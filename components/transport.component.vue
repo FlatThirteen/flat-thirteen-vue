@@ -150,7 +150,8 @@
           if (!process.browser || _.isEqual(beatsPerMeasure, oldBeatsPerMeasure)) {
             return;
           }
-//          this.stop();
+          let restart = !this.paused;
+          this.stop();
 
           this.beatIndex = -1;
 
@@ -211,6 +212,9 @@
               this.beat = -1;
               this.setBpm(this.tempo);
             }, 0);
+          }
+          if (restart) {
+            this.start();
           }
         }
       }
