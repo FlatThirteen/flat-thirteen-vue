@@ -15,7 +15,6 @@
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
   import Phrase from '~/common/phrase/phrase.model';
-//  import Sound from '~/common/sound/sound';
   import Tone from '~/common/tone';
 
   export default {
@@ -368,12 +367,6 @@
   .unpitched-enter-to
     transform: scale(2.5);
     opacity: 0.3 !important;
-
-/*
-  .unpitched
-    opacity: 0;
-*/
-
 
   .unpitched-leave-to
     transform: scale(2.5);

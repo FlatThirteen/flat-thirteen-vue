@@ -6,7 +6,7 @@
         play-icon(@click.native="onPlay()")
           .counter(v-if="transport.started") {{ transport.count }}
         .beats-input
-          input(type="text", v-model="beatsPerMeasure", placeholder="# beats")
+          input.beats(type="text", v-model="beatsPerMeasure", placeholder="# beats")
         .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
           input(type="number", v-model.number="tempo", placeholder="tempo")
 
@@ -83,9 +83,11 @@
     methods: {
       onPlay() {
         if (this.transport.started) {
+          console.log('Stop');
           this.transport.stop();
         } else {
           Sound.resume();
+          console.log('Start');
           this.transport.start('+0');
         }
       },
@@ -216,7 +218,7 @@
     position: relative;
 
   .content, .footer
-    margin: 3vw content-side-margin;
+    margin: 10vh content-side-margin;
     position: relative;
 
   .left
@@ -253,6 +255,10 @@
         margin: 0;
         text-align: center;
         width: 100%;
+
+        &[type="text"]
+          margin-right: 14%;
+          width: 86%;
 
         &:focus
           outline: none;
