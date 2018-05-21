@@ -1,0 +1,392 @@
+<template lang="pug">
+  .container
+    .container(v-if="enable")
+      .fx(v-for="note in notes", :key="note.id", :id="note.id", :class="note.fxClass")
+        .tilt(:style="{transform: note.tiltTransform}")
+          .scale(:style="{transform: note.scaleTransform}")
+            transition(appear, :name="note.transitionName")
+              .note(v-if="note.on", :class="note.noteClass")
+                .shadow(:style="{height: note.shadowHeight}")
+    .controls(v-if="allowToggle")
+      .enable(@click="enable = !enable", :class="enable ? 'on' : 'off'")
+</template>
+
+<script>
+  import BeatTick from '~/common/core/beat-tick.model';
+  import Note from '~/common/core/note.model';
+  import Phrase from '~/common/phrase/phrase.model';
+//  import Sound from '~/common/sound/sound';
+  import Tone from '~/common/tone';
+
+  export default {
+    props: {
+      allowToggle: false,
+      phrase: {
+        type: Phrase | null,
+        default: null
+      },
+      fixed: {
+        type: Array,
+        default() { return []; }
+      }
+    },
+    data: function() {
+      return {
+        enable: true,
+        notes: {},
+        notesOff: {}
+      };
+    },
+    mounted() {
+      console.log('Mounted');
+      this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+    },
+    destroyed() {
+      console.log('Destroyed');
+      this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
+    },
+    methods: {
+      beatTickHandler(data) {
+        let {beatTick, time} = data;
+        let notes = this.phrase && this.phrase.getNotes(beatTick);
+        if (!notes) {
+          return;
+        }
+
+        _.forEach(notes, (note) => {
+          note.play(time);
+        });
+        Tone.Draw.schedule(() => {
+          let durationIds = this.drawNotes(notes, beatTick);
+          // Needed because vue doesn't know Tone.Draw.schedule
+          this.$forceUpdate();
+          _.forEach(durationIds, (ids, duration) => {
+            Tone.Draw.schedule(() => {
+              this.undrawNotes(ids);
+              this.$forceUpdate();
+            }, time + Number(duration));
+          });
+        }, time);
+      },
+      drawNotes(notes, beatTick) {
+        let result = {};
+        _.forEach(notes, (note) => {
+          let id = note.toString() + beatTick;
+          if (result[note.duration]) {
+            result[note.duration].push(id);
+          } else {
+            result[note.duration] = [id];
+          }
+          this._setBackingNote(note, id);
+        });
+        return result;
+      },
+      undrawNotes(ids) {
+        _.forEach(ids, (id) => {
+          this.notes[id].on = false;
+        });
+      },
+      _setBackingNote(note, id) {
+        if (!this.notes[id]) {
+          this.notes[id] = {id};
+        }
+        let backingNote = this.notes[id];
+        let frequency = note.frequency;
+        backingNote.on = true;
+        backingNote.fxClass = note.soundName + (frequency ?
+            ' rotate' + (frequency.toMidi() % 12) :
+            ' rotate' + _.random(11) + ' offset' + _.random(24));
+        backingNote.tiltTransform = frequency ? 'rotateX(40deg)' : 'rotateX(10deg)';
+        backingNote.scaleTransform = !frequency ? '' : 'scale(' +
+            (-.009375 * frequency.toMidi() + 1.225) + ',' +
+            (frequency.toMidi() / -160 + 1.15) + ')';
+        backingNote.transitionName = note.soundName === 'cowbell' ? 'cowbell' :
+            frequency ? 'pitched' : 'unpitched';
+        backingNote.noteClass = [backingNote.transitionName];
+        if (note.soundName === 'cowbell') {
+          backingNote.noteClass.push('delay' + _.random(4));
+        } else if (note.soundName === 'snare') {
+          backingNote.noteClass.push('before' + _.random(11));
+          backingNote.noteClass.push('after' + _.random(11));
+        }
+        backingNote.shadowHeight = backingNote.transitionName !== 'pitched' ? '0' :
+            (frequency.toMidi() * -1.875 + 245) + '%';
+      }
+    },
+    computed: {
+
+    },
+    watch: {
+      fixed(fixed, oldFixed) {
+        _.forEach(oldFixed, (noteId) => {
+          if (this.notes[noteId]) {
+            this.notes[noteId].on = false;
+          }
+        });
+        _.forEach(fixed, (noteId) => {
+          let note = Note.from(noteId);
+          note.play('+0.1');
+          this._setBackingNote(note, noteId);
+        });
+        this.$forceUpdate();
+      }
+    }
+  }
+
+</script>
+<style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/note.styl"
+
+  .container
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    user-select: none;
+    perspective: 800px;
+
+  .controls
+    cursor: pointer;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 250ms;
+
+    &:hover
+      opacity: 1;
+
+    .enable
+      height: 40px;
+      width: 40px;
+      transition: background-color 250ms;
+
+      &.on
+        background-color: primary-green;
+
+      &.off
+        background-color: primary-red;
+
+  .fx, .tilt, .scale
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+  .tilt
+    transform-origin: bottom;
+
+  .scale
+    display: flex;
+    flex-flow: column-reverse nowrap;
+    align-items: center;
+    transform-origin: top;
+
+  .note
+    position: relative;
+
+    &:before, &:after
+      position: absolute;
+      top: 0;
+      bottom: 0;
+
+    .shadow
+      position: absolute;
+      width: 100%;
+
+  .fx
+    &.snare, &.kick
+      .note
+        border-radius: 50%;
+        height: 99vh;
+        width: 99vh;
+
+        &:before, &:after
+          border-radius: 50%;
+          content: '';
+
+        &:before
+          left: 7%;
+          top: @left;
+          bottom: @left;
+          right: @left;
+
+        &:after
+          left: 15%;
+          top: @left;
+          bottom: @left;
+          right: @left;
+
+    &.kick .note
+      background: radial-gradient(ellipse at center, alpha(primary-blue, 0.4) 0%, alpha(primary-blue, 0.1) 40%, transparent 80%);
+      box-shadow: 0 0 20px 4px alpha(gray, 0.1);
+
+      &:before
+        box-shadow: 0 0 15px 3px alpha(gray, 0.2);
+
+      &:after
+        box-shadow: 0 0 20px 4px alpha(gray, 0.3);
+
+    &.snare .note
+      background: radial-gradient(ellipse at center, alpha(gray, 0.5) 0%, alpha(gray, 0.2) 30%, transparent 70%);
+
+      &:before
+        star-background(3);
+        box-shadow: 0 0 20px 4px alpha(gray, 0.1);
+
+      &:after
+        star-background(5);
+        box-shadow: 0 0 15px 3px alpha(gray, 0.2);
+
+    &.synth .note
+      transform-origin: top;
+      height: 10vh;
+      width: 300%;
+
+      &:after
+        content: '';
+        animation-name: synth;
+        animation-duration: 250ms;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        background-color: primary-green;
+        background: linear-gradient(-15deg, transparent 65px, alpha(primary-green, 0.5) 75px) repeat-x;
+        background-size: 25vh 10vh;
+        width: 100%;
+
+      .shadow
+        background: linear-gradient(transparent, alpha(primary-green, 0.5));
+        bottom: 100%;
+
+    &.cowbell .note
+      transform-origin: top;
+      height: 20vh;
+      width: 20vh;
+
+      &:after
+        content: '';
+        animation-name: cowbell;
+        animation-duration: 250ms;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        background-color: primary-red;
+        clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+        width: 100%;
+
+
+  .rotate1, .before1:before, .after1:after
+    transform: rotate(-30deg);
+  .rotate2, .before2:before, .after2:after
+    transform: rotate(-60deg);
+  .rotate3, .before3:before, .after3:after
+    transform: rotate(-90deg);
+  .rotate4, .before4:before, .after4:after
+    transform: rotate(-120deg);
+  .rotate5, .before5:before, .after5:after
+    transform: rotate(-150deg);
+  .rotate6, .before6:before, .after6:after
+    transform: rotate(-180deg);
+  .rotate7, .before7:before, .after7:after
+    transform: rotate(-210deg);
+  .rotate8, .before8:before, .after8:after
+    transform: rotate(-240deg);
+  .rotate9, .before9:before, .after9:after
+    transform: rotate(-270deg);
+  .rotate10, .before10:before, .after10:after
+    transform: rotate(-300deg);
+  .rotate11, .before11:before, .after11:after
+    transform: rotate(-330deg);
+
+  .offset1, .offset2, .offset3, .offset14, .offset24
+    margin-top: 25px;
+  .offset1, .offset7, .offset8, .offset10, .offset20
+    margin-left: 25px;
+  .offset3, .offset4, .offset5, .offset12, .offset18
+    margin-right: 25px;
+  .offset5, .offset6, .offset7, .offset16, .offset22
+    margin-bottom: 25px;
+  .offset9, .offset10, .offset11, .offset12, .offset13
+    margin-top: 50px;
+  .offset13, .offset14, .offset15, .offset16, .offset17
+    margin-right: 50px;
+  .offset17, .offset18, .offset19, .offset20, .offset21
+    margin-bottom: 50px;
+  .offset9, .offset21, .offset22, .offset23, .offset24
+    margin-left: 50px;
+
+  .note.delay1
+    animation-delay: -50ms;
+  .note.delay2
+    animation-delay: -100ms;
+  .note.delay3
+    animation-delay: -150ms;
+  .note.delay4
+    animation-delay: -200ms;
+
+  @keyframes synth
+    0%
+      transform: translateX(0);
+    100%
+      transform: translateX(-25vh);
+
+  @keyframes cowbell
+    0%,100%
+      transform: rotate(0);
+    33%
+      transform: rotate(10deg);
+    66%
+      transform: rotate(-10deg);
+
+  .pitched-enter-active
+    transition: all 100ms;
+
+  .pitched-enter
+    transform: translateX(-100%);
+    opacity: 0;
+
+  .pitched-enter-to, .pitched-leave
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+
+  .pitched-leave-active
+    transition: all 140ms;
+
+  .pitched-leave-to
+    transform: translateY(20vh) scale(3, 1.5);
+    opacity: 0;
+
+  .unpitched-enter-active, .unpitched-leave-active
+    transition: all 250ms;
+
+  .unpitched-enter, .unpitched-leave
+    transform: scale(1);
+    opacity: 1 !important;
+
+  .unpitched-enter-to
+    transform: scale(2.5);
+    opacity: 0.3 !important;
+
+/*
+  .unpitched
+    opacity: 0;
+*/
+
+
+  .unpitched-leave-to
+    transform: scale(2.5);
+    opacity: 0;
+
+  .cowbell-leave-active
+    transition: all 140ms;
+
+  .cowbell-leave
+    transform: scale(1);
+    opacity: 0.5;
+
+  .cowbell-leave-to
+    transform: scale(3);
+    opacity: 0.1;
+</style>
