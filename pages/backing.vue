@@ -1,6 +1,6 @@
 <template lang="pug">
   .container
-    backing(:phrase="backingPhrase", :fixed="fixed", :allow-toggle="true")
+    backing(:phrase="backingPhrase", :fixed="fixed", :show="showFx")
     .left
       .controls
         play-icon(@click.native="onPlay()")
@@ -9,7 +9,17 @@
           input.beats(type="text", v-model="beatsPerMeasure", placeholder="# beats")
         .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
           input(type="number", v-model.number="tempo", placeholder="tempo")
+      .performance(:class="{invalid: !transport.isValidLatencyHint(latencyHint)," +
+          "dim: transport.isValidLatencyHint(latencyHint) && latencyHint !== transport.latencyHint}")
+        input(type="text", v-model="latencyHint", placeholder="latency hint",
+            @focus="showSuggestions = true", @blur="hideSuggestions()")
 
+        .suggestions(v-if="showSuggestions")
+          .suggestion(@click="onLatencyHint('0.2')") 0.2
+          .suggestion(@click="onLatencyHint('fastest')") fastest
+          .suggestion(@click="onLatencyHint('interactive')") interactive
+          .suggestion(@click="onLatencyHint('balanced')") balanced
+          .suggestion(@click="onLatencyHint('playback')") playback
 
     .content(:class="{solo: anySolo}")
       .track(v-for="(track, i) in tracks", :class="{solo: track.solo, mute: track.mute}")
@@ -22,19 +32,18 @@
 
     .footer
       .line(v-for="beat of debugPhrase", @click="onBeat(beat)")
-        .debug(:class="{selected: selectedBeat === beat, now: isNow(beat)}") {{ beat }}
+        .debug(:class="{selected: selected === beat, now: isNow(beat)}") {{ beat }}
 
     .right
       h3 More
-      h3 Cowbell
-      .mini-button(@click="onAdd($event, 'cowbell')") A5,,A5,A5 E5,A5,E5,E5 A5,,A5,E5
-      .mini-button(@click="onAdd($event, 'cowbell')") C1,C2,C3,C4 C2,C3,C4,C5 C3,C4,C5,C6 C4,C5,C6,C7
-      .mini-button(@click="onAdd($event, 'cowbell')") C1,C2,C3,C4 C5,C6,C7,C8 F#8,F#7,F#6,F#5 F#4,F#3,F#2,F#1
-      h3 Synth
-      .mini-button(@click="onAdd($event, 'synth')") C2,B1,Bb1,A1 G#1,G1,F#1,F1 E1,Eb1,D1,C#1 C1,E1,G1,B1
-      .mini-button(@click="onAdd($event, 'synth')") C1.C2.C3.C4.C5.C6.C7.C8.C9 C4.E4.G4.Bb4 Db6.F6.Ab6.Cb7 D8.F#8.A8.C9
+      div(v-for="(phrases, sound) of more")
+        h3 {{ sound }}
+        .mini-button(v-for="phrase of phrases", @click="onAdd($event, sound.toLowerCase())") {{ phrase }}
 
-    transport(ref="transport", v-bind="transportProps")
+    transport(ref="transport", v-bind="transportProps", :metronome="false")
+
+    .fx-controls
+      .enable(@click="showFx = !showFx", :class="showFx ? 'on' : showFx === false ? 'off' : ''")
 
 </template>
 
@@ -60,27 +69,53 @@
     layout: 'debug',
     data: function() {
       return {
-        transport: { bpm: () => 120, isValidBpm: () => true },
-        beatsPerMeasure: '4',
+        transport: { bpm: () => 120, isValidBpm: _.stubTrue, isValidLatencyHint: _.stubTrue },
+        beatsPerMeasure: '4,4',
         tempo: 120,
+        latencyHint: 'balanced',
         enableBacking: true,
-        selectedBeat: null,
+        selected: null,
         anySolo: false,
         backingPhrase: {},
         debugPhrase: [],
         fixed: [],
         fixedBeat: '',
+        showSuggestions: false,
+        showFx: true,
         tracks: [
-          { type: 'synth', notes: 'C2,C2 G1,G1 Bb1,Bb1 B1,B1 C2,C3 G1,G2 Bb1,Bb2 B1,B2' },
-          { type: 'synth', notes: 'G4.C5.Eb5, ,G4.C5.Eb5  G4.C5.F5 G4.C5.Eb5, ,G4.C5.Eb5  A4.C5.F5' },
-          { type: 'drums', notes: 'K ,K S,K ,K K ,K S,K S,S,K,S' }
-        ]
+          { type: 'synth', notes: 'C2,C2| G1,G1| Bb1,Bb1| B1,B1| C2,C3| G1,G2| Bb1,Bb2| B1,B2' },
+          { type: 'synth', notes: 'G4.C5.Eb5,| ,G4.C5.Eb5| | G4.C5.F5| G4.C5.Eb5,| ,G4.C5.Eb5| | A4.C5.F5' },
+          { type: 'drums', notes: 'K| ,K| S,K| ,K| K| ,K| S,K| S,S,K,S' }
+        ],
+        more: {
+          Cowbell: [
+            'A5,,A5,A5| E5,A5,E5,E5| A5,,A5,E5| | A5,,A5,A5| E5,A5,E5,E5| A5,,,E5',
+            'C1,C2,C3,C4| C2,C3,C4,C5| C3,C4,C5,C6| C4,C5,C6,C7',
+            'C1,C2,C3,C4| C5,C6,C7,C8| F#8,F#7,F#6,F#5| F#4,F#3,F#2,F#1'
+          ],
+          Synth: [
+            'C2,B1,Bb1,A1| G#1,G1,F#1,F1| E1,Eb1,D1,C#1| C1,E1,G1,B1',
+            'C1.C2.C3.C4.C5.C6.C7.C8.C9| C4.E4.G4.Bb4| Db6.F6.Ab6.Cb7| D8.F#8.A8.C9'
+          ]
+        }
       }
     },
     mounted() {
       this.transport = this.$refs.transport;
+      window.addEventListener('keydown', this.onKeyDown);
     },
+    destroyed: function() {
+      window.removeEventListener('keydown', this.onKeyDown);
+    },
+
     methods: {
+      onKeyDown(event) {
+        if (event.key === 'Enter') {
+          this.onPlay();
+        } else if (event.key === ' ') {
+          this.showFx = this.showFx !== undefined ? undefined : true;
+        }
+      },
       onPlay() {
         if (this.transport.started) {
           console.log('Stop');
@@ -103,13 +138,22 @@
       },
       onBeat(beatDebug) {
         Sound.resume();
-        if (this.selectedBeat !== beatDebug) {
-          this.selectedBeat = beatDebug;
+        if (this.selected !== beatDebug) {
+          this.selected = beatDebug;
           this.fixed = this._getFixed(beatDebug);
         } else {
-          this.selectedBeat = null;
+          this.selected = null;
           this.fixed = [];
         }
+      },
+      hideSuggestions() {
+        // Need to do this after timeout so that suggestion click handler has a chance
+        setTimeout(() => {
+          this.showSuggestions = false;
+        }, 200);
+      },
+      onLatencyHint(latencyHint) {
+        this.latencyHint = latencyHint;
       },
       isNow(beatDebug) {
         return _.startsWith(beatDebug, 'now!!!');
@@ -127,6 +171,7 @@
         return {
           beatsPerMeasure: _.map(_.split(this.beatsPerMeasure, ','), Number),
           tempo: this.tempo,
+          latencyHint: this.latencyHint,
           metronome: true,
           show: true
         }
@@ -141,43 +186,26 @@
             // Can't parse frequencies on server without Tone
             return;
           }
-          let phrase = new Phrase();
-          let solo = false;
-          _.forEach(tracks, (track) => {
-            if (!solo && track.solo) {
-              phrase = new Phrase();
-              solo = true;
-            }
-            if (parser[track.type] && track.notes && !track.mute && (!solo || track.solo)) {
-              _.forEach(track.notes.split(' '), (beatNote, beatIndex) => {
-                _.forEach(beatNote.split(','), (pulseNote, pulseIndex, array) => {
-                  if (pulseIndex > 3) {
-                    return;
-                  }
-                  let pulses = Math.min(array.length, 4);
-                  _.forEach(pulseNote.split('.'), (chordNote) => {
-                    try {
-                      let note = parser[track.type](chordNote, duration(pulses));
-                      if (note) {
-                        phrase.add(note, beatIndex, ticks(pulseIndex, pulses));
-                      }
-                    } catch (error) {
-                      console.log('Parse error:', error);
-                    }
-                  });
-                });
-              });
-            }
+          let solo = true;
+          let activeTracks = _.filter(tracks, (track) => {
+            return track.solo && !track.mute;
           });
-          this.backingPhrase = phrase;
-          this.debugPhrase = phrase.toArray();
+          if (!activeTracks.length) {
+            solo = false;
+            activeTracks = _.filter(tracks, (track) => {
+              return !track.mute;
+            });
+          }
+
+          this.backingPhrase = Phrase.from(activeTracks);
+          this.debugPhrase = this.backingPhrase.toArray();
           this.anySolo = solo;
-          if (this.selectedBeat) {
-            let selectedBeatTick = _.split(this.selectedBeat, ': ')[0];
-            this.selectedBeat = _.find(this.debugPhrase, (debugPhrase) => {
+          if (this.selected) {
+            let selectedBeatTick = _.split(this.selected, ': ')[0];
+            this.selected = _.find(this.debugPhrase, (debugPhrase) => {
               return _.startsWith(debugPhrase, selectedBeatTick);
             });
-            this.fixed = this.selectedBeat ? this._getFixed(this.selectedBeat) : [];
+            this.fixed = this.selected ? this._getFixed(this.selected) : [];
           }
         }
       }
@@ -239,7 +267,7 @@
         font-size: 40px;
         padding: 10px 5px;
 
-    .beats-input
+    .beats-input, .performance
       margin: 10px 0;
 
       &.dim
@@ -263,6 +291,28 @@
         &:focus
           outline: none;
 
+    .performance
+      position: relative;
+
+      input
+        font-size: 14px;
+        opacity: 0.3;
+
+        &:hover, &:focus
+          opacity: 1;
+
+      .suggestions
+        position: absolute;
+        left: 20%;
+        border: solid darkgray 1px;
+        padding: 1px 5px;
+
+        .suggestion
+          color: darkgray;
+          cursor: pointer;
+
+          &:hover
+            color: black;
   .right
     position: absolute;
     right: 0;
@@ -331,4 +381,26 @@
       &.now
         color: black;
 
+  .fx-controls
+    cursor: pointer;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 250ms;
+
+    &:hover
+      opacity: 1;
+
+    .enable
+      background-color: primary-blue;
+      height: 40px;
+      width: 40px;
+      transition: background-color 250ms;
+
+      &.on
+        background-color: primary-green;
+
+      &.off
+        background-color: primary-red;
 </style>

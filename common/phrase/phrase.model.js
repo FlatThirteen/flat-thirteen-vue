@@ -1,4 +1,4 @@
-import { beatTickFrom } from '~/common/core/beat-tick.model';
+import { beatTickFrom, duration, ticks } from '~/common/core/beat-tick.model';
 import { Note } from '~/common/core/note.model';
 
 export class Phrase {
@@ -58,7 +58,58 @@ export class Phrase {
   toString() {
     return _.toString(_.toPairs(this.notes));
   }
+
+  static from(tracks) {
+    return _.reduce(tracks, (phrase, track) => {
+      if (parser[track.type] && track.notes) {
+        _.forEach(track.notes.split('|'), (beatNote, beatIndex) => {
+          _.forEach(beatNote.split(','), (pulseNote, pulseIndex, array) => {
+            if (pulseIndex > 3) {
+              return;
+            }
+            let pulses = Math.min(array.length, 4);
+            _.forEach(pulseNote.split('.'), (chordNote) => {
+              try {
+                let note = parser[track.type](chordNote, duration(pulses));
+                if (note) {
+                  phrase.add(note, beatIndex, ticks(pulseIndex, pulses));
+                }
+              } catch (error) {
+                console.log('Parse error:', error);
+              }
+            });
+          });
+        });
+      }
+      return phrase;
+    }, new Phrase());
+  }
 }
+
+const parser = {
+  synth: (data, duration) => {
+    let frequency = Note.pitch(data);
+    if (frequency) {
+      return new Note('synth', {
+        pitch: frequency.toNote(),
+        duration: duration
+      });
+    }
+  },
+  drums: (data) => {
+    let sound = data.match(/[kK]/) ? 'kick' :
+      data.match(/[sS]/) ? 'snare' : null;
+    if (sound) {
+      return new Note(sound);
+    }
+  },
+  cowbell: (data) => {
+    let frequency = Note.pitch(data);
+    if (frequency) {
+      return new Note('cowbell', { pitch: frequency.toNote() });
+    }
+  }
+};
 
 export class ConstantPhraseBuilder {
   constructor(phrase) {

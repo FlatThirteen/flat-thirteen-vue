@@ -1,8 +1,10 @@
 <template lang="pug">
   .transport(v-if="show")
+    .latency(v-if="latencyHistogram.length") {{ latencyHistogram.join(',') }}
     .started(v-if="started") {{ measure }} : {{ count }} / {{ countBeats }}
     .starting(v-else-if="starting") ...
     .paused(v-else) {{ beats }} beats
+    .elapsed(v-if="startTime") ({{ elapsedTime() }}s)
 </template>
 
 <script>
@@ -37,6 +39,10 @@
       show: {
         type: Boolean,
         default: false
+      },
+      latencyHint: {
+        type: String,
+        default: 'balanced'
       }
     },
     data: function() {
@@ -44,11 +50,14 @@
         onTopId: null,
         quarterLoop: null,
         pulsesPart: null,
+        latencyHistogram: [],
         paused: true,
         started: false,
         measure: 0,
         beat: 0,
-        beatIndex: 0
+        beatIndex: 0,
+        startTime: 0,
+        endTime: 0
       };
     },
     mounted() {
@@ -56,6 +65,7 @@
         throw new Error('Only one transport should be mounted at a time');
       }
       loaded = true;
+      Tone.context.latencyHint = this.latencyHint;
     },
     destroyed() {
       this.disposeLoops();
@@ -67,20 +77,24 @@
     },
     methods: {
       start(time = '+4n') {
+        this.latencyHistogram = [];
         this.paused = false;
 //        this.paused$.next(false);
 //        this.lastBeat$.next(false);
         if (!this.started) {
+          this.startTime = Tone.rightNow();
+          this.endTime = 0;
           Tone.Transport.start(time);
         }
       },
       stop() {
+        this.endTime = Tone.rightNow();
         this.paused = true;
 //        this.paused$.next(true);
         this.measure = 0;
         this.beat = -1;
         Tone.Transport.stop();
-        this.started = Tone.Transport.started === 'started';
+        this.started = Tone.Transport.state === 'started';
       },
       disposeLoops() {
         if (this.quarterLoop) {
@@ -92,12 +106,20 @@
           this.pulsesPart = null;
         }
       },
+      latency() {
+        return Tone.context.latencyHint;
+      },
+      isValidLatencyHint(latencyHint) {
+        return latencyHint === 'fastest' || latencyHint ===  'interactive' ||
+            latencyHint === 'balanced' || latencyHint === 'playback' ||
+            _.inRange(_.toNumber(latencyHint), 0, 0.51);
+      },
       bpm() {
         return Tone.Transport && _.round(Tone.Transport.bpm.value);
       },
       setBpm(bpm) {
         if (bpm !== this.bpm() && this.isValidBpm(bpm)) {
-          Tone.Transport.bpm.value = bpm;
+          Tone.Transport.bpm.rampTo(bpm, 1);
           Tone.Transport.setLoopPoints(0, this.loopTime());
         }
       },
@@ -112,6 +134,25 @@
       },
       position() {
         return Tone.Transport && Tone.Transport.position.replace(/\:[.\d]+$/, '');
+      },
+      logIfLate(time) {
+        let start = Tone.rightNow();
+        if (start <= time) {
+          return;
+        }
+        let difference = _.floor(10 * (start - time));
+        if (!this.latencyHistogram[difference]) {
+          this.latencyHistogram[difference] = 1;
+        } else {
+          this.latencyHistogram[difference]++;
+        }
+        console.log(this.elapsedTime() + 's Late: ', _.round(start - time, 5),
+            _.toArray(this.latencyHistogram), time, this.latency());
+      },
+      elapsedTime() {
+        if (this.startTime) {
+          return _.round((this.endTime || Tone.rightNow()) - this.startTime);
+        }
       }
     },
     computed: {
@@ -139,8 +180,14 @@
     },
     watch: {
       tempo(bpm) {
-        if (this.paused) {
-          this.setBpm(bpm);
+        this.setBpm(bpm);
+      },
+      latencyHint(latencyHint) {
+        if (latencyHint === 'fastest' || latencyHint === 'interactive' ||
+          latencyHint === 'balanced' || latencyHint === 'playback') {
+          Tone.context.latencyHint = latencyHint;
+        } else if (_.inRange(_.toNumber(latencyHint), 0, 0.51)) {
+          Tone.context.latencyHint = _.toNumber(latencyHint);
         }
       },
       beatsPerMeasure: {
@@ -160,11 +207,11 @@
 
           this.disposeLoops();
 
-          console.log('Setup new quarterLoop');
           this.quarterLoop = new Tone.Loop((time) => {
             if (this.paused) {
               return;
             }
+            this.logIfLate(time);
             this.started = true;
             this.beatIndex++;
             this.beat++;
@@ -195,6 +242,7 @@
           }, {});
 //          this.supportedTicks = _.sortBy(_.values(tickEvents));
           this.pulsesPart = new Tone.Part((time, tick) => {
+            this.logIfLate(time);
             this.$bus.$emit(BeatTick.EVENT, {
               time: time,
               beat: this.beatIndex,
@@ -210,7 +258,6 @@
               this.measure = 0;
               this.beatIndex = -1;
               this.beat = -1;
-              this.setBpm(this.tempo);
             }, 0);
           }
           if (restart) {
@@ -231,4 +278,12 @@
     bottom: 0;
     right: 0;
 
+    .latency
+      color: primary-red;
+
+    .started, .starting, .paused, .elapsed
+      display: inline-block;
+
+    .elapsed
+      margin-left: 10px;
 </style>

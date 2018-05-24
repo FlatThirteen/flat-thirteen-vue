@@ -1,9 +1,9 @@
 import Vue from 'vue'
 
-const eventBus = {}
+const eventBus = {};
 
 eventBus.install = function (Vue) {
   Vue.prototype.$bus = new Vue();
-}
+};
 
 Vue.use(eventBus);

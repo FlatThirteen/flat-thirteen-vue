@@ -1,14 +1,17 @@
 <template lang="pug">
-  .container
-    .container(v-if="enable")
-      .fx(v-for="note in notes", :key="note.id", :id="note.id", :class="note.fxClass")
-        .tilt(:style="{transform: note.tiltTransform}")
-          .scale(:style="{transform: note.scaleTransform}")
-            transition(appear, :name="note.transitionName")
-              .note(v-if="note.on", :class="note.noteClass")
-                .shadow(:style="{height: note.shadowHeight}")
-    .controls(v-if="allowToggle")
-      .enable(@click="enable = !enable", :class="enable ? 'on' : 'off'")
+  .container(v-if="show")
+    .fx(v-for="note in notes", :key="note.id", :id="note.id", :class="note.fxClass")
+      .tilt(:style="{transform: note.tiltTransform}")
+        .scale(:style="{transform: note.scaleTransform}")
+          transition(appear, :name="note.transitionName")
+            .note(v-if="note.on", :class="note.noteClass")
+              .shadow(:style="{height: note.shadowHeight}")
+    .counts(v-if="showCounts", @click="resetCounts()")
+      span {{ playCount }}
+      span  {{ drawCount }}
+      span.diff(v-if="playCount !== drawCount") ({{ drawCount - playCount }})
+      span(:class="{diff: activeNotes < 0}")  {{ undrawCount }}{{ activeNotes | diff }}
+
 </template>
 
 <script>
@@ -19,7 +22,6 @@
 
   export default {
     props: {
-      allowToggle: false,
       phrase: {
         type: Phrase | null,
         default: null
@@ -27,24 +29,44 @@
       fixed: {
         type: Array,
         default() { return []; }
+      },
+      show: {
+        type: Boolean,
+        default: true
+      },
+      showCounts: {
+        type: Boolean,
+        default: true
       }
     },
     data: function() {
       return {
-        enable: true,
         notes: {},
-        notesOff: {}
+        playCount: 0,
+        drawCount: 0,
+        undrawCount: 0,
+        activeNotes: 0
       };
     },
     mounted() {
-      console.log('Mounted');
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
     },
     destroyed() {
-      console.log('Destroyed');
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
+    filters: {
+      diff(value) {
+        return value < 0 ? value : '+' + value;
+      }
+    },
     methods: {
+      resetCounts() {
+        // TODO: Reset automatically when started
+        this.playCount = 0;
+        this.drawCount = 0;
+        this.undrawCount = 0;
+        this.activeNotes = 0;
+      },
       beatTickHandler(data) {
         let {beatTick, time} = data;
         let notes = this.phrase && this.phrase.getNotes(beatTick);
@@ -54,35 +76,25 @@
 
         _.forEach(notes, (note) => {
           note.play(time);
-        });
-        Tone.Draw.schedule(() => {
-          let durationIds = this.drawNotes(notes, beatTick);
-          // Needed because vue doesn't know Tone.Draw.schedule
-          this.$forceUpdate();
-          _.forEach(durationIds, (ids, duration) => {
+          this.playCount++;
+          if (this.show !== undefined) {
+            let id = beatTick + note.toString();
             Tone.Draw.schedule(() => {
-              this.undrawNotes(ids);
+              this._setBackingNote(note, id);
+              this.drawCount++;
+              this.activeNotes++;
+              // Needed because vue doesn't know Tone.Draw.schedule
               this.$forceUpdate();
-            }, time + Number(duration));
-          });
-        }, time);
-      },
-      drawNotes(notes, beatTick) {
-        let result = {};
-        _.forEach(notes, (note) => {
-          let id = note.toString() + beatTick;
-          if (result[note.duration]) {
-            result[note.duration].push(id);
-          } else {
-            result[note.duration] = [id];
+            }, time);
+            Tone.Draw.schedule(() => {
+              if (this.notes[id]) {
+                this.notes[id].on = false;
+              }
+              this.undrawCount++;
+              this.activeNotes--;
+              this.$forceUpdate();
+            }, time + note.duration);
           }
-          this._setBackingNote(note, id);
-        });
-        return result;
-      },
-      undrawNotes(ids) {
-        _.forEach(ids, (id) => {
-          this.notes[id].on = false;
         });
       },
       _setBackingNote(note, id) {
@@ -112,9 +124,6 @@
             (frequency.toMidi() * -1.875 + 245) + '%';
       }
     },
-    computed: {
-
-    },
     watch: {
       fixed(fixed, oldFixed) {
         _.forEach(oldFixed, (noteId) => {
@@ -124,6 +133,7 @@
         });
         _.forEach(fixed, (noteId) => {
           let note = Note.from(noteId);
+          // TODO: Play only when paused
           note.play('+0.1');
           this._setBackingNote(note, noteId);
         });
@@ -146,27 +156,16 @@
     user-select: none;
     perspective: 800px;
 
-  .controls
-    cursor: pointer;
+  .counts
+    background-color: faint-grey;
+    color: lightgray;
+    padding: 5px;
     position: absolute;
-    bottom: 0;
-    left: 0;
-    opacity: 0;
-    transition: opacity 250ms;
+    top: 50px;
+    right: 2px;
 
-    &:hover
-      opacity: 1;
-
-    .enable
-      height: 40px;
-      width: 40px;
-      transition: background-color 250ms;
-
-      &.on
-        background-color: primary-green;
-
-      &.off
-        background-color: primary-red;
+    .diff
+      color: primary-red;
 
   .fx, .tilt, .scale
     position: absolute;

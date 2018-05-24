@@ -15,7 +15,7 @@ let Sound = {
       });
     }
   }
-}
+};
 
 if (process.browser) {
   Sound.kick = new KickSound();
