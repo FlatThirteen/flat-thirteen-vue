@@ -60,20 +60,32 @@
           if (this.lastSound) {
             this.lastSound.play();
           }
-          return;
-        }
-        let pitch = getPitch(event.key, this.octaveShift);
-        if (pitch && !this.activeSounds[pitch]) {
-          this.activeSounds[pitch] = true;
-          this.active = _.keys(this.activeSounds);
-          this.lastSound.attack({ pitch });
-        } else if (event.key === 'Shift') {
-          if (event.location === 1 && this.octaveShift > -3) {
-            this.releaseAll(-1);
-            this.octaveShift--;
-          } else if (event.location === 2 && this.octaveShift < 3) {
-            this.releaseAll(1);
-            this.octaveShift++;
+          if (event.key === 'ArrowDown') {
+            this.onSound('cowbell', false);
+          }
+        } else {
+          let pitch = getPitch(event.key, this.octaveShift);
+          if (pitch && !this.activeSounds[pitch]) {
+            this.activeSounds[pitch] = true;
+            this.active = _.keys(this.activeSounds);
+            this.lastSound.attack({pitch});
+          } else if (event.key === 'Shift') {
+            if (event.location === 1 && this.octaveShift > -3) {
+              this.releaseAll(-1);
+              this.octaveShift--;
+            } else if (event.location === 2 && this.octaveShift < 3) {
+              this.releaseAll(1);
+              this.octaveShift++;
+            }
+          }
+          if (event.key === 'ArrowDown' && this.lastSoundName === 'cowbell') {
+            this.onSound('synth', false);
+          } else if (event.key === 'ArrowUp') {
+            if (this.lastSoundName === 'synth') {
+              this.onSound('cowbell', false);
+            } else {
+              this.onSound('snare', false);
+            }
           }
         }
       },
@@ -85,20 +97,23 @@
           this.lastSound.release({ pitch });
         }
       },
-      onSound(soundName) {
-        Sound.resume();
-        this.lastSoundName = soundName;
-        if (this.lastSound) {
-          this.releaseAll();
-          this.octaveShift = 0;
-        }
-        this.lastSound = Sound[soundName];
-        if (this.lastSound) {
-          this.lastSound.play();
-          console.log('Play sound:', soundName);
-        } else {
-          console.log('Play ' + soundName + ' not supported');
-        }
+      onSound(soundName, play = true) {
+        Sound.resume().then(() => {
+          this.lastSoundName = soundName;
+          if (this.lastSound) {
+            this.releaseAll();
+            this.octaveShift = 0;
+          }
+          this.lastSound = Sound[soundName];
+          if (play) {
+            if (this.lastSound) {
+              this.lastSound.play();
+              console.log('Play sound:', soundName);
+            } else {
+              console.log('Play ' + soundName + ' not supported');
+            }
+          }
+        });
       },
       showKey(soundName) {
         return this.lastSoundName === soundName && this.lastSound.attack ?

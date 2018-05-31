@@ -1,7 +1,7 @@
 import Tone from '../tone';
 
 export const beatTickEvent = 'beattick';
-export const ticksPerBeat = Tone.Transport ? Tone.Transport.PPQ : 192
+export const ticksPerBeat = Tone.Transport ? Tone.Transport.PPQ : 192;
 
 export function beatTickFrom(beat, tick = 0) {
   return _.padStart(beat, 2, '0') + ':' + _.padStart(tick.toString(), 3, '0');

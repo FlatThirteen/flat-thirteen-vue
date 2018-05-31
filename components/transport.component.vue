@@ -1,13 +1,15 @@
 <template lang="pug">
   .transport(v-if="show")
     .latency(v-if="latencyHistogram.length") {{ latencyHistogram.join(',') }}
-    .started(v-if="started") {{ measure }} : {{ count }} / {{ countBeats }}
+    .playing(v-if="playing") {{ measure }} : {{ count }} / {{ countBeats }}
     .starting(v-else-if="starting") ...
     .paused(v-else) {{ beats }} beats
     .elapsed(v-if="startTime") ({{ elapsedTime() }}s)
 </template>
 
 <script>
+  import { mapGetters } from 'vuex'
+
   import BeatTick from '~/common/core/beat-tick.model';
   import Sound from '~/common/sound/sound';
   import Tone from '~/common/tone';
@@ -51,13 +53,9 @@
         quarterLoop: null,
         pulsesPart: null,
         latencyHistogram: [],
-        paused: true,
-        started: false,
         measure: 0,
-        beat: 0,
-        beatIndex: 0,
-        startTime: 0,
-        endTime: 0
+        beat: -1,
+        beatIndex: -1,
       };
     },
     mounted() {
@@ -76,26 +74,6 @@
       loaded = false;
     },
     methods: {
-      start(time = '+4n') {
-        this.latencyHistogram = [];
-        this.paused = false;
-//        this.paused$.next(false);
-//        this.lastBeat$.next(false);
-        if (!this.started) {
-          this.startTime = Tone.rightNow();
-          this.endTime = 0;
-          Tone.Transport.start(time);
-        }
-      },
-      stop() {
-        this.endTime = Tone.rightNow();
-        this.paused = true;
-//        this.paused$.next(true);
-        this.measure = 0;
-        this.beat = -1;
-        Tone.Transport.stop();
-        this.started = Tone.Transport.state === 'started';
-      },
       disposeLoops() {
         if (this.quarterLoop) {
           this.quarterLoop.dispose();
@@ -140,13 +118,9 @@
         if (start <= time) {
           return;
         }
-        let difference = _.floor(10 * (start - time));
-        if (!this.latencyHistogram[difference]) {
-          this.latencyHistogram[difference] = 1;
-        } else {
-          this.latencyHistogram[difference]++;
-        }
-        console.log(this.elapsedTime() + 's Late: ', _.round(start - time, 5),
+        let bucket = _.floor(10 * (start - time));
+        this.latencyHistogram[bucket] = (this.latencyHistogram[bucket] || 0) + 1;
+        console.log('@' + this.elapsedTime() + 's Late: ', _.round(start - time, 5),
             _.toArray(this.latencyHistogram), time, this.latency());
       },
       elapsedTime() {
@@ -156,9 +130,6 @@
       }
     },
     computed: {
-      starting() {
-        return !this.paused && !this.started;
-      },
       beats() {
         return _.sum(this.beatsPerMeasure);
       },
@@ -176,9 +147,26 @@
       },
       lastBeat() {
         return this.beatIndex === this.beats - 1;
-      }
+      }, ...mapGetters({
+        starting: 'transport/starting',
+        playing: 'transport/playing',
+        paused: 'transport/paused',
+        startTime: 'transport/startTime',
+        endTime: 'transport/endTime'
+      })
     },
     watch: {
+      starting(starting) {
+        if (starting) {
+          this.latencyHistogram = [];
+        }
+      },
+      paused(paused) {
+        if (paused) {
+          this.measure = 0;
+          this.beat = -1;
+        }
+      },
       tempo(bpm) {
         this.setBpm(bpm);
       },
@@ -197,10 +185,10 @@
           if (!process.browser || _.isEqual(beatsPerMeasure, oldBeatsPerMeasure)) {
             return;
           }
-          let restart = !this.paused;
-          this.stop();
-
-          this.beatIndex = -1;
+          let restart = this.starting || this.playing;
+          if (restart) {
+            this.$store.dispatch('transport/stop');
+          }
 
           Tone.Transport.loop = true;
           Tone.Transport.setLoopPoints(0, this.loopTime());
@@ -212,7 +200,6 @@
               return;
             }
             this.logIfLate(time);
-            this.started = true;
             this.beatIndex++;
             this.beat++;
             if (this.beat >= this.countBeats) {
@@ -255,14 +242,18 @@
 
           if (!this.onTopId) {
             this.onTopId = Tone.Transport.schedule((time) => {
+              if (this.paused) {
+                this.$store.commit('transport/play');
+              }
               this.measure = 0;
               this.beatIndex = -1;
               this.beat = -1;
             }, 0);
           }
           if (restart) {
-            this.start();
+            this.$store.dispatch('transport/start');
           }
+          this.$store.commit('transport/ready');
         }
       }
     }
@@ -272,16 +263,17 @@
 </script>
 <style scoped lang="stylus" type="text/stylus">
   .transport
-    background-color: faint-grey;
-    padding: 5px;
     position: fixed;
     bottom: 0;
     right: 0;
+    background-color: faint-grey;
+    padding: 5px;
+    text-align: left;
 
     .latency
       color: primary-red;
 
-    .started, .starting, .paused, .elapsed
+    .playing, .starting, .paused, .elapsed
       display: inline-block;
 
     .elapsed

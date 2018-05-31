@@ -1,5 +1,5 @@
 <template lang="pug">
-  .container(v-if="show")
+  .container(v-if="show && !skip")
     .fx(v-for="note in notes", :key="note.id", :id="note.id", :class="note.fxClass")
       .tilt(:style="{transform: note.tiltTransform}")
         .scale(:style="{transform: note.scaleTransform}")
@@ -15,6 +15,8 @@
 </template>
 
 <script>
+  import { mapGetters } from 'vuex'
+
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
   import Phrase from '~/common/phrase/phrase.model';
@@ -31,6 +33,10 @@
         default() { return []; }
       },
       show: {
+        type: Boolean,
+        default: true
+      },
+      skip: {
         type: Boolean,
         default: true
       },
@@ -61,14 +67,12 @@
     },
     methods: {
       resetCounts() {
-        // TODO: Reset automatically when started
         this.playCount = 0;
         this.drawCount = 0;
         this.undrawCount = 0;
         this.activeNotes = 0;
       },
-      beatTickHandler(data) {
-        let {beatTick, time} = data;
+      beatTickHandler({beatTick, time}) {
         let notes = this.phrase && this.phrase.getNotes(beatTick);
         if (!notes) {
           return;
@@ -77,7 +81,7 @@
         _.forEach(notes, (note) => {
           note.play(time);
           this.playCount++;
-          if (this.show !== undefined) {
+          if (!this.skip) {
             let id = beatTick + note.toString();
             Tone.Draw.schedule(() => {
               this._setBackingNote(note, id);
@@ -124,7 +128,18 @@
             (frequency.toMidi() * -1.875 + 245) + '%';
       }
     },
+    computed: {
+      ...mapGetters({
+        starting: 'transport/starting',
+        paused: 'transport/paused'
+      })
+    },
     watch: {
+      starting(starting) {
+        if (starting) {
+          this.resetCounts();
+        }
+      },
       fixed(fixed, oldFixed) {
         _.forEach(oldFixed, (noteId) => {
           if (this.notes[noteId]) {
@@ -133,8 +148,9 @@
         });
         _.forEach(fixed, (noteId) => {
           let note = Note.from(noteId);
-          // TODO: Play only when paused
-          note.play('+0.1');
+          if (this.paused) {
+            note.play('+0.1');
+          }
           this._setBackingNote(note, noteId);
         });
         this.$forceUpdate();

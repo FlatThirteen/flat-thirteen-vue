@@ -13,6 +13,8 @@ let Sound = {
         firstUserAction = true;
         console.log('Resumed AudioContext')
       });
+    } else {
+      return Promise.resolve();
     }
   }
 };

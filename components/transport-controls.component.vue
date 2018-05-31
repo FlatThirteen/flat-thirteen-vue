@@ -1,0 +1,162 @@
+<template lang="pug">
+  .controls
+    transport(ref="transport", v-bind="transportProps")
+    play-icon(@click.native="onPlay()")
+      .counter(v-if="transport.playing") {{ transport.count }}
+    .beats-input
+      input.beats(type="text", v-model="beatsPerMeasure", placeholder="# beats")
+    .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
+      input(type="number", v-model.number="tempo", placeholder="tempo")
+    .performance(:class="{invalid: !transport.isValidLatencyHint(latencyHint)," +
+        "dim: transport.isValidLatencyHint(latencyHint) && latencyHint !== transport.latencyHint}")
+      input(type="text", v-model="latencyHint", placeholder="latency hint",
+      @focus="showSuggestions = true", @blur="hideSuggestions()")
+      .suggestions(v-if="showSuggestions")
+        .suggestion(@click="onLatencyHint('0.2')") 0.2
+        .suggestion(@click="onLatencyHint('fastest')") fastest
+        .suggestion(@click="onLatencyHint('interactive')") interactive
+        .suggestion(@click="onLatencyHint('balanced')") balanced
+        .suggestion(@click="onLatencyHint('playback')") playback
+</template>
+
+<script>
+  import { mapGetters } from 'vuex'
+
+  import Sound from '~/common/sound/sound';
+  import PlayIcon from '~/components/play-icon.component';
+  import Transport from '~/components/transport.component';
+
+  export default {
+    components: {
+      'play-icon': PlayIcon,
+      'transport': Transport
+    },
+    props: {
+      metronome: {
+        type: Boolean,
+        default: false
+      },
+    },
+    data: function() {
+      return {
+        transport: { bpm: () => 120, isValidBpm: _.stubTrue, isValidLatencyHint: _.stubTrue },
+        beatsPerMeasure: '4,4',
+        tempo: 120,
+        latencyHint: 'balanced',
+        showSuggestions: false,
+      }
+    },
+    mounted() {
+      this.transport = this.$refs.transport;
+      window.addEventListener('keydown', this.onKeyDown);
+    },
+    destroyed: function() {
+      window.removeEventListener('keydown', this.onKeyDown);
+    },
+
+    methods: {
+      onKeyDown(event) {
+        if (event.key === 'Enter') {
+          this.onPlay();
+        }
+      },
+      onPlay() {
+        Sound.resume().then(() => {
+          this.$store.dispatch('transport/toggle', '+0.1');
+        });
+      },
+      hideSuggestions() {
+        // Need to do this after timeout so that suggestion click handler has a chance
+        setTimeout(() => {
+          this.showSuggestions = false;
+        }, 200);
+      },
+      onLatencyHint(latencyHint) {
+        this.latencyHint = latencyHint;
+      },
+    },
+    computed: {
+      transportProps() {
+        this.$nextTick(function () {
+          // Needed because vue doesn't watch Tone.Transport.bpm
+          this.$forceUpdate();
+        });
+        return {
+          beatsPerMeasure: _.map(_.split(this.beatsPerMeasure, ','), Number),
+          tempo: this.tempo,
+          latencyHint: this.latencyHint,
+          metronome: this.metronome,
+          show: true
+        }
+      }
+    },
+    watch: {
+
+    }
+  }
+
+</script>
+
+<style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/button.styl"
+
+  .controls
+    padding: 10px;
+
+  .play
+    position: relative;
+
+    .counter
+      position: absolute;
+      top: 0;
+      font-size: 40px;
+      padding: 10px 5px;
+
+  .beats-input, .performance
+    margin: 10px 0;
+
+    &.dim
+      opacity: 0.5;
+
+    &.invalid input
+      color: primary-red;
+
+    input
+      background: transparent;
+      border: none;
+      font-size: 30px;
+      margin: 0;
+      text-align: center;
+      width: 100%;
+
+      &[type="text"]
+        margin-right: 14%;
+        width: 86%;
+
+      &:focus
+        outline: none;
+
+  .performance
+    position: relative;
+
+    input
+      font-size: 14px;
+      opacity: 0.3;
+
+      &:hover, &:focus
+        opacity: 1;
+
+    .suggestions
+      position: absolute;
+      left: 20%;
+      border: solid darkgray 1px;
+      padding: 1px 5px;
+
+      .suggestion
+        color: darkgray;
+        cursor: pointer;
+
+        &:hover
+          color: black;
+
+</style>
