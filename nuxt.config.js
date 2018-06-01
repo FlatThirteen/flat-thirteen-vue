@@ -23,12 +23,19 @@ module.exports = {
   ** Customize the progress bar color
   */
   loading: { color: '#008FFF' },
-  plugins: [ '~/plugins/event-bus.js' ],
+  plugins: [
+    '~/plugins/event-bus.js',
+    { src: '~/plugins/pixi', ssr: false }
+  ],
+  router: {
+    middleware: 'transport'
+  },
   /*
   ** Build configuration
   */
   build: {
     vendor: [
+      'pixi.js',
       'Tone'
     ],
     plugins: [
@@ -60,4 +67,4 @@ module.exports = {
       }
     }
   }
-}
+};

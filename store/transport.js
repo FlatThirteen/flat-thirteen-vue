@@ -1,7 +1,8 @@
 import Tone from '~/common/tone';
 
 export const state = () => ({
-  ready: false,
+  tempo: 0,
+  numBeats: 0,
   starting: false,
   playing: false,
   startTime: 0,
@@ -17,20 +18,23 @@ export const actions = {
     }
   },
   start({commit, state}, time = '+4n') {
-    if (state.ready && !state.starting && !state.playing) {
+    if (state.tempo && state.numBeats && !state.starting && !state.playing) {
       commit('start');
       Tone.Transport.start(time);
     }
   },
-  stop({commit}) {
-    commit('stop');
-    Tone.Transport.stop();
+  stop({commit, state}) {
+    if (state.starting || state.playing) {
+      commit('stop');
+      Tone.Transport.stop();
+    }
   }
 };
 
 export const mutations = {
-  ready(state) {
-    state.ready = true;
+  setup(state, {tempo = state.tempo, numBeats = state.numBeats}) {
+    state.tempo = tempo;
+    state.numBeats = numBeats;
   },
   start(state) {
     state.startTime = 0;
@@ -50,6 +54,9 @@ export const mutations = {
 };
 
 export const getters = {
+  tempo: state => state.tempo,
+  numBeats: state => state.numBeats,
+  duration: state => 60000 / state.tempo,
   starting: state => state.starting,
   playing: state => state.playing,
   paused: state => !state.playing,

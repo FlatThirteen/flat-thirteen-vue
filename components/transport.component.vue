@@ -99,6 +99,7 @@
         if (bpm !== this.bpm() && this.isValidBpm(bpm)) {
           Tone.Transport.bpm.rampTo(bpm, 1);
           Tone.Transport.setLoopPoints(0, this.loopTime());
+          this.$store.commit('transport/setup', {tempo: bpm});
         }
       },
       isValidBpm(bpm) {
@@ -112,6 +113,15 @@
       },
       position() {
         return Tone.Transport && Tone.Transport.position.replace(/\:[.\d]+$/, '');
+      },
+      emitBeatTick(time, tick = 0) {
+        this.$bus.$emit(BeatTick.EVENT, {
+          time: time,
+          beat: this.beatIndex,
+          count: this.count,
+          nextBeat: this.nextBeat,
+          beatTick: BeatTick.from(this.beatIndex, tick)
+        });
       },
       logIfLate(time) {
         let start = Tone.rightNow();
@@ -189,6 +199,10 @@
           if (restart) {
             this.$store.dispatch('transport/stop');
           }
+          if (!this.beats) {
+            this.$store.commit('transport/setup', {numBeats: 0});
+            return;
+          }
 
           Tone.Transport.loop = true;
           Tone.Transport.setLoopPoints(0, this.loopTime());
@@ -211,11 +225,7 @@
               Sound.click.play(time, { variation: this.beat ? 'normal' : 'heavy' });
             }
 
-            this.$bus.$emit(BeatTick.EVENT, {
-              time: time,
-              beat: this.beatIndex,
-              beatTick: BeatTick.from(this.beatIndex, 0)
-            });
+            this.emitBeatTick(time);
 //          this.lastBeat$.next(this.lastBeat());
           }, '4n');
           this.quarterLoop.start(0);
@@ -230,11 +240,7 @@
 //          this.supportedTicks = _.sortBy(_.values(tickEvents));
           this.pulsesPart = new Tone.Part((time, tick) => {
             this.logIfLate(time);
-            this.$bus.$emit(BeatTick.EVENT, {
-              time: time,
-              beat: this.beatIndex,
-              beatTick: BeatTick.from(this.beatIndex, tick)
-            });
+            this.emitBeatTick(time, tick);
           }, _.toPairs(tickEvents));
           this.pulsesPart.loop = true;
           this.pulsesPart.loopEnd = '4n';
@@ -242,7 +248,7 @@
 
           if (!this.onTopId) {
             this.onTopId = Tone.Transport.schedule((time) => {
-              if (this.paused) {
+              if (this.starting) {
                 this.$store.commit('transport/play');
               }
               this.measure = 0;
@@ -250,10 +256,15 @@
               this.beat = -1;
             }, 0);
           }
+          this.$store.commit('transport/setup',
+            {tempo: this.bpm(), numBeats: this.beats});
           if (restart) {
-            this.$store.dispatch('transport/start');
+            // nextTick needed so listeners have a chance to react before restart
+            this.$nextTick(function () {
+              this.$store.dispatch('transport/start');
+            });
+
           }
-          this.$store.commit('transport/ready');
         }
       }
     }

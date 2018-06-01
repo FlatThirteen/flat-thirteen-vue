@@ -14,6 +14,7 @@
           Home: "/",
           About: '/about',
           Sound: '/sound',
+          Grid: '/grid',
           Backing: '/backing'
         }
       };

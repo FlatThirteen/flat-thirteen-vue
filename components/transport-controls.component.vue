@@ -4,7 +4,7 @@
     play-icon(@click.native="onPlay()")
       .counter(v-if="transport.playing") {{ transport.count }}
     .beats-input
-      input.beats(type="text", v-model="beatsPerMeasure", placeholder="# beats")
+      input.beats(type="text", v-model="bpm", placeholder="# beats")
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
       input(type="number", v-model.number="tempo", placeholder="tempo")
     .performance(:class="{invalid: !transport.isValidLatencyHint(latencyHint)," +
@@ -32,6 +32,14 @@
       'transport': Transport
     },
     props: {
+      playTime: {
+        type: String,
+        default: '+4n'
+      },
+      beatsPerMeasure: {
+        type: String,
+        default: '4,4'
+      },
       metronome: {
         type: Boolean,
         default: false
@@ -40,7 +48,7 @@
     data: function() {
       return {
         transport: { bpm: () => 120, isValidBpm: _.stubTrue, isValidLatencyHint: _.stubTrue },
-        beatsPerMeasure: '4,4',
+        bpm: this.beatsPerMeasure,
         tempo: 120,
         latencyHint: 'balanced',
         showSuggestions: false,
@@ -62,7 +70,7 @@
       },
       onPlay() {
         Sound.resume().then(() => {
-          this.$store.dispatch('transport/toggle', '+0.1');
+          this.$store.dispatch('transport/toggle', this.playTime);
         });
       },
       hideSuggestions() {
@@ -82,8 +90,8 @@
           this.$forceUpdate();
         });
         return {
-          beatsPerMeasure: _.map(_.split(this.beatsPerMeasure, ','), Number),
-          tempo: this.tempo,
+          beatsPerMeasure: _.map(_.split(this.bpm, ','), Number),
+          tempo: this.tempo || 0,
           latencyHint: this.latencyHint,
           metronome: this.metronome,
           show: true
@@ -128,6 +136,11 @@
       margin: 0;
       text-align: center;
       width: 100%;
+
+      &::placeholder {
+        color: primary-red;
+        font-size: 14px;
+      }
 
       &[type="text"]
         margin-right: 14%;

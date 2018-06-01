@@ -4,7 +4,7 @@
         :skip="showFx === undefined")
 
     .left
-      transport-controls
+      transport-controls(:playTime="'+0.1'")
 
     .content(:class="{solo: anySolo}")
       .track(v-for="(track, i) in tracks", :class="{solo: track.solo, mute: track.mute}")
@@ -32,8 +32,6 @@
 </template>
 
 <script>
-  import { mapGetters } from 'vuex'
-
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
   import Phrase from '~/common/phrase/phrase.model';
@@ -160,36 +158,9 @@
     }
   }
 
-  const parser = {
-    synth: (data, duration) => {
-      let frequency = Note.pitch(data);
-      if (frequency) {
-        return new Note('synth', {
-          pitch: frequency.toNote(),
-          duration: duration
-        });
-      }
-    },
-    drums: (data) => {
-      let sound = data.match(/[kK]/) ? 'kick' :
-        data.match(/[sS]/) ? 'snare' : null;
-      if (sound) {
-        return new Note(sound);
-      }
-    },
-    cowbell: (data) => {
-      let frequency = Note.pitch(data);
-      if (frequency) {
-        return new Note('cowbell', { pitch: frequency.toNote() });
-      }
-    }
-  };
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  @import "~assets/stylus/button.styl"
-  /*@import "~assets/stylus/note.styl"*/
-
   .container
     position: relative;
 
