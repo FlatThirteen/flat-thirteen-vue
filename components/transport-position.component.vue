@@ -68,11 +68,10 @@
         this.pixiApp.stage.addChild(this.line);
       },
       resize() {
-        const renderCanvas = this.$refs.renderCanvas;
-        this.width = renderCanvas.offsetWidth;
-        const height = renderCanvas.offsetHeight;
-        this.pixiApp.view.style.width = this.width + 'px';
-        this.pixiApp.view.style.height = height + 'px';
+        const parent = this.pixiApp.view.parentNode;
+        this.width = parent.clientWidth;
+        this.pixiApp.renderer.resize(this.width, parent.clientHeight);
+        this.line.height = parent.clientHeight;
       },
       update() {
         this.fps = _.round(this.pixiApp.ticker.FPS, 1);
@@ -125,9 +124,7 @@
       transform: translateX(0);
 
   .fps
-    position: fixed;
-    top: 50px;
-    right: 2px;
+    posit(fixed, 50px, 2px, x, x);
     background-color: faint-grey;
     color: lightgray;
     padding: 5px;

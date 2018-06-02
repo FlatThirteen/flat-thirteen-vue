@@ -3,7 +3,8 @@
     transport(ref="transport", v-bind="transportProps")
     play-icon(@click.native="onPlay()")
       .counter(v-if="transport.playing") {{ transport.count }}
-    .beats-input
+    slot
+    .beats-input(v-if="showBeatsPerMeasureInput")
       input.beats(type="text", v-model="bpm", placeholder="# beats")
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
       input(type="number", v-model.number="tempo", placeholder="tempo")
@@ -89,13 +90,17 @@
           // Needed because vue doesn't watch Tone.Transport.bpm
           this.$forceUpdate();
         });
+        let bpm = this.showBeatsPerMeasureInput ? this.bpm : this.beatsPerMeasure;
         return {
-          beatsPerMeasure: _.map(_.split(this.bpm, ','), Number),
+          beatsPerMeasure: _.map(_.split(_.trim(bpm, ':'), ','), Number),
           tempo: this.tempo || 0,
           latencyHint: this.latencyHint,
           metronome: this.metronome,
           show: true
         }
+      },
+      showBeatsPerMeasureInput() {
+        return !_.startsWith(this.bpm, ':');
       }
     },
     watch: {
@@ -115,8 +120,7 @@
     position: relative;
 
     .counter
-      position: absolute;
-      top: 0;
+      posit(absolute, 0, x, x);
       font-size: 40px;
       padding: 10px 5px;
 
@@ -160,8 +164,7 @@
         opacity: 1;
 
     .suggestions
-      position: absolute;
-      left: 20%;
+      posit(absolute, x, x, x, 20%);
       border: solid darkgray 1px;
       padding: 1px 5px;
 

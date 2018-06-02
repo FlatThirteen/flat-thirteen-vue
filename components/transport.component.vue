@@ -157,7 +157,13 @@
       },
       lastBeat() {
         return this.beatIndex === this.beats - 1;
-      }, ...mapGetters({
+      },
+      measureTops() {
+        return _.reduce(this.beatsPerMeasure, (result, beats) => {
+          return _.concat(result, true, ..._.times(beats - 1, false));
+        }, []);
+      },
+      ...mapGetters({
         starting: 'transport/starting',
         playing: 'transport/playing',
         paused: 'transport/paused',
@@ -256,8 +262,11 @@
               this.beat = -1;
             }, 0);
           }
-          this.$store.commit('transport/setup',
-            {tempo: this.bpm(), numBeats: this.beats});
+          this.$store.commit('transport/setup', {
+            tempo: this.bpm(),
+            numBeats: this.beats,
+            measureTops: this.measureTops
+          });
           if (restart) {
             // nextTick needed so listeners have a chance to react before restart
             this.$nextTick(function () {

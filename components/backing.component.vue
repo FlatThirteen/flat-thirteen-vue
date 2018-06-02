@@ -163,32 +163,22 @@
   @import "~assets/stylus/note.styl"
 
   .container
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    posit(fixed);
     overflow: hidden;
     user-select: none;
     perspective: 800px;
 
   .counts
+    posit(absolute, 50px, 2px, x, x);
     background-color: faint-grey;
     color: lightgray;
     padding: 5px;
-    position: absolute;
-    top: 50px;
-    right: 2px;
 
     .diff
       color: primary-red;
 
   .fx, .tilt, .scale
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    posit(absolute, 0);
 
   .tilt
     transform-origin: bottom;
@@ -203,9 +193,7 @@
     position: relative;
 
     &:before, &:after
-      position: absolute;
-      top: 0;
-      bottom: 0;
+      posit(absolute, 0, x);
 
     .shadow
       position: absolute;

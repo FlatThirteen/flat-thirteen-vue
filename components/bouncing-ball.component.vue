@@ -8,7 +8,7 @@
 </template>
 
 <script>
-  import { mapGetters } from 'vuex'
+  import { mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
   import Tone from '~/common/tone';
@@ -80,7 +80,6 @@
             return (50 / this.numBeats * index) + '%'
           });
           this.left = this.lefts[0];
-          console.log(' lefts', this.lefts);
         }
       },
       paused(paused) {
@@ -99,6 +98,7 @@
     user-select: none;
 
   .ball
+    position: absolute;
     border-radius: 50%;
     height: 3vw;
     font-size: @height;
@@ -106,7 +106,6 @@
     line-height: @height;
     margin-left: -0.5 * @height;
     width: @height;
-    position: absolute;
 
   .bouncing
     background-color: primary-blue;

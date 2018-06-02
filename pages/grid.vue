@@ -1,30 +1,40 @@
 <template lang="pug">
   .container
     .left
-      transport-controls(:metronome="true", :beatsPerMeasure="'4'")
+      transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure")
+        .pulses-input
+          input.pulses(type="text", v-model="pbb", placeholder="# pulses")
 
-    .content
-      bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
-      .grid
-        transport-position.transport-container(:show="showPosition")
-
-    .right
       .toggle.ball(:class="{active: showBall}",
           @click="showBall = !showBall") Bounce
       .toggle.counter(:class="{active: showCounter}",
           @click="showCounter = !showCounter") Counter
       .toggle.position(:class="{active: showPosition}",
           @click="showPosition = !showPosition") Position
+
+    .content
+      bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
+      html-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface")
+        transport-position.transport-container(:show="showPosition")
+
+    .right
+
 </template>
 
 <script>
+  import { mapGetters } from 'vuex';
+
+  import BeatTick from '~/common/core/beat-tick.model';
+
   import BouncingBall from '~/components/bouncing-ball.component';
+  import HtmlGrid from '~/components/grid/html-grid.component';
   import TransportControls from '~/components/transport-controls.component';
   import TransportPosition from '~/components/transport-position.component';
 
   export default {
     components: {
       'bouncing-ball': BouncingBall,
+      'html-grid': HtmlGrid,
       'transport-controls': TransportControls,
       'transport-position': TransportPosition
     },
@@ -36,7 +46,54 @@
       return {
         showBall: true,
         showCounter: true,
-        showPosition: true
+        showPosition: true,
+        pbb: 1111,
+        surfaces: [{
+          soundByKey: {
+            q: 'snare',
+            a: 'kick'
+          }
+        }]
+      }
+    },
+    mounted() {
+      this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+    },
+    destroyed() {
+      this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
+    },
+    methods: {
+      beatTickHandler({time, beatTick}) {
+        _.forEach(this.getNotes(beatTick), note => {
+          note.play(time);
+        });
+      }
+    },
+    computed: {
+      pbbPerMeasure() {
+        return _.map(_.split(this.pbb, ','), (pbb) => {
+          return _.chain(_.split(pbb, '')).map(_.toNumber).filter(value => {
+            return _.inRange(value, 1, 5);
+          }).value();
+        });
+      },
+      beatsPerMeasure() {
+        return ':' + _.map(this.pbbPerMeasure, 'length').join(',');
+      },
+      pulsesByBeat() {
+        return _.flatten(this.pbbPerMeasure);
+      },
+      ...mapGetters({
+        getNotes: 'player/getNotes'
+      })
+    },
+    watch: {
+      pulsesByBeat: {
+        deep: true,
+        immediate: true,
+        handler(pulsesByBeat) {
+          this.$store.dispatch('player/update', pulsesByBeat);
+        }
       }
     }
   }
@@ -48,70 +105,71 @@
     position: relative;
 
   .left
-    position: absolute;
-    left: 0;
+    posit(absolute, x, x, x, 0);
     width: content-side-margin;
     text-align: center;
+
+    .pulses-input
+      margin: 10px 0;
+
+      input
+        background: transparent;
+        border: none;
+        margin: 0;
+        text-align: center;
+        width: 100%;
+
+        &::placeholder {
+          color: primary-red;
+          font-size: 14px;
+        }
+
+        &[type="text"]
+          margin-right: 14%;
+          width: 86%;
+
+        &:focus
+          outline: none;
+
+    .toggle
+      background-color: white;
+      border: solid 1px;
+      cursor: pointer;
+      padding: 5px;
+      margin: 5px;
+      user-select: none;
+
+      &.active
+        color: white;
+
+    toggle-color(class, color)
+      {class}
+        color: color;
+        border-color: color;
+
+        &.active
+          background-color: color;
+
+    toggle-color('.ball', primary-blue);
+    toggle-color('.counter', black);
+    toggle-color('.position', primary-green);
 
   .content, .footer
     margin: 10vh content-side-margin;
     position: relative;
 
-  .content
-    height: 80vh;
+  .ball-container
+    height: 10vh;
+    width: 100%;
+    max-width: 80vh;
+    margin: auto;
 
-    .ball-container
-      height: 10vh;
-
-    .grid
-      background-color: back-blue;
-      height: 40vh;
-      position: relative;
-
-    .transport-container
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
+  .transport-container
+    posit(absolute);
 
   .right
-    position: absolute;
-    right: 0;
-    top: 0;
+    posit(absolute, 0, 0, x, x);
     padding-top: 10vh;
     width: content-side-margin;
 
-    .toggle
-      background-color: white;
-      border: solid 1px;
-      padding: 5px;
-      margin: 5px;
-
-      &.active
-        color: white;
-
-    ball-color = primary-blue;
-    .ball
-      color: ball-color;
-      border-color: ball-color;
-
-      &.active
-        background-color: ball-color;
-
-    counter-color = black;
-    .counter
-      color: counter-color;
-      border-color: counter-color;
-
-      &.active
-        background-color: counter-color;
-
-    position-color = primary-green;
-    .position
-      color: position-color;
-      border-color: position-color;
-
-      &.active
-        background-color: position-color;
 </style>
