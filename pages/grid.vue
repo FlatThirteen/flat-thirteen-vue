@@ -1,5 +1,6 @@
 <template lang="pug">
   .container
+    key-handler(:player="true")
     .left
       transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure")
         .pulses-input
@@ -28,6 +29,7 @@
 
   import BouncingBall from '~/components/bouncing-ball.component';
   import HtmlGrid from '~/components/grid/html-grid.component';
+  import KeyHandler from '~/components/key-handler.component';
   import TransportControls from '~/components/transport-controls.component';
   import TransportPosition from '~/components/transport-position.component';
 
@@ -35,6 +37,7 @@
     components: {
       'bouncing-ball': BouncingBall,
       'html-grid': HtmlGrid,
+      'key-handler': KeyHandler,
       'transport-controls': TransportControls,
       'transport-position': TransportPosition
     },
@@ -48,12 +51,10 @@
         showCounter: true,
         showPosition: true,
         pbb: 1111,
-        surfaces: [{
-          soundByKey: {
-            q: 'snare',
-            a: 'kick'
-          }
-        }]
+        surfaces: [
+          { soundByKey: { q: 'snare', a: 'kick' }, soundId: 'qa' },
+          { soundByKey: { z: 'click' } }
+        ]
       }
     },
     mounted() {

@@ -51,8 +51,6 @@
       return {
         activeBeat: -1,
         activeBeatTick: null,
-        heldKeys: {},
-        keyMode: false,
         liveKeyCursor: null,
         noteName: {
           1: 'quarter',
@@ -63,47 +61,12 @@
       };
     },
     mounted() {
-      window.addEventListener('keydown', this.onKeyDown);
-      window.addEventListener('keyup', this.onKeyUp);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
     },
     destroyed() {
-      window.removeEventListener('keydown', this.onKeyDown);
-      window.removeEventListener('keyup', this.onKeyUp);
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
     methods: {
-      onKeyDown(event) {
-        this.keyMode = true;
-        if (this.heldKeys[event.key]) {
-          return; // Don't repeat held keys
-        }
-        this.heldKeys[event.key] = true;
-        if (event.key === 'Escape') { // Esc: Unselect
-          this.unselect();
-        } else if (event.key === ' ') { // Space: Unset
-
-          this.$store.dispatch('player/unset', this.soundId());
-        } else if (event.key === 'Backspace') {
-          if (_.size(this.heldKeys) === 1) {
-            this.$store.dispatch('player/move', -1);
-          }
-          this.$store.dispatch('player/unset', this.soundId());
-        } else if (event.key === 'ArrowLeft') { // Left: Select previous
-          this.$store.dispatch('player/move', -1);
-        } else if (event.key === 'ArrowRight') { // Right: Select next
-          this.$store.dispatch('player/move', 1);
-        } else if (this.soundName[event.key]) {
-          this.onNote(event.key);
-        }
-      },
-      onKeyUp(event) {
-        delete this.heldKeys[event.key];
-        // Move one space when all keys are released
-        if (!_.size(this.heldKeys) && (event.key === ' ' || this.soundName[event.key])) {
-          this.$store.dispatch('player/move', 1);
-        }
-      },
       beatTickHandler({beat, beatTick}) {
         if (!this.paused) {
           this.activeBeat = beat;
@@ -113,11 +76,11 @@
         }
       },
       select(key, cursor) {
-        this.keyMode = false;
+        this.$store.commit('keyMode');
         this.$store.commit('player/select', { cursor, soundId: this.soundId(key) });
       },
       unselect() {
-        this.keyMode = false;
+        this.$store.commit('keyMode');
         this.$store.commit('player/unselect');
       },
       onNote(key, cursor) {
@@ -200,6 +163,10 @@
         return this.beatPulse[0];
       },
       ...mapGetters({
+        keyDown: 'keyDown',
+        keyUp: 'keyUp',
+        keyMode: 'keyMode',
+        noKeysHeld: 'noKeysHeld',
         starting: 'transport/starting',
         paused: 'transport/paused',
         numBeats: 'transport/numBeats',
@@ -217,6 +184,18 @@
       })
     },
     watch: {
+      keyDown(key) {
+        if (key === ' ' || key === 'Backspace') {
+          this.$store.dispatch('player/unset', this.soundId());
+        } else if (this.soundName[key]) {
+          this.onNote(key);
+        }
+      },
+      keyUp(key) {
+        if (this.noKeysHeld && this.soundName[key]) {
+          this.$store.dispatch('player/move', 1);
+        }
+      },
       paused(paused) {
         if (paused) {
           this.activeBeat = -1;
