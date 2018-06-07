@@ -1,0 +1,237 @@
+<template lang="pug">
+  .faces(:class="facesClass")
+    <!--particle-fx([type]="particleType", [count]="particleCount$ | async")-->
+    .face(v-for="(pulses, beat) in pulsesByBeat", :class="faceClass[beat]")
+      .eyes(:class="eyesClass[beat]")
+</template>
+
+<script>
+  import { mapGetters } from 'vuex';
+
+  import BeatTick from '~/common/core/beat-tick.model';
+
+  export default {
+    props: {
+      state: '',
+    },
+    data: function() {
+      return {
+        activeBeat: -1
+      };
+    },
+    mounted() {
+      this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+    },
+    destroyed() {
+      this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
+    },
+    methods: {
+      beatTickHandler({beat}) {
+        if (!this.paused) {
+          this.activeBeat = beat;
+        }
+      },
+    },
+    computed: {
+      facesClass() {
+        return [this.state, {
+          selected: this.selected
+        }];
+      },
+      faceClass() {
+        return _.times(this.numBeats, beat => ({
+          active: this.activeBeat === beat,
+          cursor: this.playerBeat === beat
+        }));
+      },
+      eyesClass() {
+        return _.times(this.numBeats, beat => ({
+          left: this.playerBeat + 1 === beat,
+          right: this.playerBeat - 1 === beat,
+          wrong: false,
+          very: false
+        }));
+      },
+      playerBeat() {
+        return this.beatPulse[0];
+      },
+      ...mapGetters({
+        paused: 'transport/paused',
+        numBeats: 'transport/numBeats',
+        pulsesByBeat: 'player/pulsesByBeat',
+        selected: 'player/selected',
+        beatPulse: 'player/beatPulse',
+      })
+    },
+    watch: {
+      paused(paused) {
+        if (paused) {
+          this.activeBeat = -1;
+        }
+      }
+    }
+  }
+
+</script>
+<style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/note.styl"
+
+  faces-height = 5vh;
+
+  particle-fx
+    posit(absolute);
+    margin: - faces-height 0 0;
+
+  .faces
+    display: flex;
+    margin: auto;
+    background-color: back-blue;
+    position: relative;
+    max-width: 80vh;
+    width: 100%;
+
+    .victory &
+      background-color: back-green;
+
+  .face
+    flex: 1 1 0;
+    height: faces-height;
+    min-height: 25px;
+    margin: 5px;
+    background-color: main-blue;
+    transition: background-color 150ms ease-in-out;
+
+    &.active
+      background-color: active-blue;
+
+    .victory &
+      background-color: main-green;
+
+  .victory &
+    background-color: active-green;
+
+  eyes-path(tl, bl = 100% - tl, tr = tl, br = bl, tl2 = tl, bl2 = bl, tr2 = tr, br2 = br)
+    polygon(0% tl, 50% tl2, 50% tr2, 100% tr, 100% br, 50% br2, 50% bl2, 0% bl);
+
+  clip-path(param)
+    clip-path param;
+    -webkit-clip-path param;
+
+  .eyes
+    posit(relative, 25%, x, x, 0);
+    margin: 0 auto;
+    height: 17px;
+    width: 4vw;
+    min-width: 30px;
+    max-width: 40px;
+    padding: 1px;
+    transition: all 100ms ease-in-out;
+    display: flex;
+    justify-content: space-between;
+    clip-path(eyes-path(0%));
+
+    .goal &, .count &
+      clip-path(eyes-path(60%, 70%));
+
+    .goal &.wrong
+      clip-path(eyes-path(50%, 70%, 35%, 60%, 65%, 70%, 55%));
+      animation-duration: 50ms;
+
+      &.very
+        clip-path(eyes-path(50%, 70%, 15%, 80%, 65%, 70%, 55%));
+
+    .victory &
+      clip-path: none;
+
+    .active &
+      animation: blink;
+      animation-duration: 250ms;
+
+    .selected:not(.goal).faces:not(:hover) &
+      &.left, &.right
+        top: 10%;
+
+      &.left
+        left: -1vw;
+
+      &.right
+        left: 1vw;
+
+    .selected:not(.goal).faces:not(:hover) .cursor &
+      top: 0;
+
+    &:before, &:after
+      background-color: eye-color = #000;
+      content: '';
+      border: solid 0 eye-color;
+      border-radius: 50%;
+      height: 17px;
+      width: 12px;
+      transition: all 150ms ease-in-out;
+
+      .victory &
+        animation: bounce 500ms ease infinite;
+        background-color: transparent;
+        border-radius: 50% 50% 0 0;
+        border-width: 3px 0 0 0;
+
+    &:before
+      left: 0;
+
+    &:after
+      right: 0;
+
+    &:hover
+      margin-top: 8px;
+
+      &:before, &:after
+        height: 2px;
+
+  .eyes:hover:active
+    animation: shake 500ms ease infinite;
+
+  @keyframes blink
+    0%, 100%
+      transform: translateY(0) scaleY(1);
+
+    20%
+      transform: translateY(1vh) scaleY(.3)
+
+    40%
+      transform: translateY(1.4vh) scaleY(.2);
+
+    80%
+      transform: translateY(1vh) scaleY(.5)
+
+  @keyframes bounce
+    0%, 95%
+      transform: translateY(0)
+
+    25%
+      transform: translateY(.7vh)
+
+    50%
+      transform: translateY(-.8vh)
+
+    65%
+      transform: translateY(.5vh)
+
+    80%
+      transform: translateY(-.3vh)
+
+  @keyframes shake
+    0%, 100%
+      transform: translate3d(0, 0, 0)
+
+    25%
+      transform: translate3D(.7vw, -.1vh, 0)
+
+    50%
+      transform: translate3D(-.8vw, -.2vh, 0)
+
+    65%
+      transform: translate3D(.5vw, -.2vh, 0)
+
+    80%
+      transform: translate3D(-.3vw, -.1vh, 0)
+</style>

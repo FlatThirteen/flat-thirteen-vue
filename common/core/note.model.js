@@ -2,7 +2,7 @@ import Sound from '~/common/sound/sound';
 import Tone from '~/common/tone';
 
 export class Note {
-  constructor(soundName, params = {}) {
+  constructor(soundName, params) {
     this.soundName = soundName;
     this.params = params;
   }

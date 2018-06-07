@@ -13,10 +13,6 @@
             .actual.note(v-if="isOn[cursor][key]",
                 :class="[live(key, cursor), soundName[key], noteName[pulses]]")
     slot
-    .faces
-      <!--particle-fx([type]="particleType", [count]="particleCount$ | async")-->
-      .face(v-for="(pulses, beat) in pulsesByBeat", :class="faceClass[beat]")
-        .eyes(:class="eyesClass[beat]")
     .overlay
       .strip(v-for="key in keys")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
@@ -49,7 +45,6 @@
     },
     data: function() {
       return {
-        activeBeat: -1,
         activeBeatTick: null,
         liveKeyCursor: null,
         noteName: {
@@ -67,12 +62,9 @@
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
     methods: {
-      beatTickHandler({beat, beatTick}) {
-        if (!this.paused) {
-          this.activeBeat = beat;
-          if (this.beatTicks.includes(beatTick)) {
-            this.activeBeatTick = beatTick;
-          }
+      beatTickHandler({beatTick}) {
+        if (!this.paused && this.beatTicks.includes(beatTick)) {
+          this.activeBeatTick = beatTick;
         }
       },
       select(key, cursor) {
@@ -95,9 +87,6 @@
           this.liveKeyCursor = key + this.cursor;
           Sound[soundName].play();
         }
-      },
-      isBeat(beat) {
-        return beat === this.activeBeat;
       },
       live(key, cursor) {
         return this.liveKeyCursor === key + cursor ? 'live' : '';
@@ -145,23 +134,6 @@
           cursor: this.playerCursor === cursor
         }));
       },
-      faceClass() {
-        return _.times(this.numBeats, beat => ({
-          active: this.isBeat(beat),
-          cursor: this.playerBeat === beat
-        }));
-      },
-      eyesClass() {
-        return _.times(this.numBeats, beat => ({
-          left: this.playerBeat + 1 === beat,
-          right: this.playerBeat - 1 === beat,
-          wrong: false,
-          very: false
-        }));
-      },
-      playerBeat() {
-        return this.beatPulse[0];
-      },
       ...mapGetters({
         keyDown: 'keyDown',
         keyUp: 'keyUp',
@@ -169,7 +141,6 @@
         noKeysHeld: 'noKeysHeld',
         starting: 'transport/starting',
         paused: 'transport/paused',
-        numBeats: 'transport/numBeats',
         measureTops: 'transport/measureTops',
         pulsesByBeat: 'player/pulsesByBeat',
         numPulses: 'player/numPulses',
@@ -179,8 +150,7 @@
         getDataFor: 'player/getDataFor',
         selected: 'player/selected',
         cursor: 'player/cursor',
-        playerCursor: 'player/cursor',
-        beatPulse: 'player/beatPulse',
+        playerCursor: 'player/cursor'
       })
     },
     watch: {
@@ -198,7 +168,6 @@
       },
       paused(paused) {
         if (paused) {
-          this.activeBeat = -1;
           this.activeBeatTick = '';
         } else {
           this.liveKeyCursor = null;
@@ -212,17 +181,16 @@
   @import "~assets/stylus/note.styl"
 
   button-shadow-size = 4px;
-  faces-height = 5vh;
 
   .grid
-    margin: auto;
+    margin: 0 auto 5px;
     position: relative;
     user-select: none;
     width: 100%;
     max-width: 80vh;
 
   .overlay
-    posit(absolute, 0, 0, faces-height);
+    posit(absolute);
     margin-bottom: 15px;
 
   .glass
@@ -240,22 +208,19 @@
       .char
         display: inline-block;
 
-  .strip, .faces
+  .strip
     display: flex;
     margin: 0;
     width: 100%;
 
-  .strip-container, .faces
+  .strip-container
     background-color: back-blue;
 
     .victory &
       background-color: back-green;
 
-  .beat, .face
-    transition: background-color 150ms ease-in-out;
-
   .victory
-    .strip-container .beat, .face
+    .strip-container .beat
       background-color: main-green;
 
   .strip-container .first-measure.beat:not(:first-child):before
@@ -267,148 +232,6 @@
     margin: auto 4px;
     width: 2px;
 
-  .faces
-    display: flex;
-    margin-top: 5px;
-    position: relative;
-
-  particle-fx
-    posit(absolute);
-    margin: - faces-height 0 0;
-
-  .face
-    flex: 1 1 0;
-    height: faces-height;
-    min-height: 25px;
-    margin: 5px;
-    background-color: main-blue;
-
-  eyes-path(tl, bl = 100% - tl, tr = tl, br = bl, tl2 = tl, bl2 = bl, tr2 = tr, br2 = br)
-    polygon(0% tl, 50% tl2, 50% tr2, 100% tr,
-    100% br, 50% br2, 50% bl2, 0% bl);
-
-  clip-path(param)
-    clip-path param;
-    -webkit-clip-path param;
-
-  .eyes
-    posit(relative, 25%, x, x, 0);
-    margin: 0 auto;
-    height: 17px;
-    width: 4vw;
-    min-width: 30px;
-    max-width: 40px;
-    padding: 1px;
-    transition: all 100ms ease-in-out;
-    display: flex;
-    justify-content: space-between;
-    clip-path(eyes-path(0%));
-
-    .goal &, .count &
-      clip-path(eyes-path(60%, 70%));
-
-    .goal &.wrong
-      clip-path(eyes-path(50%, 70%, 35%, 60%, 65%, 70%, 55%));
-      animation-duration: 50ms;
-
-      &.very
-        clip-path(eyes-path(50%, 70%, 15%, 80%, 65%, 70%, 55%));
-
-    .victory &
-      clip-path: none;
-
-    .active &
-      animation: blink;
-      animation-duration: 250ms;
-
-    .selected:not(.goal) .faces:not(:hover) &
-      &.left, &.right
-        top: 10%;
-
-      &.left
-        left: -1vw;
-
-      &.right
-        left: 1vw;
-
-    .selected:not(.goal) .faces:not(:hover) .cursor &
-      top: 0;
-
-    &:before, &:after
-      background-color: eye-color = #000;
-      content: '';
-      border: solid 0 eye-color;
-      border-radius: 50%;
-      height: 17px;
-      width: 12px;
-      transition: all 150ms ease-in-out;
-
-      .victory &
-        animation: bounce 500ms ease infinite;
-        background-color: transparent;
-        border-radius: 50% 50% 0 0;
-        border-width: 3px 0 0 0;
-
-    &:before
-      left: 0;
-
-    &:after
-      right: 0;
-
-    &:hover
-      margin-top: 8px;
-
-      &:before, &:after
-        height: 2px;
-
-  .eyes:hover:active
-    animation: shake 500ms ease infinite;
-
-  @keyframes blink
-    0%, 100%
-      transform: translateY(0) scaleY(1);
-
-    20%
-      transform: translateY(1vh) scaleY(.3)
-
-    40%
-      transform: translateY(1.4vh) scaleY(.2);
-
-    80%
-      transform: translateY(1vh) scaleY(.5)
-
-  @keyframes bounce
-    0%, 95%
-      transform: translateY(0)
-
-    25%
-      transform: translateY(.7vh)
-
-    50%
-      transform: translateY(-.8vh)
-
-    65%
-      transform: translateY(.5vh)
-
-    80%
-      transform: translateY(-.3vh)
-
-  @keyframes shake
-    0%, 100%
-      transform: translate3d(0, 0, 0)
-
-    25%
-      transform: translate3D(.7vw, -.1vh, 0)
-
-    50%
-      transform: translate3D(-.8vw, -.2vh, 0)
-
-    65%
-      transform: translate3D(.5vw, -.2vh, 0)
-
-    80%
-      transform: translate3D(-.3vw, -.1vh, 0)
-
   .beat
     align-items: center;
     display: inline-flex;
@@ -418,29 +241,28 @@
     margin: 5px;
     position: relative;
     text-align: center;
+    transition: background-color 150ms ease-in-out;
 
     .strip-container &
       background-color: main-blue;
 
-  .active
-    .strip-container .beat &, &.face
-      background-color: active-blue;
+      & .active
+        background-color: active-blue;
 
-    .strip-container .beat &, &.face
-      .victory &
-        background-color: active-green;
+        .victory &
+          background-color: active-green;
 
   .pulse
+    display: inline-flex;
+    flex: 1;
+    height: 100%;
+    position: relative;
+
     .strip-container &:not(:last-child)
       border-right: dotted 3px back-blue;
 
       .victory &
         border-right-color: back-green;
-
-    display: inline-flex;
-    flex: 1;
-    height: 100%;
-    position: relative;
 
   note-size(percent, line-adjust = 0)
     line-height (percent - line-adjust)vh;

@@ -17,8 +17,7 @@
       bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
       html-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface")
         transport-position.transport-container(:show="showPosition")
-
-    .right
+      faces
 
 </template>
 
@@ -28,6 +27,7 @@
   import BeatTick from '~/common/core/beat-tick.model';
 
   import BouncingBall from '~/components/bouncing-ball.component';
+  import Faces from '~/components/faces.component';
   import HtmlGrid from '~/components/grid/html-grid.component';
   import KeyHandler from '~/components/key-handler.component';
   import TransportControls from '~/components/transport-controls.component';
@@ -36,6 +36,7 @@
   export default {
     components: {
       'bouncing-ball': BouncingBall,
+      'faces': Faces,
       'html-grid': HtmlGrid,
       'key-handler': KeyHandler,
       'transport-controls': TransportControls,
@@ -53,7 +54,7 @@
         pbb: 1111,
         surfaces: [
           { soundByKey: { q: 'snare', a: 'kick' }, soundId: 'qa' },
-          { soundByKey: { z: 'click' } }
+          { soundByKey: { z: 'cowbell' } }
         ]
       }
     },
@@ -167,10 +168,5 @@
 
   .transport-container
     posit(absolute);
-
-  .right
-    posit(absolute, 0, 0, x, x);
-    padding-top: 10vh;
-    width: content-side-margin;
 
 </style>
