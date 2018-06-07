@@ -53,7 +53,7 @@
         showPosition: true,
         pbb: 1111,
         surfaces: [
-          { soundByKey: { q: 'snare', a: 'kick' }, soundId: 'qa' },
+          { soundByKey: { q: 'snare', a: 'kick' } },
           { soundByKey: { z: 'cowbell' } }
         ]
       }

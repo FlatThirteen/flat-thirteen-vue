@@ -5,19 +5,19 @@
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
           .pulse(v-for="cursor in cursorsFor(beat)", :class="pulseClass[cursor]")
             .fx.note(v-if="isOn[cursor][key]",
-                :class="[live(key, cursor), soundName[key], noteName[pulses]]")
+                :class="[live[cursor][key], soundName[key], noteName[pulses]]")
     .overlay
       .strip(v-for="key in keys")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
           .pulse(v-for="cursor in cursorsFor(beat)", :class="pulseClass[cursor]")
             .actual.note(v-if="isOn[cursor][key]",
-                :class="[live(key, cursor), soundName[key], noteName[pulses]]")
+                :class="[live[cursor][key], soundName[key], noteName[pulses]]")
     slot
     .overlay
       .strip(v-for="key in keys")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
-          .pulse(v-for="(cursor, pulse) in cursorsFor(beat)",
-              :class="pulseClass[cursor]", @mouseenter="select(key, cursor)")
+          .pulse(v-for="cursor in cursorsFor(beat)", :class="pulseClass[cursor]",
+              @mouseenter="select(cursor)")
             .controls
               .note(@click="onNote(key, cursor)",
                   :class="[noteName[pulses], isOn[cursor][key] && 'on']")
@@ -34,13 +34,7 @@
     props: {
       grid: {
         type: Object,
-        default: () => ({
-          soundId: 'qa',
-          soundByKey: {
-            q: 'snare',
-            a: 'kick'
-          }
-        })
+        default: () => ({ soundByKey: { q: 'kick' } })
       }
     },
     data: function() {
@@ -67,9 +61,9 @@
           this.activeBeatTick = beatTick;
         }
       },
-      select(key, cursor) {
+      select(cursor) {
         this.$store.commit('keyMode');
-        this.$store.commit('player/select', { cursor, soundId: this.soundId(key) });
+        this.$store.commit('player/select', { cursor, soundId: this.soundId });
       },
       unselect() {
         this.$store.commit('keyMode');
@@ -81,21 +75,18 @@
             this.soundName[key];
 
         this.$store.dispatch('player/set', {cursor, soundName,
-          soundId: this.soundId(key)
+          soundId: this.soundId
         });
         if (this.paused && soundName) {
           this.liveKeyCursor = key + this.cursor;
           Sound[soundName].play();
         }
       },
-      live(key, cursor) {
-        return this.liveKeyCursor === key + cursor ? 'live' : '';
-      },
-      soundId(key) {
-        return this.grid.soundId || key || this.keys;
-      },
     },
     computed: {
+      soundId() {
+        return _.join(this.keys);
+      },
       keys() {
         return _.keys(this.grid.soundByKey);
       },
@@ -103,17 +94,22 @@
         return this.grid.soundByKey;
       },
       isSelected() {
-        return this.keyMode || (this.grid.soundId ?
-            this.grid.soundId === this.selected :
-            !!this.grid.soundByKey[this.selected]);
+        return this.keyMode || this.soundId === this.selected;
       },
       isOn() {
         return _.times(this.numPulses, cursor => {
-          return _.mapValues(this.soundName, (soundName, key) => {
+          return _.mapValues(this.soundName, (soundName) => {
             return soundName === this.getDataFor({
               beatTick: this.beatTickFor(cursor),
-              soundId: this.soundId(key)
+              soundId: this.soundId
             });
+          });
+        });
+      },
+      live() {
+        return _.times(this.numPulses, cursor => {
+          return _.mapValues(this.soundName, (soundName, key) => {
+            return this.liveKeyCursor === key + cursor ? 'live' : '';
           });
         });
       },
@@ -156,7 +152,7 @@
     watch: {
       keyDown(key) {
         if (key === ' ' || key === 'Backspace') {
-          this.$store.dispatch('player/unset', this.soundId());
+          this.$store.dispatch('player/unset', this.soundId);
         } else if (this.soundName[key]) {
           this.onNote(key);
         }
