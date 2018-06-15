@@ -14,12 +14,11 @@ export const state = () => ({
 export const getters = {
   pulsesByBeat: state => state.pulsesByBeat,
   numPulses: state => _.sum(state.pulsesByBeat),
-  cursorsFor: state => beat => {
-    let offset = _.sum(state.pulsesByBeat.slice(0, beat));
-    return _.times(state.pulsesByBeat[beat], (i) => offset + i);
-  },
+  cursorsByBeat: state => _.reduce(state.pulsesByBeat, ({result, offset}, pulses) => ({
+    result: _.concat(result, [_.times(pulses, (i) => offset + i)]),
+    offset: offset + pulses
+  }), { result: [], offset: 0 }).result,
   beatTicks: state => beatTicksFrom(state.pulsesByBeat),
-  beatTickFor: (state, getters) => cursor => getters.beatTicks[cursor],
   getDataFor: state => ({beatTick, soundId}) => (state.data[beatTick] || {})[soundId],
   getNotes: state => beatTick => _.map(_.values(state.data[beatTick]),
       soundName => new Note(soundName)),
@@ -86,7 +85,7 @@ export const actions = {
   set({commit, state, getters, rootGetters}, {cursor = state.cursor, soundId = state.selected, soundName}) {
     if (!rootGetters['transport/starting']) {
       commit(soundName ? 'setNote' : 'unsetNote', {
-        beatTick: getters.beatTickFor(cursor),
+        beatTick: getters.beatTicks[cursor],
         soundId,
         soundName
       });
@@ -95,7 +94,7 @@ export const actions = {
   unset({commit, state, getters, rootGetters}, soundId) {
     if (!rootGetters['transport/starting']) {
       commit('unsetNote', {
-        beatTick: getters.beatTickFor(state.cursor),
+        beatTick: getters.beatTicks[state.cursor],
         soundId
       });
     }

@@ -41,6 +41,9 @@
       window.addEventListener('resize', this.resize);
     },
     destroyed() {
+      if (this.pixiApp) {
+        this.pixiApp.destroy(true);
+      }
       window.removeEventListener('resize', this.resize);
     },
     methods: {

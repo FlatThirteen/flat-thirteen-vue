@@ -3,20 +3,20 @@
     .strip-container
       .strip(v-for="key in keys")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
-          .pulse(v-for="cursor in cursorsFor(beat)", :class="pulseClass[cursor]")
+          .pulse(v-for="cursor in cursorsByBeat[beat]", :class="pulseClass[cursor]")
             .fx.note(v-if="isOn[cursor][key]",
                 :class="[live[cursor][key], soundName[key], noteName[pulses]]")
     .overlay
       .strip(v-for="key in keys")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
-          .pulse(v-for="cursor in cursorsFor(beat)", :class="pulseClass[cursor]")
+          .pulse(v-for="cursor in cursorsByBeat[beat]", :class="pulseClass[cursor]")
             .actual.note(v-if="isOn[cursor][key]",
                 :class="[live[cursor][key], soundName[key], noteName[pulses]]")
     slot
     .overlay
       .strip(v-for="key in keys")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
-          .pulse(v-for="cursor in cursorsFor(beat)", :class="pulseClass[cursor]",
+          .pulse(v-for="cursor in cursorsByBeat[beat]", :class="pulseClass[cursor]",
               @mouseenter="select(cursor)")
             .controls
               .note(@click="onNote(key, cursor)",
@@ -100,7 +100,7 @@
         return _.times(this.numPulses, cursor => {
           return _.mapValues(this.soundName, (soundName) => {
             return soundName === this.getDataFor({
-              beatTick: this.beatTickFor(cursor),
+              beatTick: this.beatTicks[cursor],
               soundId: this.soundId
             });
           });
@@ -126,7 +126,7 @@
       },
       pulseClass() {
         return _.times(this.numPulses, cursor => ({
-          active: this.activeBeatTick === this.beatTickFor(cursor),
+          active: this.activeBeatTick === this.beatTicks[cursor],
           cursor: this.playerCursor === cursor
         }));
       },
@@ -140,9 +140,8 @@
         measureTops: 'transport/measureTops',
         pulsesByBeat: 'player/pulsesByBeat',
         numPulses: 'player/numPulses',
-        cursorsFor: 'player/cursorsFor',
+        cursorsByBeat: 'player/cursorsByBeat',
         beatTicks: 'player/beatTicks',
-        beatTickFor: 'player/beatTickFor',
         getDataFor: 'player/getDataFor',
         selected: 'player/selected',
         cursor: 'player/cursor',

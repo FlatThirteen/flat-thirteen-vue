@@ -1,6 +1,12 @@
 <template lang="pug">
   .container
     key-handler(:player="true")
+    .content
+      bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
+      svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface")
+      html-grid(v-for="(surface, i) in surfaces", :key="'h' + i", :grid="surface")
+        transport-position.transport-container(:show="showPosition")
+      faces
     .left
       transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure")
         .pulses-input
@@ -13,11 +19,6 @@
       .toggle.position(:class="{active: showPosition}",
           @click="showPosition = !showPosition") Position
 
-    .content
-      bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
-      html-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface")
-        transport-position.transport-container(:show="showPosition")
-      faces
 
 </template>
 
@@ -29,6 +30,7 @@
   import BouncingBall from '~/components/bouncing-ball.component';
   import Faces from '~/components/faces.component';
   import HtmlGrid from '~/components/grid/html-grid.component';
+  import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
   import TransportControls from '~/components/transport-controls.component';
   import TransportPosition from '~/components/transport-position.component';
@@ -38,6 +40,7 @@
       'bouncing-ball': BouncingBall,
       'faces': Faces,
       'html-grid': HtmlGrid,
+      'svg-grid': SvgGrid,
       'key-handler': KeyHandler,
       'transport-controls': TransportControls,
       'transport-position': TransportPosition
@@ -107,7 +110,7 @@
     position: relative;
 
   .left
-    posit(absolute, x, x, x, 0);
+    posit(absolute, 0, x, x, 0);
     width: content-side-margin;
     text-align: center;
 
@@ -157,7 +160,7 @@
     toggle-color('.position', primary-green);
 
   .content, .footer
-    margin: 10vh content-side-margin;
+    margin: 10vh 0 0 content-side-margin;
     position: relative;
 
   .ball-container

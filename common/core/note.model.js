@@ -21,9 +21,9 @@ export class Note {
   }
 
   toString() {
-    let pitch = this.params.pitch ? '(' + this.params.pitch + ')' : '';
-    let accent = this.params.variation === 'heavy' ? '>' :
-      this.params.variation === 'light' ? '*' : '';
+    let pitch = this.params && this.params.pitch ? '(' + this.params.pitch + ')' : '';
+    let accent = this.params && this.params.variation === 'heavy' ? '>' :
+      this.params && this.params.variation === 'light' ? '*' : '';
     return accent + this.soundName + pitch;
   }
 

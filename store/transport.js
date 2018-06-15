@@ -3,6 +3,7 @@ import Tone from '~/common/tone';
 export const state = () => ({
   tempo: 0,
   numBeats: 0,
+  beatsPerMeasure: [],
   measureTops: [],
   starting: false,
   playing: false,
@@ -13,6 +14,7 @@ export const state = () => ({
 export const getters = {
   tempo: state => state.tempo,
   numBeats: state => state.numBeats,
+  beatsPerMeasure :state => state.beatsPerMeasure,
   measureTops: state => state.measureTops,
   duration: state => 60000 / state.tempo,
   starting: state => state.starting,
@@ -23,9 +25,11 @@ export const getters = {
 };
 
 export const mutations = {
-  setup(state, {tempo = state.tempo, numBeats = state.numBeats, measureTops = state.measureTops}) {
+  setup(state, {tempo = state.tempo, numBeats = state.numBeats,
+      beatsPerMeasure = state.beatsPerMeasure, measureTops = state.measureTops}) {
     state.tempo = tempo;
     state.numBeats = numBeats;
+    state.beatsPerMeasure = beatsPerMeasure;
     state.measureTops = measureTops;
   },
   start(state) {

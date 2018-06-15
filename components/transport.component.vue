@@ -265,6 +265,7 @@
           this.$store.commit('transport/setup', {
             tempo: this.bpm(),
             numBeats: this.beats,
+            beatsPerMeasure: this.beatsPerMeasure,
             measureTops: this.measureTops
           });
           if (restart) {

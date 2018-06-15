@@ -27,13 +27,11 @@
     margin-top: 50px;
 
   .menu
+    posit(absolute, 0, 0, x, 0);
     background-color: main-blue;
     display: block;
     height: 48px;
     padding: 0 1vw 0 content-side-margin;
-    position: absolute;
-    top: 0;
-    width: 100%;
 
     a
       display: inline-block;
