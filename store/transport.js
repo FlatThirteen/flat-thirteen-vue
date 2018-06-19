@@ -4,7 +4,7 @@ export const state = () => ({
   tempo: 0,
   numBeats: 0,
   beatsPerMeasure: [],
-  measureTops: [],
+  counts: [],
   starting: false,
   playing: false,
   startTime: 0,
@@ -15,22 +15,23 @@ export const getters = {
   tempo: state => state.tempo,
   numBeats: state => state.numBeats,
   beatsPerMeasure :state => state.beatsPerMeasure,
-  measureTops: state => state.measureTops,
+  counts: state => state.counts,
   duration: state => 60000 / state.tempo,
   starting: state => state.starting,
   playing: state => state.playing,
   paused: state => !state.playing,
+  active: state => state.starting || state.playing,
   startTime: state => state.startTime,
   endTime: state => state.endTime
 };
 
 export const mutations = {
   setup(state, {tempo = state.tempo, numBeats = state.numBeats,
-      beatsPerMeasure = state.beatsPerMeasure, measureTops = state.measureTops}) {
+      beatsPerMeasure = state.beatsPerMeasure, counts = state.counts}) {
     state.tempo = tempo;
     state.numBeats = numBeats;
     state.beatsPerMeasure = beatsPerMeasure;
-    state.measureTops = measureTops;
+    state.counts = counts;
   },
   start(state) {
     state.startTime = 0;

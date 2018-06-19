@@ -1,13 +1,12 @@
 <template lang="pug">
   .container
-    .bouncing.ball(v-if="showBall", :style="ballStyle",
-        :class="{active: active, calibrate: !paused}")
+    #bouncing.ball(:class="{active: showBall && active}")
     .counter.ball(v-for="(left, i) in lefts", :style="{left}",
-        :class="{active: !paused && showCounter && beat === i}")
-      | {{ beat === i ? count : ''}}
+        :class="{active: playing && showCounter && beat === i}") {{ counts[i] }}
 </template>
 
 <script>
+  import { TimelineMax, TweenMax, Circ } from 'gsap'
   import { mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
@@ -29,8 +28,6 @@
     data: function() {
       return {
         ball: null,
-        active: false,
-        count: 0,
         beat: 0,
         nextBeat: 0,
         left: inactiveLeft,
@@ -44,48 +41,87 @@
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
     methods: {
-      beatTickHandler({time, count, beat, nextBeat}) {
-        this.count = count;
+      beatTickHandler({time, beat, tick, nextBeat}) {
         this.beat = beat;
         this.nextBeat = nextBeat;
-        Tone.Draw.schedule(() => {
-          this.left = this.lefts[nextBeat];
-          this.$forceUpdate();
-        }, time);
+        if (this.showBall && !tick) {
+          Tone.Draw.schedule(() => {
+            if (!this.paused && this.showBall) {
+              this.bounceAnimation.play(0);
+              TweenMax.to('#bouncing', .8 * this.durationMs, {
+                left: this.lefts[nextBeat],
+                delay: nextBeat ? .1 * this.durationMs : 0
+              });
+            }
+          }, time);
+        }
+      },
+      ballEnter(starting) {
+        TweenMax.fromTo('#bouncing', this.durationMs, {
+          opacity: 1,
+          left: 0
+        }, {
+          left: this.lefts[this.nextBeat]
+        });
+        TweenMax.fromTo('#bouncing', this.durationMs, {
+          bottom: '160%',
+        }, {
+          bottom: 0,
+          ease: Circ.easeIn,
+          delay: starting ? .2 * this.durationMs : 0
+        });
+      },
+      ballExit() {
+        TweenMax.to('#bouncing', .5 * this.durationMs, {
+          bottom: '160%'
+        });
       }
     },
     computed: {
-      ballStyle() {
-        return {
-          left: this.left,
-          animationDuration: this.duration + 'ms',
-          animationDelay: '0',
-          transitionDuration: .8 * this.duration + 'ms',
-          transitionDelay: .1 * this.duration + 'ms'
-        };
+      durationMs() {
+        return this.duration / 1000;
+      },
+      bounceAnimation() {
+        return new TimelineMax().to('#bouncing', .2 * this.durationMs, {
+          transform: 'translateY(-7vh) scale(0.9, 1.1)'
+        }).to('#bouncing', .2 * this.durationMs, {
+          transform: 'translateY(-10vh) scale(1.1, 0.9)'
+        }).to('#bouncing', .3 * this.durationMs, {
+          transform: 'translateY(0.1vh) scale(0.8, 1.2)',
+          ease: Circ.easeIn
+        }).to('#bouncing', .2 * this.durationMs, {
+          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
+        }).to('#bouncing', .1 * this.durationMs, {
+          transform: 'translateY(0.2vh) scale(0.8, 1.2)'
+        });
       },
       ...mapGetters({
-        starting: 'transport/starting',
-        paused: 'transport/paused',
+        playing: 'transport/playing',
+        active: 'transport/active',
+        counts: 'transport/counts',
         duration: 'transport/duration',
         numBeats: 'transport/numBeats'
       })
     },
     watch: {
-      starting(starting) {
-        if (starting) {
-          this.active = true;
+      active(active) {
+        if (active) {
+          this.nextBeat = 0;
           this.lefts = _.times(this.numBeats, beat => {
-            let index = 2 * beat + 1;
-            return (50 / this.numBeats * index) + '%'
+            return ((100 * beat + 50) / this.numBeats) + '%'
           });
-          this.left = this.lefts[0];
+          if (this.showBall) {
+            this.ballEnter(true);
+          }
+        } else {
+          this.ballExit();
         }
       },
-      paused(paused) {
-        this.active = !paused;
-        if (paused) {
-          this.left = inactiveLeft;
+      showBall(showBall) {
+        if (showBall) {
+          this.ballEnter();
+        } else {
+          this.ballExit();
         }
       }
     }
@@ -107,19 +143,10 @@
     margin-left: -0.5 * @height;
     width: @height;
 
-  .bouncing
+  #bouncing
     background-color: primary-blue;
-    bottom: 150%;
-    opacity: 0;
     transform-origin: bottom;
-    transition: all cubic-bezier(0.81, 0.16, 0.38, 0.56);
-
-    &.calibrate
-      animation: bouncing ease-in infinite;
-
-    &.active
-      bottom: 0;
-      opacity: 1;
+    opacity: 0;
 
   .counter
     border: solid 6px primary-blue;
@@ -127,22 +154,12 @@
     color: primary-blue;
     opacity: 0;
     text-align: center;
-    transition: all 100ms cubic-bezier(0.81, 0.16, 0.38, 0.56);
+    transition: all 150ms cubic-bezier(0.81, 0.16, 0.38, 0.56);
+    transform: scale(0.1, 1.2);
 
     &.active {
       bottom: 0;
       opacity: 1;
+      transform: scale(1, 1);
     }
-
-  @keyframes bouncing
-    0%, 100%
-      transform: translateY(0.2vh) scale(0.8, 1.2);
-    30%
-      transform: translateY(-9vh) scale(0.9, 1.1);
-    40%
-      transform: translateY(-10vh) scale(1.1, 0.9);
-    80%
-      transform: translateY(0.1vh) scale(0.9, 1.1);
-    90%
-      transform: translateY(0.2vh) scale(1.2, 0.6);
 </style>

@@ -122,7 +122,7 @@
         };
       },
       beatClass() {
-        return _.map(this.measureTops, top => top ? 'first-measure' : '');
+        return _.map(this.counts, count => count === 1 ? 'first' : '');
       },
       pulseClass() {
         return _.times(this.numPulses, cursor => ({
@@ -137,7 +137,7 @@
         noKeysHeld: 'noKeysHeld',
         starting: 'transport/starting',
         paused: 'transport/paused',
-        measureTops: 'transport/measureTops',
+        counts: 'transport/counts',
         pulsesByBeat: 'player/pulsesByBeat',
         numPulses: 'player/numPulses',
         cursorsByBeat: 'player/cursorsByBeat',
@@ -218,7 +218,7 @@
     .strip-container .beat
       background-color: main-green;
 
-  .strip-container .first-measure.beat:not(:first-child):before
+  .strip-container .first.beat:not(:first-child):before
     posit(absolute, 0, 100%, 0, x)
     background-color: #FFF;
     content: '';

@@ -13,6 +13,7 @@
     "precommit": "npm run lint"
   },
   "dependencies": {
+    "gsap": "^2.0.1",
     "nuxt": "^1.0.0",
     "pixi.js": "^4.8.0",
     "tone": "13.1.31"

@@ -1,7 +1,7 @@
 <template lang="pug">
   .transport(v-if="show")
     .latency(v-if="latencyHistogram.length") {{ latencyHistogram.join(',') }}
-    .playing(v-if="playing") {{ measure }} : {{ count }} / {{ countBeats }}
+    .playing(v-if="playing") {{ measure }} : {{ counts[beat] }} / {{ countBeats }}
     .starting(v-else-if="starting") ...
     .paused(v-else) {{ beats }} beats
     .elapsed(v-if="startTime") ({{ elapsedTime() }}s)
@@ -118,7 +118,7 @@
         this.$bus.$emit(BeatTick.EVENT, {
           time: time,
           beat: this.beatIndex,
-          count: this.count,
+          tick: tick,
           nextBeat: this.nextBeat,
           beatTick: BeatTick.from(this.beatIndex, tick)
         });
@@ -143,9 +143,6 @@
       beats() {
         return _.sum(this.beatsPerMeasure);
       },
-      count() {
-        return this.beat + 1;
-      },
       countBeats() {
         return this.beatsPerMeasure[this.measure];
       },
@@ -158,9 +155,9 @@
       lastBeat() {
         return this.beatIndex === this.beats - 1;
       },
-      measureTops() {
+      counts() {
         return _.reduce(this.beatsPerMeasure, (result, beats) => {
-          return _.concat(result, true, ..._.times(beats - 1, false));
+          return _.concat(result, _.times(beats, beat => beat + 1));
         }, []);
       },
       ...mapGetters({
@@ -266,7 +263,7 @@
             tempo: this.bpm(),
             numBeats: this.beats,
             beatsPerMeasure: this.beatsPerMeasure,
-            measureTops: this.measureTops
+            counts: this.counts
           });
           if (restart) {
             // nextTick needed so listeners have a chance to react before restart

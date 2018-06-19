@@ -5,13 +5,13 @@
       .counter(v-if="transport.playing") {{ transport.count }}
     slot
     .beats-input(v-if="showBeatsPerMeasureInput")
-      input.beats(type="text", v-model="bpm", placeholder="# beats")
+      input.beats(type="text", v-model="bpm", placeholder="# beats", @keydown.stop)
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
-      input(type="number", v-model.number="tempo", placeholder="tempo")
+      input(type="number", v-model.number="tempo", placeholder="tempo", @keydown.stop)
     .performance(:class="{invalid: !transport.isValidLatencyHint(latencyHint)," +
         "dim: transport.isValidLatencyHint(latencyHint) && latencyHint !== transport.latencyHint}")
       input(type="text", v-model="latencyHint", placeholder="latency hint",
-      @focus="showSuggestions = true", @blur="hideSuggestions()")
+          @focus="showSuggestions = true", @blur="hideSuggestions()", @keydown.stop)
       .suggestions(v-if="showSuggestions")
         .suggestion(@click="onLatencyHint('0.2')") 0.2
         .suggestion(@click="onLatencyHint('fastest')") fastest

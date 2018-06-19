@@ -10,7 +10,7 @@
     .left
       transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure")
         .pulses-input
-          input.pulses(type="text", v-model="pbb", placeholder="# pulses")
+          input.pulses(type="text", v-model="pbb", placeholder="# pulses", @keydown.stop)
 
       .toggle.ball(:class="{active: showBall}",
           @click="showBall = !showBall") Bounce

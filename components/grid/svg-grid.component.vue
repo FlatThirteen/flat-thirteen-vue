@@ -154,7 +154,7 @@
           }
           last += beats;
           return result;
-        }, [])
+        }, []);
       },
       pulseClass() {
         return _.times(this.numPulses, cursor => ({
@@ -256,7 +256,7 @@
     cursor: pointer;
     opacity: 0;
 
-    .standby &.live, &.active
+    .standby &.live, &.active.on
       animation: actual 250ms;
 
     .selected &.cursor:not(.on)

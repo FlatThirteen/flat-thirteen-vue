@@ -35,6 +35,7 @@ module.exports = {
   */
   build: {
     vendor: [
+      'gsap',
       'pixi.js',
       'Tone'
     ],
