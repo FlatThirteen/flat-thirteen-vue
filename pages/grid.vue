@@ -3,7 +3,8 @@
     key-handler(:player="true")
     .content
       bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
-      svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface")
+      svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
+          :showPosition="showPosition")
       html-grid(v-for="(surface, i) in surfaces", :key="'h' + i", :grid="surface")
         transport-position.transport-container(:show="showPosition")
       faces

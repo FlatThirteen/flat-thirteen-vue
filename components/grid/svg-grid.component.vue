@@ -1,6 +1,8 @@
 <template lang="pug">
   .grid(:class="gridClass", @mouseleave="unselect()")
     svg(:viewBox="viewBox", :style="svgStyle")
+      rect#background(:height="height - beatBorder", :width="width - beatBorder")
+      rect#position(v-show="showPosition", :height="height - beatBorder")
       g(v-for="(key, index) in keys",
           :transform="'translate(0,' + index * beatUnit + ')'")
         g(v-for="(pulses, beat) in pulsesByBeat",
@@ -32,16 +34,22 @@
 </template>
 
 <script>
+  import { TweenMax, Linear } from 'gsap'
   import { mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
   import Sound from '~/common/sound/sound';
+  import Tone from '~/common/tone';
 
   export default {
     props: {
       grid: {
         type: Object,
         default: () => ({ soundByKey: { q: 'kick' } })
+      },
+      showPosition: {
+        type: Boolean,
+        default: false
       }
     },
     data: function() {
@@ -57,9 +65,18 @@
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
     methods: {
-      beatTickHandler({beatTick}) {
+      beatTickHandler({beat, tick, beatTick}) {
         if (!this.paused && this.beatTicks.includes(beatTick)) {
           this.activeBeatTick = beatTick;
+        }
+        if (this.showPosition && !tick) {
+          TweenMax.fromTo('#position', this.duration, {
+            opacity: .7,
+            width: beat * this.beatUnit
+          }, {
+            width: (beat + 1) * this.beatUnit - this.pulseBorder,
+            ease: Linear.easeNone
+          });
         }
       },
       select(cursor) {
@@ -158,7 +175,7 @@
       },
       pulseClass() {
         return _.times(this.numPulses, cursor => ({
-          active: this.activeBeatTick === this.beatTicks[cursor]
+          active: !this.showPosition && this.activeBeatTick === this.beatTicks[cursor]
         }));
       },
       noteClass() {
@@ -180,6 +197,7 @@
         paused: 'transport/paused',
         numBeats: 'transport/numBeats',
         beatsPerMeasure: 'transport/beatsPerMeasure',
+        duration: 'transport/duration',
         pulsesByBeat: 'player/pulsesByBeat',
         numPulses: 'player/numPulses',
         cursorsByBeat: 'player/cursorsByBeat',
@@ -205,6 +223,9 @@
       paused(paused) {
         if (paused) {
           this.activeBeatTick = '';
+          TweenMax.to('#position', this.duration, {
+            opacity: 0,
+          });
         } else {
           this.liveKeyCursor = null;
         }
@@ -222,22 +243,28 @@
     margin: 5px auto;
     position: relative;
 
-    &.victory
-      background-color: back-green;
 
     svg
       overflow: visible;
 
+  #background
+    fill: main-blue;
+
+    .victory &
+      fill: main-green;
+
+  #position
+    fill: primary-green;
+    opacity: 0;
+
   .beat
     transition: background-color 150ms ease-in-out;
-    fill: main-blue;
+    fill: transparent;
     stroke: back-blue;
 
-    & .active
-      background-color: active-blue;
+    .victory &
+      stroke: back-green;
 
-      .victory &
-        background-color: active-green;
 
   .measure-top
     stroke: white;
@@ -249,8 +276,14 @@
     &.active
       opacity: 1;
 
+      .victory &
+        fill: active-green;
+
   .pulse-line
     stroke: back-blue;
+
+    .victory &
+      stroke: back-green;
 
   .note
     cursor: pointer;

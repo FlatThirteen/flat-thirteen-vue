@@ -48,50 +48,47 @@
           Tone.Draw.schedule(() => {
             if (!this.paused && this.showBall) {
               this.bounceAnimation.play(0);
-              TweenMax.to('#bouncing', .8 * this.durationMs, {
+              TweenMax.to('#bouncing', .8 * this.duration, {
                 left: this.lefts[nextBeat],
-                delay: nextBeat ? .1 * this.durationMs : 0
+                delay: nextBeat ? .1 * this.duration : 0
               });
             }
           }, time);
         }
       },
       ballEnter(starting) {
-        TweenMax.fromTo('#bouncing', this.durationMs, {
+        TweenMax.fromTo('#bouncing', this.duration, {
           opacity: 1,
           left: 0
         }, {
           left: this.lefts[this.nextBeat]
         });
-        TweenMax.fromTo('#bouncing', this.durationMs, {
+        TweenMax.fromTo('#bouncing', this.duration, {
           bottom: '160%',
         }, {
           bottom: 0,
           ease: Circ.easeIn,
-          delay: starting ? .2 * this.durationMs : 0
+          delay: starting ? .2 * this.duration : 0
         });
       },
       ballExit() {
-        TweenMax.to('#bouncing', .5 * this.durationMs, {
+        TweenMax.to('#bouncing', .5 * this.duration, {
           bottom: '160%'
         });
       }
     },
     computed: {
-      durationMs() {
-        return this.duration / 1000;
-      },
       bounceAnimation() {
-        return new TimelineMax().to('#bouncing', .2 * this.durationMs, {
+        return new TimelineMax().to('#bouncing', .2 * this.duration, {
           transform: 'translateY(-7vh) scale(0.9, 1.1)'
-        }).to('#bouncing', .2 * this.durationMs, {
+        }).to('#bouncing', .2 * this.duration, {
           transform: 'translateY(-10vh) scale(1.1, 0.9)'
-        }).to('#bouncing', .3 * this.durationMs, {
+        }).to('#bouncing', .3 * this.duration, {
           transform: 'translateY(0.1vh) scale(0.8, 1.2)',
           ease: Circ.easeIn
-        }).to('#bouncing', .2 * this.durationMs, {
+        }).to('#bouncing', .2 * this.duration, {
           transform: 'translateY(0.2vh) scale(1.2, 0.6)'
-        }).to('#bouncing', .1 * this.durationMs, {
+        }).to('#bouncing', .1 * this.duration, {
           transform: 'translateY(0.2vh) scale(0.8, 1.2)'
         });
       },
