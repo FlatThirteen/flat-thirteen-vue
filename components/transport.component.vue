@@ -54,8 +54,7 @@
         pulsesPart: null,
         latencyHistogram: [],
         measure: 0,
-        beat: -1,
-        beatIndex: -1,
+        beat: -1
       };
     },
     mounted() {
@@ -117,10 +116,10 @@
       emitBeatTick(time, tick = 0) {
         this.$bus.$emit(BeatTick.EVENT, {
           time: time,
-          beat: this.beatIndex,
+          beat: this.beat,
           tick: tick,
           nextBeat: this.nextBeat,
-          beatTick: BeatTick.from(this.beatIndex, tick)
+          beatTick: BeatTick.from(this.beat, tick)
         });
       },
       logIfLate(time) {
@@ -150,10 +149,10 @@
         return this.beatsPerMeasure.length;
       },
       nextBeat() {
-        return this.beatIndex === this.beats - 1 ? 0 : this.beatIndex + 1;
+        return this.beat === this.beats - 1 ? 0 : this.beat + 1;
       },
       lastBeat() {
-        return this.beatIndex === this.beats - 1;
+        return this.beat === this.beats - 1;
       },
       counts() {
         return _.reduce(this.beatsPerMeasure, (result, beats) => {
@@ -217,15 +216,14 @@
               return;
             }
             this.logIfLate(time);
-            this.beatIndex++;
             this.beat++;
-            if (this.beat >= this.countBeats) {
-              this.beat = 0;
+            let measureTop = this.counts[this.beat] === 1;
+            if (measureTop) {
               this.measure++;
             }
 
             if (this.metronome) {
-              Sound.click.play(time, { variation: this.beat ? 'normal' : 'heavy' });
+              Sound.click.play(time, { variation: measureTop ? 'heavy' : 'normal'});
             }
 
             this.emitBeatTick(time);
@@ -240,7 +238,6 @@
               result[time] = ticks * (i + 1);
             });
           }, {});
-//          this.supportedTicks = _.sortBy(_.values(tickEvents));
           this.pulsesPart = new Tone.Part((time, tick) => {
             this.logIfLate(time);
             this.emitBeatTick(time, tick);
@@ -250,12 +247,11 @@
           this.pulsesPart.start(0);
 
           if (!this.onTopId) {
-            this.onTopId = Tone.Transport.schedule((time) => {
+            this.onTopId = Tone.Transport.schedule(() => {
               if (this.starting) {
                 this.$store.commit('transport/play');
               }
               this.measure = 0;
-              this.beatIndex = -1;
               this.beat = -1;
             }, 0);
           }
