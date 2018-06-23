@@ -15,6 +15,7 @@
           About: '/about',
           Sound: '/sound',
           Grid: '/grid',
+          Stage: '/stage',
           Backing: '/backing'
         }
       };

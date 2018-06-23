@@ -1,22 +1,40 @@
 button-height = 60px;
-button-shadow-size = 4px;
-button-shadow = 0 button-shadow-size 0 #000;
+
+toggle-color(class, color)
+  {class}
+    color: color;
+    border-color: color;
+
+    &.active
+      background-color: color;
 
 .button
   cursor: pointer;
   display: inline-block;
   height: button-height;
   text-align: center;
-  margin-top: 0;
-  margin-bottom: 0;
   user-select: none;
   vertical-align: top;
   width: button-height;
+  transition: filter 250ms;
 
   &.disabled
     cursor: default;
 
   &:hover:not(:active):not(.disabled)
-    margin-top: - button-shadow-size;
-    margin-bottom: button-shadow-size;
-    filter: drop-shadow(button-shadow);
+    shadow(#888);
+
+.toggle
+  background-color: white;
+  border: solid 1px;
+  cursor: pointer;
+  padding: 5px;
+  margin: 5px;
+  user-select: none;
+  transition: filter 250ms;
+
+  &.active
+    color: white !important;
+
+  &:hover
+    shadow(#888, 2px);

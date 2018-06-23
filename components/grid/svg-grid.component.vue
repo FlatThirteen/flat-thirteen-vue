@@ -1,8 +1,15 @@
 <template lang="pug">
-  .grid(:class="gridClass", @mouseleave="unselect()")
-    svg(:viewBox="viewBox", :style="svgStyle")
-      rect#background(:height="height - beatBorder", :width="width - beatBorder")
-      rect#position(v-show="showPosition", :height="height - beatBorder")
+  .grid(:class="gridClass")
+    svg(:viewBox="viewBox", :style="svgStyle", @mouseleave="unselect()")
+      defs
+        filter(id="shadow", x="-10%", y="-10%", width="120%", height="120%")
+          feOffset(result="offOut", in="SourceGraphic", dx="1", dy="5")
+          feComponentTransfer(result="colorOut", in="offOut")
+            feFuncA(type="table", tableValues="0 0.6")
+          feGaussianBlur(result="blurOut", in="colorOut", stdDeviation="5")
+          feComposite(in="SourceGraphic", in2="blurOut", operator="over")
+      rect#background(:height="backgroundHeight", :width="backgroundWidth")
+      rect#position(:height="backgroundHeight", width="0")
       g(v-for="(key, index) in keys",
           :transform="'translate(0,' + index * beatUnit + ')'")
         g(v-for="(pulses, beat) in pulsesByBeat",
@@ -29,6 +36,7 @@
               :r="beatSize / 2 / pulses - 4 * beatBorder / pulses",
               :transform-origin="((2 * i) + 1) * beatSize / 2 / pulses + ' ' + beatCenter",
               @mouseenter="select(cursor)", @click="onNote(key, cursor)")
+      rect#glass(:height="backgroundHeight", width="0")
     slot
 
 </template>
@@ -47,6 +55,10 @@
         type: Object,
         default: () => ({ soundByKey: { q: 'kick' } })
       },
+      scene: {
+        type: String,
+        default: null
+      },
       showPosition: {
         type: Boolean,
         default: false
@@ -54,22 +66,27 @@
     },
     data: function() {
       return {
-        activeBeatTick: null,
+        activeCursor: null,
         liveKeyCursor: null
       };
     },
     mounted() {
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
     destroyed() {
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
+      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
     methods: {
-      beatTickHandler({beat, tick, beatTick}) {
-        if (!this.paused && this.beatTicks.includes(beatTick)) {
-          this.activeBeatTick = beatTick;
+      beatTickHandler({beatTick}) {
+        let cursor = _.indexOf(this.beatTicks, beatTick);
+        if (this.active && cursor !== -1) {
+          this.activeCursor = cursor;
         }
-        if (this.showPosition && !tick) {
+      },
+      beatHandler({beat}) {
+        if (this.showPosition) {
           TweenMax.fromTo('#position', this.duration, {
             opacity: .7,
             width: beat * this.beatUnit
@@ -77,6 +94,14 @@
             width: (beat + 1) * this.beatUnit - this.pulseBorder,
             ease: Linear.easeNone
           });
+          if (this.scene) {
+            TweenMax.fromTo('#glass', .2 * this.duration, {
+              width: beat * this.beatUnit
+            }, {
+              width: (beat + 1) * this.beatUnit - this.pulseBorder,
+              ease: Linear.easeNone
+            });
+          }
         }
       },
       select(cursor) {
@@ -95,7 +120,7 @@
         this.$store.dispatch('player/set', {cursor, soundName,
           soundId: this.soundId
         });
-        if (this.paused && soundName) {
+        if (!this.active && soundName) {
           this.liveKeyCursor = key + this.cursor;
           Sound[soundName].play();
         } else {
@@ -130,6 +155,12 @@
       width() {
         return this.beatUnit * this.numBeats;
       },
+      backgroundHeight() {
+        return this.height && this.height - this.beatBorder;
+      },
+      backgroundWidth() {
+        return this.width && this.width - this.beatBorder;
+      },
       viewBox() {
         return '0 0 ' + this.width + ' ' + this.height;
       },
@@ -156,12 +187,11 @@
         });
       },
       gridClass() {
-        return {
-          standby: !this.starting && this.paused,
-          playback: this.starting || !this.paused,
-          selected: this.isSelected,
-          starting: this.starting
-        };
+        return [this.scene, {
+          standby: !this.scene && !this.active,
+          playback: !this.scene && this.active,
+          selected: this.isSelected
+        }];
       },
       measureTops() {
         let last = 0;
@@ -175,16 +205,17 @@
       },
       pulseClass() {
         return _.times(this.numPulses, cursor => ({
-          active: !this.showPosition && this.activeBeatTick === this.beatTicks[cursor]
+          active: !this.showPosition && this.activeCursor === cursor
         }));
       },
       noteClass() {
         return _.times(this.numPulses, cursor => {
           return _.mapValues(this.soundName, (soundName, key) => ({
-            active: this.activeBeatTick === this.beatTicks[cursor],
-            cursor: this.cursor === cursor,
+            active: this.activeCursor === cursor,
+            cursor: this.scene !== 'victory' && this.cursor === cursor,
             live: this.liveKeyCursor === key + cursor,
-            on: this.isOn[cursor][key]
+            on: this.isOn[cursor][key],
+            hover: this.scene !== 'victory' && this.keyMode && this.cursor === cursor
           }));
         });
       },
@@ -193,8 +224,7 @@
         keyUp: 'keyUp',
         keyMode: 'keyMode',
         noKeysHeld: 'noKeysHeld',
-        starting: 'transport/starting',
-        paused: 'transport/paused',
+        active: 'transport/active',
         numBeats: 'transport/numBeats',
         beatsPerMeasure: 'transport/beatsPerMeasure',
         duration: 'transport/duration',
@@ -209,6 +239,11 @@
     },
     watch: {
       keyDown(key) {
+        if (this.scene === 'victory' ||
+            this.scene === 'playback' && this.activeCursor >= this.cursor) {
+          // Don't allow modifications to notes
+          return;
+        }
         if (key === ' ' || key === 'Backspace') {
           this.$store.dispatch('player/unset', this.soundId);
         } else if (this.soundName[key]) {
@@ -220,20 +255,43 @@
           this.$store.dispatch('player/move', 1);
         }
       },
-      paused(paused) {
-        if (paused) {
-          this.activeBeatTick = '';
+      active(active) {
+        if (active) {
+          this.liveKeyCursor = null;
+        } else {
+          this.activeCursor = -1;
+          TweenMax.to('#position', this.duration, {
+            opacity: 0
+          });
+        }
+      },
+      showPosition(showPosition) {
+        if (showPosition) {
+          TweenMax.to('#position', this.duration, {
+            opacity: .7,
+          });
+        } else  {
           TweenMax.to('#position', this.duration, {
             opacity: 0,
           });
-        } else {
-          this.liveKeyCursor = null;
+          TweenMax.to('#position', 0, {
+            width: 0,
+            delay: this.duration
+          });
+        }
+      },
+      scene(scene) {
+        if (scene !== 'playback') {
+          TweenMax.to('#glass', 0, { width: 0 });
+        }
+        if (scene === 'victory') {
+          TweenMax.to('#glass', 0, { width: this.width });
         }
       }
     }
   }
-
 </script>
+
 <style scoped lang="stylus" type="text/stylus">
   @import "~assets/stylus/note.styl"
 
@@ -257,6 +315,9 @@
     fill: primary-green;
     opacity: 0;
 
+  #glass
+    fill: transparent;
+
   .beat
     transition: background-color 150ms ease-in-out;
     fill: transparent;
@@ -270,14 +331,11 @@
     stroke: white;
 
   .pulse
-    fill: active-blue;
+    fill: white;
     opacity: 0;
 
     &.active
-      opacity: 1;
-
-      .victory &
-        fill: active-green;
+      opacity: 0.1;
 
   .pulse-line
     stroke: back-blue;
@@ -288,8 +346,12 @@
   .note
     cursor: pointer;
     opacity: 0;
+    transition: opacity 200ms ease;
 
-    .standby &.live, &.active.on
+    .goal &.on
+      opacity: 0.3;
+
+    .standby &.live, .playback &.active.on, .victory &.active.on
       animation: actual 250ms;
 
     .selected &.cursor:not(.on)
@@ -301,4 +363,10 @@
 
     &.on
       opacity: 1;
+
+      &:hover, &.hover
+        opacity: 0.9;
+        filter: url(#shadow);
+
+
 </style>

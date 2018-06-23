@@ -1,6 +1,6 @@
 <template lang="pug">
   .content
-    img.logo(src="../assets/logo.png")
+    img.logo(src="~/assets/logo.png")
     .header
       h1 Flat Thirteen
       h3 Teaching music through gaming

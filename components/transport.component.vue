@@ -1,7 +1,7 @@
 <template lang="pug">
   .transport(v-if="show")
     .latency(v-if="latencyHistogram.length") {{ latencyHistogram.join(',') }}
-    .playing(v-if="playing") {{ measure }} : {{ counts[beat] }} / {{ countBeats }}
+    .playing(v-if="playing") {{ measure }} : {{ count }} / {{ countBeats }}
     .starting(v-else-if="starting") ...
     .paused(v-else) {{ beats }} beats
     .elapsed(v-if="startTime") ({{ elapsedTime() }}s)
@@ -118,9 +118,20 @@
           time: time,
           beat: this.beat,
           tick: tick,
-          nextBeat: this.nextBeat,
-          beatTick: BeatTick.from(this.beat, tick)
+          beatTick: BeatTick.from(this.beat, tick),
+          lastBeat: this.lastBeat
         });
+        if (!tick) {
+          // Emit BEAT event on nextTick so that values propagate
+          this.$nextTick(() => {
+            this.$bus.$emit(BeatTick.BEAT, {
+              time: time,
+              beat: this.beat,
+              nextBeat: this.nextBeat,
+              count: this.count
+            });
+          });
+        }
       },
       logIfLate(time) {
         let start = Tone.rightNow();
@@ -159,23 +170,23 @@
           return _.concat(result, _.times(beats, beat => beat + 1));
         }, []);
       },
+      count() {
+        return this.counts[this.beat];
+      },
       ...mapGetters({
         starting: 'transport/starting',
         playing: 'transport/playing',
-        paused: 'transport/paused',
+        active: 'transport/active',
         startTime: 'transport/startTime',
         endTime: 'transport/endTime'
       })
     },
     watch: {
-      starting(starting) {
-        if (starting) {
+      active(active) {
+        if (active) {
           this.latencyHistogram = [];
-        }
-      },
-      paused(paused) {
-        if (paused) {
-          this.measure = 0;
+        } else {
+          this.measure = -1;
           this.beat = -1;
         }
       },
@@ -197,7 +208,7 @@
           if (!process.browser || _.isEqual(beatsPerMeasure, oldBeatsPerMeasure)) {
             return;
           }
-          let restart = this.starting || this.playing;
+          let restart = this.active;
           if (restart) {
             this.$store.dispatch('transport/stop');
           }
@@ -212,7 +223,7 @@
           this.disposeLoops();
 
           this.quarterLoop = new Tone.Loop((time) => {
-            if (this.paused) {
+            if (!this.playing) {
               return;
             }
             this.logIfLate(time);
@@ -227,7 +238,6 @@
             }
 
             this.emitBeatTick(time);
-//          this.lastBeat$.next(this.lastBeat());
           }, '4n');
           this.quarterLoop.start(0);
 
@@ -248,10 +258,11 @@
 
           if (!this.onTopId) {
             this.onTopId = Tone.Transport.schedule(() => {
+              this.$bus.$emit(BeatTick.TOP, { first: this.starting });
               if (this.starting) {
                 this.$store.commit('transport/play');
               }
-              this.measure = 0;
+              this.measure = -1;
               this.beat = -1;
             }, 0);
           }

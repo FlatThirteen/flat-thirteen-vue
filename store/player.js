@@ -5,7 +5,7 @@ import Note from '~/common/core/note.model'
 
 export const state = () => ({
   pulsesByBeat: [],
-  data: {},
+  data: {}, // data[beatTick][soundId] = soundName
   selected: null,
   cursor: 0,
   touched: false
@@ -22,6 +22,8 @@ export const getters = {
   getDataFor: state => ({beatTick, soundId}) => (state.data[beatTick] || {})[soundId],
   getNotes: state => beatTick => _.map(_.values(state.data[beatTick]),
       soundName => new Note(soundName)),
+  notes: state => _.flatten(_.map(_.values(state.data), _.values)),
+  noteCount: (state, getters) => _.size(getters.notes),
   selected: state => state.selected,
   cursor: state => state.cursor,
   beatPulse: state => _.reduce(state.pulsesByBeat, ([beat, pulse, working], pulses) =>
@@ -32,7 +34,7 @@ export const getters = {
 };
 
 export const mutations = {
-  setup(state, {pulsesByBeat, data = {}}) {
+  setup(state, {pulsesByBeat = state.pulsesByBeat, data = {}}) {
     state.pulsesByBeat = pulsesByBeat;
     state.data = data;
     state.selected = null;
@@ -76,7 +78,7 @@ export const actions = {
     });
   },
   move({commit, state, getters, rootGetters}, move) {
-    if (!rootGetters['transport/starting']) {
+    if (rootGetters['stage/scene'] !== 'victory') {
       commit('select', {
         cursor: (state.cursor + move + getters.numPulses) % getters.numPulses
       });

@@ -8,3 +8,6 @@ posit(type, top = 0, right = top, bottom = top, left = right)
     bottom: bottom;
   unless left == x
     left: left;
+
+shadow(color, size = 4px)
+  filter: drop-shadow(0 size size+1 color);

@@ -47,9 +47,10 @@ module.exports = {
         options: {
           stylus: {
             import: [
-              path.resolve(__dirname, './assets/stylus/colors.styl'),
+              path.resolve(__dirname, './assets/stylus/variables.styl'),
               path.resolve(__dirname, './assets/stylus/mixin.styl'),
-              path.resolve(__dirname, './assets/stylus/variables.styl')
+              path.resolve(__dirname, './assets/stylus/button.styl'),
+              path.resolve(__dirname, './assets/stylus/colors.styl')
             ]
           }
         }

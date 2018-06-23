@@ -1,10 +1,11 @@
 <template lang="pug">
   .container
-    backing(:phrase="backingPhrase", :fixed="fixed", :show="showFx",
-        :skip="showFx === undefined")
+    backing(:fixed="fixed", :show="showFx", :skip="showFx === undefined")
 
     .left
-      transport-controls(:playTime="'+0.1'")
+      transport-controls(:playTime="'+0.1'", :beatsPerMeasure="bpm")
+        .beats-input
+          input.beats(type="text", v-model="bpm", placeholder="# beats", @keydown.stop="")
 
     .content(:class="{solo: anySolo}")
       .track(v-for="(track, i) in tracks", :class="{solo: track.solo, mute: track.mute}")
@@ -32,9 +33,10 @@
 </template>
 
 <script>
+  import { mapGetters } from 'vuex';
+
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
-  import Phrase from '~/common/phrase/phrase.model';
   import Sound from '~/common/sound/sound';
 
   import Backing from '~/components/backing.component';
@@ -51,11 +53,11 @@
     layout: 'debug',
     data: function() {
       return {
+        bpm: '4,4',
         now: '',
         enableBacking: true,
         selected: null,
         anySolo: false,
-        backingPhrase: {},
         debugPhrase: [],
         fixed: [],
         fixedBeat: '',
@@ -82,11 +84,10 @@
       window.addEventListener('keydown', this.onKeyDown);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
     },
-    destroyed: function() {
+    destroyed() {
       window.removeEventListener('keydown', this.onKeyDown);
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
-
     methods: {
       onKeyDown(event) {
         if (event.key === ' ') {
@@ -123,6 +124,11 @@
         return _.split(_.split(beatDebug, ': ')[1], ',')
       }
     },
+    computed: {
+      ...mapGetters({
+        asArray: 'phrase/asArray'
+      })
+    },
     watch: {
       tracks: {
         deep: true,
@@ -143,8 +149,11 @@
             });
           }
 
-          this.backingPhrase = Phrase.from(activeTracks);
-          this.debugPhrase = this.backingPhrase.toArray();
+          this.$store.dispatch('phrase/setTracks', {
+            name: 'backing',
+            tracks: activeTracks
+          });
+          this.debugPhrase = this.asArray('backing');
           this.anySolo = solo;
           if (this.selected) {
             let selectedBeatTick = _.split(this.selected, ': ')[0];

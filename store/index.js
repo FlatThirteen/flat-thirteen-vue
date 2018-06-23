@@ -20,7 +20,7 @@ export const getters = {
 
 export const mutations = {
   keyDown(state, {key, location}) {
-    state.keyMode = true;
+    state.keyMode = key !== 'Enter';
     Vue.set(state.keysHeld, key, true);
     state.keyDown = key;
     state.keyUp = null;

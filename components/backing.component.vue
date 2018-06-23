@@ -19,15 +19,10 @@
 
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
-  import Phrase from '~/common/phrase/phrase.model';
   import Tone from '~/common/tone';
 
   export default {
     props: {
-      phrase: {
-        type: Phrase | null,
-        default: null
-      },
       fixed: {
         type: Array,
         default() { return []; }
@@ -73,11 +68,7 @@
         this.activeNotes = 0;
       },
       beatTickHandler({beatTick, time}) {
-        let notes = this.phrase && this.phrase.getNotes(beatTick);
-        if (!notes) {
-          return;
-        }
-
+        let notes = this.getNotes('backing', beatTick);
         _.forEach(notes, (note) => {
           note.play(time);
           this.playCount++;
@@ -131,7 +122,8 @@
     computed: {
       ...mapGetters({
         starting: 'transport/starting',
-        paused: 'transport/paused'
+        paused: 'transport/paused',
+        getNotes: 'phrase/getNotes'
       })
     },
     watch: {

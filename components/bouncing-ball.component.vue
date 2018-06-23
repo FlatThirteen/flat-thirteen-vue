@@ -27,7 +27,7 @@
     },
     data: function() {
       return {
-        ball: null,
+        ballIn: false,
         beat: 0,
         nextBeat: 0,
         left: inactiveLeft,
@@ -35,16 +35,16 @@
       };
     },
     mounted() {
-      this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
     destroyed() {
-      this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
+      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
     methods: {
-      beatTickHandler({time, beat, tick, nextBeat}) {
+      beatHandler({time, beat, nextBeat}) {
         this.beat = beat;
         this.nextBeat = nextBeat;
-        if (this.showBall && !tick) {
+        if (this.showBall) {
           Tone.Draw.schedule(() => {
             if (!this.paused && this.showBall) {
               this.bounceAnimation.play(0);
@@ -57,24 +57,32 @@
         }
       },
       ballEnter(starting) {
+        if (this.ballIn) {
+          return;
+        }
+        this.ballIn = true;
         TweenMax.fromTo('#bouncing', this.duration, {
           opacity: 1,
           left: 0
         }, {
           left: this.lefts[this.nextBeat]
         });
-        TweenMax.fromTo('#bouncing', this.duration, {
+        TweenMax.fromTo('#bouncing', .9 * this.duration, {
           bottom: '160%',
         }, {
           bottom: 0,
           ease: Circ.easeIn,
-          delay: starting ? .2 * this.duration : 0
+          delay: starting ? .3 * this.duration : 0
         });
       },
       ballExit() {
-        TweenMax.to('#bouncing', .5 * this.duration, {
-          bottom: '160%'
-        });
+        if (this.ballIn) {
+          this.ballIn = false;
+          TweenMax.killTweensOf('#bouncing', { bottom: true });
+          TweenMax.to('#bouncing', .5 * this.duration, {
+            bottom: '160%'
+          });
+        }
       }
     },
     computed: {
@@ -115,7 +123,7 @@
         }
       },
       showBall(showBall) {
-        if (showBall) {
+        if (showBall && this.active) {
           this.ballEnter();
         } else {
           this.ballExit();

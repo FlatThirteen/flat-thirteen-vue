@@ -14,7 +14,7 @@ export const state = () => ({
 export const getters = {
   tempo: state => state.tempo,
   numBeats: state => state.numBeats,
-  beatsPerMeasure :state => state.beatsPerMeasure,
+  beatsPerMeasure: state => state.beatsPerMeasure,
   counts: state => state.counts,
   duration: state => 60 / state.tempo,
   starting: state => state.starting,
@@ -51,21 +51,21 @@ export const mutations = {
 };
 
 export const actions = {
-  toggle({dispatch, state}, time) {
-    if (state.playing || state.starting) {
+  toggle({dispatch, getters}, time) {
+    if (getters.active) {
       dispatch('stop');
     } else {
       dispatch('start', time);
     }
   },
-  start({commit, state}, time = '+4n') {
-    if (state.tempo && state.numBeats && !state.starting && !state.playing) {
+  start({commit, getters}, time = '+4n') {
+    if (getters.tempo && getters.numBeats && !getters.active) {
       commit('start');
       Tone.Transport.start(time);
     }
   },
-  stop({commit, state}) {
-    if (state.starting || state.playing) {
+  stop({commit, getters}) {
+    if (getters.active) {
       commit('stop');
       Tone.Transport.stop();
     }

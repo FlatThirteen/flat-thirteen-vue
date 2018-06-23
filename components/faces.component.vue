@@ -1,6 +1,6 @@
 <template lang="pug">
   .faces(:class="facesClass")
-    <!--particle-fx([type]="particleType", [count]="particleCount$ | async")-->
+    particle-fx(:type="particleType", :count="particleCount")
     .face(v-for="(pulses, beat) in pulsesByBeat", :class="faceClass[beat]")
       .eyes(:class="eyesClass[beat]")
 </template>
@@ -10,9 +10,17 @@
 
   import BeatTick from '~/common/core/beat-tick.model';
 
+  import ParticleFx from '~/components/particle-fx.component';
+
   export default {
+    components: {
+      'particle-fx': ParticleFx
+    },
     props: {
-      state: '',
+      react: {
+        type: Boolean,
+        default: true
+      }
     },
     data: function() {
       return {
@@ -34,33 +42,49 @@
     },
     computed: {
       facesClass() {
-        return [this.state, {
+        return [this.scene, {
           selected: this.selected
         }];
       },
       faceClass() {
         return _.times(this.numBeats, beat => ({
           active: this.activeBeat === beat,
-          cursor: this.playerBeat === beat
+          cursor: this.cursorBeat === beat && this.keyMode,
+          wrong: this.react && this.beatWrong === beat && this.goalCount > 2,
+          very: this.react && this.playCount > 3
         }));
       },
       eyesClass() {
         return _.times(this.numBeats, beat => ({
-          left: this.playerBeat + 1 === beat,
-          right: this.playerBeat - 1 === beat,
-          wrong: false,
-          very: false
+          closed: this.react && this.isOrNext('goal'),
+          ready: this.react && this.isOrNext('playback'),
+          up: this.cursorBeat === beat,
+          left: this.cursorBeat + 1 === beat,
+          right: this.cursorBeat - 1 === beat,
         }));
       },
-      playerBeat() {
+      cursorBeat() {
         return this.beatPulse[0];
       },
+      particleType() {
+        return this.scene === 'victory' ? 'confetti' : null;
+      },
+      particleCount() {
+        return this.scene === 'victory' ? this.basePoints : null;
+      },
       ...mapGetters({
+        keyMode: 'keyMode',
         paused: 'transport/paused',
         numBeats: 'transport/numBeats',
         pulsesByBeat: 'player/pulsesByBeat',
         selected: 'player/selected',
         beatPulse: 'player/beatPulse',
+        scene: 'stage/scene',
+        isOrNext: 'stage/isOrNext',
+        basePoints: 'stage/basePoints',
+        beatWrong: 'stage/beatWrong',
+        goalCount: 'stage/goalCount',
+        playCount: 'stage/playCount'
       })
     },
     watch: {
@@ -71,8 +95,8 @@
       }
     }
   }
-
 </script>
+
 <style scoped lang="stylus" type="text/stylus">
   @import "~assets/stylus/note.styl"
 
@@ -89,8 +113,9 @@
     position: relative;
     max-width: 80vh;
     width: 100%;
+    transition: background-color 150ms ease-in-out;
 
-    .victory &
+    &.victory
       background-color: back-green;
 
   .face
@@ -101,14 +126,11 @@
     background-color: main-blue;
     transition: background-color 150ms ease-in-out;
 
-    &.active
+    &.cursor
       background-color: active-blue;
 
     .victory &
-      background-color: main-green;
-
-  .victory &
-    background-color: active-green;
+      background-color: active-green;
 
   eyes-path(tl, bl = 100% - tl, tr = tl, br = bl, tl2 = tl, bl2 = bl, tr2 = tr, br2 = br)
     polygon(0% tl, 50% tl2, 50% tr2, 100% tr, 100% br, 50% br2, 50% bl2, 0% bl);
@@ -130,15 +152,19 @@
     justify-content: space-between;
     clip-path(eyes-path(0%));
 
-    .goal &, .count &
+    &.closed
       clip-path(eyes-path(60%, 70%));
 
-    .goal &.wrong
+    &.ready
+      clip-path(eyes-path(10%, 80%));
+
+    .goal .wrong &
       clip-path(eyes-path(50%, 70%, 35%, 60%, 65%, 70%, 55%));
       animation-duration: 50ms;
 
-      &.very
-        clip-path(eyes-path(50%, 70%, 15%, 80%, 65%, 70%, 55%));
+    .very.wrong &
+      clip-path(eyes-path(50%, 70%, 15%, 80%, 65%, 70%, 55%));
+      animation-duration: 350ms;
 
     .victory &
       clip-path: none;
@@ -147,18 +173,18 @@
       animation: blink;
       animation-duration: 250ms;
 
-    .selected:not(.goal).faces:not(:hover) &
+    .selected.faces:not(:hover) &
+      &.up
+        top: 0;
+
       &.left, &.right
-        top: 10%;
+        margin-top: -2px;
 
       &.left
-        left: -1vw;
+        left: -.5vw;
 
       &.right
-        left: 1vw;
-
-    .selected:not(.goal).faces:not(:hover) .cursor &
-      top: 0;
+        left: .5vw;
 
     &:before, &:after
       background-color: eye-color = #000;
@@ -193,45 +219,34 @@
   @keyframes blink
     0%, 100%
       transform: translateY(0) scaleY(1);
-
     20%
       transform: translateY(1vh) scaleY(.3)
-
     40%
       transform: translateY(1.4vh) scaleY(.2);
-
     80%
       transform: translateY(1vh) scaleY(.5)
 
   @keyframes bounce
     0%, 95%
       transform: translateY(0)
-
     25%
       transform: translateY(.7vh)
-
     50%
       transform: translateY(-.8vh)
-
     65%
       transform: translateY(.5vh)
-
     80%
       transform: translateY(-.3vh)
 
   @keyframes shake
     0%, 100%
       transform: translate3d(0, 0, 0)
-
     25%
       transform: translate3D(.7vw, -.1vh, 0)
-
     50%
       transform: translate3D(-.8vw, -.2vh, 0)
-
     65%
       transform: translate3D(.5vw, -.2vh, 0)
-
     80%
       transform: translate3D(-.3vw, -.1vh, 0)
 </style>

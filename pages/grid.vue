@@ -3,15 +3,18 @@
     key-handler(:player="true")
     .content
       bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
-      svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
-          :showPosition="showPosition")
-      html-grid(v-for="(surface, i) in surfaces", :key="'h' + i", :grid="surface")
-        transport-position.transport-container(:show="showPosition")
-      faces
+      .svg-grids(v-if="showSvgGrid")
+        svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
+            :showPosition="showPosition")
+      .html-grids(v-if="showHtmlGrid")
+        html-grid(v-for="(surface, i) in surfaces", :key="'h' + i", :grid="surface")
+          transport-position.transport-container(:show="showPosition")
+      faces(:react="false")
     .left
       transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure")
         .pulses-input
-          input.pulses(type="text", v-model="pbb", placeholder="# pulses", @keydown.stop)
+          input.pulses(type="text", v-model="pbb", placeholder="# pulses",
+              @keydown.stop="")
 
       .toggle.ball(:class="{active: showBall}",
           @click="showBall = !showBall") Bounce
@@ -19,7 +22,11 @@
           @click="showCounter = !showCounter") Counter
       .toggle.position(:class="{active: showPosition}",
           @click="showPosition = !showPosition") Position
-
+      .spacer
+      .toggle.svg-grid(:class="{active: showSvgGrid}",
+          @click="showSvgGrid = !showSvgGrid") SVG Grid
+      .toggle.html-grid(:class="{active: showHtmlGrid}",
+          @click="showHtmlGrid = !showHtmlGrid") HTML Grid
 
 </template>
 
@@ -55,6 +62,8 @@
         showBall: true,
         showCounter: true,
         showPosition: true,
+        showSvgGrid: true,
+        showHtmlGrid: false,
         pbb: 1111,
         surfaces: [
           { soundByKey: { q: 'snare', a: 'kick' } },
@@ -69,10 +78,8 @@
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
     methods: {
-      beatTickHandler({time, beatTick}) {
-        _.forEach(this.getNotes(beatTick), note => {
-          note.play(time);
-        });
+      beatTickHandler({time, beat, beatTick}) {
+        this.$store.dispatch('stage/onBeatTick', {time, beat, beatTick});
       }
     },
     computed: {
@@ -84,14 +91,11 @@
         });
       },
       beatsPerMeasure() {
-        return ':' + _.map(this.pbbPerMeasure, 'length').join(',');
+        return _.map(this.pbbPerMeasure, 'length').join(',');
       },
       pulsesByBeat() {
         return _.flatten(this.pbbPerMeasure);
-      },
-      ...mapGetters({
-        getNotes: 'player/getNotes'
-      })
+      }
     },
     watch: {
       pulsesByBeat: {
@@ -137,28 +141,14 @@
         &:focus
           outline: none;
 
-    .toggle
-      background-color: white;
-      border: solid 1px;
-      cursor: pointer;
-      padding: 5px;
-      margin: 5px;
-      user-select: none;
-
-      &.active
-        color: white;
-
-    toggle-color(class, color)
-      {class}
-        color: color;
-        border-color: color;
-
-        &.active
-          background-color: color;
+    .spacer
+      height: 40px;
 
     toggle-color('.ball', primary-blue);
     toggle-color('.counter', black);
     toggle-color('.position', primary-green);
+    toggle-color('.svg-grid', primary-red);
+    toggle-color('.html-grid', primary-red);
 
   .content, .footer
     margin: 10vh 0 0 content-side-margin;

@@ -1,6 +1,5 @@
 import Tone from '../tone';
 
-export const beatTickEvent = 'beattick';
 export const ticksPerBeat = Tone.Transport ? Tone.Transport.PPQ : 192;
 
 export function beatTickFrom(beat, tick = 0) {
@@ -25,7 +24,9 @@ export function duration(pulses) {
 }
 
 export default {
-  EVENT: beatTickEvent,
+  TOP: 'top',
+  EVENT: 'beattick',
+  BEAT: 'beat',
   PER: ticksPerBeat,
   from: beatTickFrom,
   ticks,

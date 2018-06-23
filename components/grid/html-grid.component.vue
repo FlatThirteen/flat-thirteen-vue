@@ -21,7 +21,7 @@
             .controls
               .note(@click="onNote(key, cursor)",
                   :class="[noteName[pulses], isOn[cursor][key] && 'on']")
-    .glass.overlay(v-if="false")
+    .glass.overlay(v-if="scene === 'victory'")
 </template>
 
 <script>
@@ -35,6 +35,10 @@
       grid: {
         type: Object,
         default: () => ({ soundByKey: { q: 'kick' } })
+      },
+      scene: {
+        type: String,
+        default: null
       }
     },
     data: function() {
@@ -57,7 +61,7 @@
     },
     methods: {
       beatTickHandler({beatTick}) {
-        if (!this.paused && this.beatTicks.includes(beatTick)) {
+        if (this.active && this.beatTicks.includes(beatTick)) {
           this.activeBeatTick = beatTick;
         }
       },
@@ -77,7 +81,7 @@
         this.$store.dispatch('player/set', {cursor, soundName,
           soundId: this.soundId
         });
-        if (this.paused && soundName) {
+        if (!this.active && soundName) {
           this.liveKeyCursor = key + this.cursor;
           Sound[soundName].play();
         }
@@ -114,12 +118,11 @@
         });
       },
       gridClass() {
-        return {
-          standby: !this.starting && this.paused,
-          playback: this.starting || !this.paused,
-          selected: this.isSelected,
-          starting: this.starting
-        };
+        return [this.scene, {
+          standby: !this.scene && !this.active,
+          playback: ! this.scene && this.active,
+          selected: this.isSelected
+        }];
       },
       beatClass() {
         return _.map(this.counts, count => count === 1 ? 'first' : '');
@@ -135,8 +138,7 @@
         keyUp: 'keyUp',
         keyMode: 'keyMode',
         noKeysHeld: 'noKeysHeld',
-        starting: 'transport/starting',
-        paused: 'transport/paused',
+        active: 'transport/active',
         counts: 'transport/counts',
         pulsesByBeat: 'player/pulsesByBeat',
         numPulses: 'player/numPulses',
@@ -161,11 +163,11 @@
           this.$store.dispatch('player/move', 1);
         }
       },
-      paused(paused) {
-        if (paused) {
-          this.activeBeatTick = '';
-        } else {
+      active(active) {
+        if (active) {
           this.liveKeyCursor = null;
+        } else {
+          this.activeBeatTick = '';
         }
       }
     }
@@ -286,6 +288,7 @@
     background-color: #000;
     border-radius: 50%;
     margin: auto;
+    transition: opacity 200ms ease;
 
     .goal &.actual
       opacity: 0.3;

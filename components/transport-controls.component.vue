@@ -1,17 +1,14 @@
 <template lang="pug">
   .controls
     transport(ref="transport", v-bind="transportProps")
-    play-icon(@click.native="onPlay()")
-      .counter(v-if="transport.playing") {{ transport.count }}
+    play-icon(@click.native="onPlay()", :showCount="transport.playing")
     slot
-    .beats-input(v-if="showBeatsPerMeasureInput")
-      input.beats(type="text", v-model="bpm", placeholder="# beats", @keydown.stop)
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
-      input(type="number", v-model.number="tempo", placeholder="tempo", @keydown.stop)
+      input(type="number", v-model.number="tempo", placeholder="tempo", @keydown.stop="")
     .performance(:class="{invalid: !transport.isValidLatencyHint(latencyHint)," +
         "dim: transport.isValidLatencyHint(latencyHint) && latencyHint !== transport.latencyHint}")
       input(type="text", v-model="latencyHint", placeholder="latency hint",
-          @focus="showSuggestions = true", @blur="hideSuggestions()", @keydown.stop)
+          @focus="showSuggestions = true", @blur="hideSuggestions()", @keydown.stop="")
       .suggestions(v-if="showSuggestions")
         .suggestion(@click="onLatencyHint('0.2')") 0.2
         .suggestion(@click="onLatencyHint('fastest')") fastest
@@ -35,7 +32,7 @@
     props: {
       playTime: {
         type: String,
-        default: '+4n'
+        default: undefined
       },
       beatsPerMeasure: {
         type: String,
@@ -49,7 +46,6 @@
     data: function() {
       return {
         transport: { bpm: () => 120, isValidBpm: _.stubTrue, isValidLatencyHint: _.stubTrue },
-        bpm: this.beatsPerMeasure,
         tempo: 120,
         latencyHint: 'balanced',
         showSuggestions: false,
@@ -66,12 +62,16 @@
     methods: {
       onKeyDown(event) {
         if (event.key === 'Enter') {
+          this.$store.commit('player/unselect');
           this.onPlay();
         }
       },
       onPlay() {
         Sound.resume().then(() => {
-          this.$store.dispatch('transport/toggle', this.playTime);
+          this.$store.dispatch('stage/onAction', {
+            scene: 'playback',
+            playTime : this.playTime
+          });
         });
       },
       hideSuggestions() {
@@ -90,39 +90,25 @@
           // Needed because vue doesn't watch Tone.Transport.bpm
           this.$forceUpdate();
         });
-        let bpm = this.showBeatsPerMeasureInput ? this.bpm : this.beatsPerMeasure;
         return {
-          beatsPerMeasure: _.map(_.split(_.trim(bpm, ':'), ','), Number),
+          beatsPerMeasure: _.map(_.split(this.beatsPerMeasure, ','), Number),
           tempo: this.tempo || 0,
           latencyHint: this.latencyHint,
           metronome: this.metronome,
           show: true
         }
       },
-      showBeatsPerMeasureInput() {
-        return !_.startsWith(this.bpm, ':');
-      }
-    },
-    watch: {
-
+      ...mapGetters({
+        playing: 'transport/playing'
+      })
     }
   }
 
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  @import "~assets/stylus/button.styl"
-
   .controls
     padding: 10px;
-
-  .play
-    position: relative;
-
-    .counter
-      posit(absolute, 0, x, x);
-      font-size: 40px;
-      padding: 10px 5px;
 
   .beats-input, .performance
     margin: 10px 0;
@@ -165,6 +151,7 @@
 
     .suggestions
       posit(absolute, x, x, x, 20%);
+      background-color: white;
       border: solid darkgray 1px;
       padding: 1px 5px;
 

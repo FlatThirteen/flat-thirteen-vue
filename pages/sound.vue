@@ -212,8 +212,6 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  @import "~assets/stylus/button.styl"
-
   size = 1.5vh;
 
   h3
