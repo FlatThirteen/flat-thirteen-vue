@@ -12,7 +12,8 @@
   import BeatTick from '~/common/core/beat-tick.model';
   import Tone from '~/common/tone';
 
-  const inactiveLeft = '25%';
+  const inactiveLeft = '50%';
+  const inactiveBottom = '20vh';
 
   export default {
     props: {
@@ -63,12 +64,12 @@
         this.ballIn = true;
         TweenMax.fromTo('#bouncing', this.duration, {
           opacity: 1,
-          left: 0
+          left: inactiveLeft
         }, {
           left: this.lefts[this.nextBeat]
         });
         TweenMax.fromTo('#bouncing', .9 * this.duration, {
-          bottom: '160%',
+          bottom: inactiveBottom,
         }, {
           bottom: 0,
           ease: Circ.easeIn,
@@ -80,7 +81,7 @@
           this.ballIn = false;
           TweenMax.killTweensOf('#bouncing', { bottom: true });
           TweenMax.to('#bouncing', .5 * this.duration, {
-            bottom: '160%'
+            bottom: inactiveBottom
           });
         }
       }

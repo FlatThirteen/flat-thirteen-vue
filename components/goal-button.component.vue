@@ -1,5 +1,5 @@
 <template lang="pug">
-  .goal.button(ref="goal", @click="$emit('click')", :class="{show}")
+  .goal.button(ref="goal", :class="{show}")
     img(src="~/assets/listen-music-128.png", v-if="mode === 'listen'")
     svg(height="60", width="60", viewBox="0 0 60 60")
       svg:path.auto(v-if="mode === 'auto'", :d="autoPath",
@@ -13,16 +13,6 @@
   import BeatTick from '~/common/core/beat-tick.model';
 
   export default {
-    props: {
-      scene: {
-        type: String,
-        default: null
-      },
-      nextScene: {
-        type: String,
-        default: null
-      }
-    },
     data: function() {
       return {
         autoPath: 'M15,27 H32 V23 L47,30 L32,37 V33 H15 Z',
@@ -67,7 +57,9 @@
       },
       ...mapGetters({
         duration: 'transport/duration',
-        autoGoal: 'stage/autoGoal'
+        autoGoal: 'stage/autoGoal',
+        scene: 'stage/scene',
+        nextScene: 'stage/nextScene'
       }),
       show() {
         return this.scene === 'standby' ||
