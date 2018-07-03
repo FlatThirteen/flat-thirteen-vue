@@ -11,6 +11,47 @@
 
   export default {
     mixins: [AnimatedMixin],
+    constants: {
+      animationTarget: 'loop',
+      animationDefinitions: {
+        pulse: [[.2, {
+          transform: 'scale(1.05)'
+        }], [.6, {
+          transform: 'scale(0.95)'
+        }], [.2, {
+          transform: 'scale(1)'
+        }]],
+        bumper: [[0, {
+          transform: 'translateX(0)'
+        }], [.2, {
+          transform: 'translateX(1vw)'
+        }], [.1, {
+          transform: 'translateX(-1vw)'
+        }], [.2, {
+          transform: 'translateX(0)'
+        }]],
+        toast: [[0, {
+          opacity: 0,
+          transform: 'translateY(3vh)'
+        }], [.8, {
+          opacity: 1,
+          transform: 'translateY(-1vh)',
+        }], [.2, {
+          transform: 'translateY(0)'
+        }]],
+        drop: [[0, {
+          transform: 'translateY(0)'
+        }], [.2, {
+          transform: 'translateY(-1vh)'
+        }], [.8, {
+          opacity: 0,
+          transform: 'translateY(3vh)'
+        }]],
+        fade: [[1, {
+          opacity: 0
+        }]]
+      }
+    },
     mounted() {
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
@@ -20,13 +61,7 @@
     methods: {
       beatHandler() {
         if (this.autoLoop && this.nextScene !== 'playback') {
-          this.animate('loop', [[.2, {
-            transform: 'scale(1.05)'
-          }], [.6, {
-            transform: 'scale(0.95)'
-          }], [.2, {
-            transform: 'scale(1)'
-          }]]);
+          this.animate('pulse');
         }
       }
     },
@@ -42,34 +77,12 @@
         if (!this.autoLoop) {
           return;
         }
-        if (scene === 'standby' && (oldScene === 'goal' || oldScene === 'count')) {
-          this.animate('loop', [[0, {
-            transform: 'scale(1)'
-          }], [.2, {
-            transform: 'scale(1.1)'
-          }], [.8, {
-            opacity: 0,
-            transform: 'scale(0)'
-          }]]);
+        if (scene === 'standby') {
+          this.animate('fade');
         } else if ((scene === 'count' && this.nextScene === 'goal') && oldScene === 'goal') {
-          this.animate('loop', [[0, {
-            transform: 'translateY(0)'
-          }], [.2, {
-            transform: 'translateY(-.5vh)'
-          }], [.2, {
-            transform: 'translateY(1vh)'
-          }], [.2, {
-            transform: 'translateY(0)'
-          }]]);
-        } else if (scene === 'playback' && (oldScene === 'goal' || oldScene === 'count')) {
-          this.animate('loop', [[0, {
-            transform: 'translateY(0)'
-          }], [.2, {
-            transform: 'translateY(-1vh)'
-          }], [.8, {
-            opacity: 0,
-            transform: 'translateY(3vh)'
-          }]]);
+          this.animate('bumper');
+        } else if (scene === 'goal' && this.nextScene === 'count') {
+          this.animate('toast');
         }
       },
       nextScene(nextScene, oldNextScene) {
@@ -77,24 +90,10 @@
           return;
         }
         if (nextScene === 'goal') {
-          this.animate('loop', [[0, {
-            opacity: 0,
-            transform: 'translateY(3vh)'
-          }], [.8, {
-            opacity: 1,
-            transform: 'translateY(-1vh)',
-          }], [.2, {
-            transform: 'translateY(0)'
-          }]]);
-        } else if (nextScene === 'playback' && (oldNextScene === 'goal' || oldNextScene === 'count')) {
-          this.animate('loop', [[0, {
-            transform: 'scale(1)'
-          }], [.2, {
-            transform: 'scale(1.1)'
-          }], [.8, {
-            opacity: 0,
-            transform: 'scale(0)'
-          }]]);
+          this.animate('toast');
+        } else if (nextScene === 'standby' ||
+            nextScene === 'playback' && (oldNextScene === 'goal' || oldNextScene === 'count')) {
+          this.animate('drop');
         }
       }
     }
@@ -106,7 +105,7 @@
   .loop
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     height: 60px;
     width: 60px;

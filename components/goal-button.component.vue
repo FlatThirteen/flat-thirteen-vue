@@ -16,9 +16,42 @@
 
   export default {
     mixins: [AnimatedMixin],
+    constants: {
+      autoPath: 'M15,27 H32 V23 L47,30 L32,37 V33 H15 Z',
+      animationTarget: 'goal',
+      animationDefinitions: {
+        launch: [[.2, {
+          transform: 'translateY(2vh) scale(1.2, 0.6)'
+        }], [.2, {
+          transform: 'translateY(0vh) scale(0.5, 1.2)'
+        }], [.6, {
+          transform: 'translateY(-50vh) scale(0.5, 1)'
+        }]],
+        land: [[0, {
+          transform: 'translateY(-50vh) scale(0.5, 1)'
+        }], [.6, {
+          transform: 'translateY(0vh) scale(0.5, 1.2)'
+        }], [.2, {
+          transform: 'translateY(2vh) scale(1.2, 0.6)'
+        }], [.2, {
+          transform: 'translateY(0) scale(1)'
+        }]],
+        appear: [[0, {
+          transform: 'translateY(5vh) scale(0)'
+        }], [.8, {
+          transform: 'translateY(-1vh) scale(1.05)'
+        }], [.2, {
+          transform: 'translateY(0) scale(1)'
+        }]],
+        disappear: [[.4, {
+          transform: 'scale(1.05)'
+        }], [.6, {
+          transform: 'scale(0)'
+        }]]
+      }
+    },
     data: function() {
       return {
-        autoPath: 'M15,27 H32 V23 L47,30 L32,37 V33 H15 Z',
         mode: 'listen'
       };
     },
@@ -37,39 +70,13 @@
         immediate: true,
         handler(scene, oldScene) {
           if (scene === 'goal' && oldScene === 'standby') {
-            this.animate('goal', [[.2, {
-              transform: 'translateY(2vh) scale(1.2, 0.6)'
-            }], [.2, {
-              transform: 'translateY(0vh) scale(0.5, 1.2)'
-            }], [.6, {
-              transform: 'translateY(-50vh) scale(0.5, 1)'
-            }]]);
-          } else if (scene === 'count' && oldScene !== 'victory' || oldScene === 'standby') {
-            this.animate('goal', [[.4, {
-              transform: 'rotate(-15deg) scale(1.05)'
-            }], [.6, {
-              transform: 'rotate(180deg) scale(0)'
-            }]]);
-          } else if (scene === 'standby' && oldScene === 'goal') {
-            this.mode = 'listen';
-            this.animate('goal', [[0, {
-              transform: 'translateY(-50vh) scale(0.5, 1)'
-            }], [.6, {
-              transform: 'translateY(0vh) scale(0.5, 1.2)'
-            }], [.2, {
-              transform: 'translateY(2vh) scale(1.2, 0.6)'
-            }], [.2, {
-              transform: 'translateY(0) scale(1)'
-            }]]);
+            this.animate('launch');
+          } else if (!this.autoGoal && scene === 'count' && oldScene !== 'victory' ||
+              oldScene === 'standby') {
+            this.animate('disappear');
           } else if (scene === 'standby') {
             this.mode = 'listen';
-            this.animate('goal', [[0, {
-              transform: 'rotate(180deg) scale(0)'
-            }], [.8, {
-              transform: 'rotate(-15deg) scale(1.05)'
-            }], [.2, {
-              transform: 'rotate(0) scale(1)'
-            }]]);
+            this.animate(oldScene === 'goal' ? 'land' : 'appear');
           }
         }
       }

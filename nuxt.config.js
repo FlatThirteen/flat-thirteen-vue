@@ -25,6 +25,7 @@ module.exports = {
   */
   loading: { color: '#008FFF' },
   plugins: [
+    '~/plugins/constants.js',
     '~/plugins/event-bus.js',
     { src: '~/plugins/pixi', ssr: false }
   ],

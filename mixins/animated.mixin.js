@@ -3,10 +3,10 @@ import { mapGetters } from 'vuex';
 
 export default {
   methods: {
-    animate(id, data, options) {
-      let element = this.$refs[id];
+    animate(name, options) {
+      let element = this.$refs[this.animationTarget];
       if (element) {
-        return _.reduce(data, (timeline, [time, style]) => {
+        return _.reduce(this.animationDefinitions[name], (timeline, [time, style]) => {
           if (time) {
             return timeline.to(element, time, style);
           } else {

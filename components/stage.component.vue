@@ -89,7 +89,11 @@
         this.$store.dispatch('stage/onAction', { scene: 'playback' });
       },
       onStop() {
-        this.$store.dispatch('stage/onAction', { scene: 'standby' })
+        if (this.scene === 'count') {
+          this.$store.dispatch('stage/onAction', { scene: 'standby' });
+        } else {
+          this.$store.commit('stage/next', { nextScene: 'standby' });
+        }
       }
     },
     computed: {

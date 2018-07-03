@@ -5966,6 +5966,10 @@ void-elements@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/void-elements/-/void-elements-2.0.1.tgz#c066afb582bb1cb4128d60ea92392e94d5e9dbec"
 
+vue-constants@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/vue-constants/-/vue-constants-1.0.3.tgz#0f143d3e5c51b3d2a06c857b3b8543b0b3c3373b"
+
 vue-eslint-parser@^2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/vue-eslint-parser/-/vue-eslint-parser-2.0.3.tgz#c268c96c6d94cfe3d938a5f7593959b0ca3360d1"

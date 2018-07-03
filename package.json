@@ -16,7 +16,8 @@
     "gsap": "^2.0.1",
     "nuxt": "^1.0.0",
     "pixi.js": "^4.8.0",
-    "tone": "13.1.31"
+    "tone": "13.1.31",
+    "vue-constants": "^1.0.3"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.1",
