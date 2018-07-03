@@ -81,6 +81,7 @@
           this.ballIn = false;
           TweenMax.killTweensOf('#bouncing', { bottom: true });
           TweenMax.to('#bouncing', .5 * this.duration, {
+            opacity: 0,
             bottom: inactiveBottom
           });
         }

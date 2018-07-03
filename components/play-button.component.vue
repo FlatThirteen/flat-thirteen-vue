@@ -15,31 +15,18 @@
   import { TweenMax } from 'gsap'
   import { mapGetters } from 'vuex';
 
+  import AnimatedMixin from '~/mixins/animated.mixin';
+
   import { primaryGreen } from '~/common/colors'
 
   import BeatTick from '~/common/core/beat-tick.model';
 
   export default {
+    mixins: [AnimatedMixin],
     props: {
-      showCount: {
+      noGoal: {
         type: Boolean,
         default: false
-      },
-      scene: {
-        type: String,
-        default: null
-      },
-      nextScene: {
-        type: String,
-        default: null
-      },
-      playNotes: {
-        type: Number,
-        default: 0
-      },
-      goalNotes: {
-        type: Number,
-        default: 0
       }
     },
     data: function() {
@@ -61,31 +48,32 @@
       beatHandler({count}) {
         this.count = count;
         if (this.goalNotes && this.showCount) {
-          this.animate([[.1, {
-            transform: 'translateX(10px)'
+          this.animate('play', [[.1, {
+            transform: 'translateY(-1vh)',
+            transformOrigin: 'center center'
           }], [.6, {
-            transform: 'translateX(-6px)'
+            transform: 'translateY(.6vh)'
           }], [.3, {
-            transform: 'translateX(0)'
+            transform: 'translateY(0)'
           }]]);
         }
       },
-      animate(data) {
-        if (this.$refs.play) {
-          _.reduce(data, (timeline, [time, style]) => {
-            if (time) {
-              return timeline.to(this.$refs.play, time, style);
-            } else {
-              return timeline.from(this.$refs.play, time, style);
-            }
-          }, new TimelineMax()).duration(this.animationDuration).play(0);
-        }
+      animateEnter() {
+        this.animate('play', [[0, {
+          opacity: 0,
+          transform: 'rotate(90deg) scale(0)',
+          transformOrigin: 'center center'
+        }], [.5, {
+          opacity: 1,
+          transform: 'rotate(45deg) scale(0.3)'
+        }], [.3, {
+          transform: 'rotate(-10deg) scale(1.2)'
+        }], [.2, {
+          transform: 'rotate(0) scale(1)'
+        }]]);
       }
     },
     computed: {
-      animationDuration() {
-        return this.duration / 2;
-      },
       ready() {
         return this.playNotes === this.goalNotes;
       },
@@ -105,94 +93,96 @@
           wrong: this.goalNotes && !this.ready
         };
       },
+      showCount() {
+        return this.playing && (this.noGoal || this.nextScene === 'playback');
+      },
       ...mapGetters({
-        duration: 'transport/duration'
+        playing: 'transport/playing',
+        scene: 'stage/scene',
+        nextScene: 'stage/nextScene',
+        playNotes: 'player/noteCount',
+        goalNotes: 'phrase/goalNoteCount'
       })
     },
     watch: {
       playNotes: {
         immediate: true,
         handler() {
+          if (this.noGoal) {
+            return;
+          }
           TweenMax.to(this.$data, this.animationDuration, {
             stopLevelTop: this.ready ? 0 : this.stopCalculation,
             stopLevelBottom: this.ready ? 0 : this.stopCalculation + 15
           });
-          if (this.$refs.play) {
-            this.animate([[0, {
-              transform: 'scale(1)'
-            }], [.2, {
-              transform: 'scale(0.8, 1.1)'
-            }], [.4, {
-              transform: 'scale(1.2, 0.8)'
-            }], [.4, {
-              transform: 'scale(1)'
-            }]]);
-          }
+          this.animate('play', [[0, {
+            transform: 'scale(1)',
+          }], [.2, {
+            transform: 'scale(0.8, 1.1)',
+            transformOrigin: 'center center'
+          }], [.4, {
+            transform: 'scale(1.2, 0.8)'
+          }], [.4, {
+            transform: 'scale(1)'
+          }]]);
         }
       },
       scene(scene, oldScene) {
+        if (this.noGoal) {
+          return;
+        }
         if (scene === 'playback') {
-          this.animate([[0, {
+          this.animate('play', [[0, {
             opacity: 1,
-            transform: 'translateX(0) scale(1)'
+            transform: 'translateY(0) scale(1)',
           }], [.2, {
-            transform: 'translateX(-1vw) scale(0.8, 1.1)'
+            transform: 'translateY(-1vh) scale(1.1, .8)',
+            transformOrigin: 'top left'
           }], [.3, {
-            transform: 'translateX(-1vw) scale(0.6, 1.2)'
+            transform: 'translateY(-1vh) scale(1.2, .6)'
           }], [.4, {
             opacity: 0.5,
-            transform: 'translateX(5vw) scale(1.5, 0.1)'
+            transform: 'translateY(2vh) scale(.1, 1.5)'
           }], [.1, {
             opacity: 0,
-            transform: 'translateX(5vw) scale(0, 0)'
+            transform: 'translateY(2vh) scale(0, 1.5)'
           }]]);
         } else if (scene === 'standby' && oldScene === 'playback') {
-          this.animate([[0, {
+          this.animate('play', [[0, {
             opacity: 0,
-            transform: 'translateX(5vw) scale(0, 0)'
+            transform: 'translateY(2vh) scale(0, 1.5)'
           }], [.1, {
             opacity: 0.5,
-            transform: 'translateX(5vw) scale(1.5, 0.1)'
+            transform: 'translateY(2vh) scale(.1, 1.5)',
+            transformOrigin: 'top left'
           }], [.5, {
             opacity: 1,
-            transform: 'translateX(-1vw) scale(0.6, 1.2)'
+            transform: 'translateY(-1vh) scale(1.2, .6)'
           }], [.2, {
-            transform: 'translateX(-1vw) scale(0.8, 1.1)'
+            transform: 'translateY(-1vh) scale(1.1, .8)'
           }], [.2, {
-            transform: 'translateX(0) scale(1)'
+            transform: 'translateY(0) scale(1)'
           }]]);
         } else if (scene === 'goal') {
-          this.animate([[.1, {
-            transform: 'rotate(0) scale(1.2)'
+          this.animate('play', [[.1, {
+            transform: 'rotate(0) scale(1.2)',
+            transformOrigin: 'center center'
           }], [.4, {
             transform: 'rotate(-10deg) scale(1.2)'
           }], [.5, {
             transform: 'rotate(90deg) scale(0)'
           }]]);
         } else if (scene === 'standby' || scene === 'count' && oldScene !== 'standby') {
-          this.animate(appearData);
+          this.animateEnter();
         }
       },
       nextScene(nextScene) {
-        if (nextScene === 'playback') {
-          this.animate(appearData);
+        if (!this.noGoal && nextScene === 'playback' && this.scene !== 'count') {
+          this.animateEnter();
         }
       }
     }
   }
-
-  const appearData = [[0, {
-    opacity: 0,
-    transform: 'rotate(90deg) scale(0)'
-  }], [.5, {
-    opacity: 1,
-    transform: 'rotate(45deg) scale(0.3)'
-  }], [.3, {
-    transform: 'rotate(-10deg) scale(1.2)'
-  }], [.2, {
-    transform: 'rotate(0) scale(1)'
-  }]];
-
 </script>
 
 <style scoped lang="stylus" type="text/stylus">

@@ -11,9 +11,9 @@
           transport-position.transport-container(:show="showPosition")
       faces(:react="false")
     .left
-      transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure")
+      transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure.join(',')")
         .pulses-input
-          input.pulses(type="text", v-model="pbb", placeholder="# pulses",
+          input(type="text", v-model="pulseBeat", placeholder="# pulses",
               @keydown.stop="")
 
       .toggle.ball(:class="{active: showBall}",
@@ -64,7 +64,7 @@
         showPosition: true,
         showSvgGrid: true,
         showHtmlGrid: false,
-        pbb: 1111,
+        pulseBeat: 1111,
         surfaces: [
           { soundByKey: { q: 'snare', a: 'kick' } },
           { soundByKey: { z: 'cowbell' } }
@@ -83,21 +83,15 @@
       }
     },
     computed: {
-      pbbPerMeasure() {
-        return _.map(_.split(this.pbb, ','), (pbb) => {
-          return _.chain(_.split(pbb, '')).map(_.toNumber).filter(value => {
-            return _.inRange(value, 1, 5);
-          }).value();
-        });
-      },
-      beatsPerMeasure() {
-        return _.map(this.pbbPerMeasure, 'length').join(',');
-      },
-      pulsesByBeat() {
-        return _.flatten(this.pbbPerMeasure);
-      }
+      ...mapGetters(['beatsPerMeasure', 'pulsesByBeat'])
     },
     watch: {
+      pulseBeat: {
+        immediate: true,
+        handler(pulseBeat) {
+          this.$store.commit('pulseBeat', pulseBeat);
+        }
+      },
       pulsesByBeat: {
         deep: true,
         immediate: true,

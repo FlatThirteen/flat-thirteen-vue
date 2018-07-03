@@ -13,10 +13,12 @@
     mounted() {
       window.addEventListener('keydown', this.onKeyDown);
       window.addEventListener('keyup', this.onKeyUp);
+      window.addEventListener('mousemove', this.onMouseMove);
     },
     destroyed() {
       window.removeEventListener('keydown', this.onKeyDown);
       window.removeEventListener('keyup', this.onKeyUp);
+      window.removeEventListener('mousemove', this.onMouseMove);
     },
     methods: {
       onKeyDown(event) {
@@ -42,6 +44,9 @@
         if (this.player && this.noKeysHeld && (event.key === ' ')) {
           this.$store.dispatch('player/move', 1);
         }
+      },
+      onMouseMove() {
+        this.$store.dispatch('disableKeyMode');
       }
     },
     computed: {

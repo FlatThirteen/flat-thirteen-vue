@@ -17,7 +17,8 @@ module.exports = {
     ]
   },
   css: [
-    '~/assets/stylus/common.styl'
+    '~/assets/stylus/common.styl',
+    './assets/stylus/button.styl'
   ],
   /*
   ** Customize the progress bar color
@@ -49,7 +50,6 @@ module.exports = {
             import: [
               path.resolve(__dirname, './assets/stylus/variables.styl'),
               path.resolve(__dirname, './assets/stylus/mixin.styl'),
-              path.resolve(__dirname, './assets/stylus/button.styl'),
               path.resolve(__dirname, './assets/stylus/colors.styl')
             ]
           }

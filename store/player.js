@@ -85,6 +85,9 @@ export const actions = {
     }
   },
   set({commit, state, getters, rootGetters}, {cursor = state.cursor, soundId = state.selected, soundName}) {
+    if (state.cursor !== cursor) {
+      commit('select', { cursor, soundId });
+    }
     if (!rootGetters['transport/starting']) {
       commit(soundName ? 'setNote' : 'unsetNote', {
         beatTick: getters.beatTicks[cursor],
@@ -99,6 +102,16 @@ export const actions = {
         beatTick: getters.beatTicks[state.cursor],
         soundId
       });
+    }
+  },
+  select({commit, state, rootGetters}, {cursor, soundId = state.selected}) {
+    if (!rootGetters['keyMode'] && (state.cursor !== cursor || state.selected !== soundId)) {
+      commit('select', { cursor, soundId });
+    }
+  },
+  unselect({commit, rootGetters}) {
+    if (!rootGetters['keyMode']) {
+      commit('unselect');
     }
   }
 };

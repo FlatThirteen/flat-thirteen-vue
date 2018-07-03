@@ -1,7 +1,7 @@
 <template lang="pug">
   .controls
     transport(ref="transport", v-bind="transportProps")
-    play-icon(@click.native="onPlay()", :showCount="transport.playing")
+    play-button(@click.native="onPlay()", :noGoal="true")
     slot
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
       input(type="number", v-model.number="tempo", placeholder="tempo", @keydown.stop="")
@@ -21,12 +21,12 @@
   import { mapGetters } from 'vuex'
 
   import Sound from '~/common/sound/sound';
-  import PlayIcon from '~/components/play-icon.component';
+  import PlayButton from '~/components/play-button.component';
   import Transport from '~/components/transport.component';
 
   export default {
     components: {
-      'play-icon': PlayIcon,
+      'play-button': PlayButton,
       'transport': Transport
     },
     props: {

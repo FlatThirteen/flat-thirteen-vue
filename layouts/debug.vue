@@ -16,6 +16,7 @@
           Sound: '/sound',
           Grid: '/grid',
           Stage: '/stage',
+          Lesson: '/lesson',
           Backing: '/backing'
         }
       };
@@ -33,6 +34,8 @@
     display: block;
     height: 48px;
     padding: 0 1vw 0 content-side-margin;
+    overflow-x: scroll;
+    white-space: nowrap;
 
     a
       display: inline-block;

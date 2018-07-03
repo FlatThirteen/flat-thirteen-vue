@@ -11,3 +11,12 @@ posit(type, top = 0, right = top, bottom = top, left = right)
 
 shadow(color, size = 4px)
   filter: drop-shadow(0 size size+1 color);
+
+toggle-color(class, color)
+  {class}
+    color: color;
+    border-color: color;
+
+    &.active
+      background-color: color;
+

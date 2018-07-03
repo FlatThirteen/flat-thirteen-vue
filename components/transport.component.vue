@@ -274,7 +274,7 @@
           });
           if (restart) {
             // nextTick needed so listeners have a chance to react before restart
-            this.$nextTick(function () {
+            this.$nextTick(() => {
               this.$store.dispatch('transport/start');
             });
 

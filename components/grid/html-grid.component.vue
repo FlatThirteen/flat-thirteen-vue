@@ -66,12 +66,10 @@
         }
       },
       select(cursor) {
-        this.$store.commit('keyMode');
-        this.$store.commit('player/select', { cursor, soundId: this.soundId });
+        this.$store.dispatch('player/select', { cursor, soundId: this.soundId });
       },
       unselect() {
-        this.$store.commit('keyMode');
-        this.$store.commit('player/unselect');
+        this.$store.dispatch('player/unselect');
       },
       onNote(key, cursor) {
         Sound.resume();

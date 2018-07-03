@@ -1,21 +1,11 @@
 button-height = 60px;
 
-toggle-color(class, color)
-  {class}
-    color: color;
-    border-color: color;
-
-    &.active
-      background-color: color;
-
 .button
   cursor: pointer;
   display: inline-block;
-  height: button-height;
   text-align: center;
   user-select: none;
   vertical-align: top;
-  width: button-height;
   transition: filter 250ms;
 
   &.disabled
@@ -23,6 +13,10 @@ toggle-color(class, color)
 
   &:hover:not(:active):not(.disabled)
     shadow(#888);
+
+.play.button, .goal.button, .stop.button, .toggle.button
+  height: 60px;
+  width: 60px;
 
 .toggle
   background-color: white;

@@ -72,8 +72,10 @@ export const actions = {
       commit('set', { bucket: 'victory', name: 10, notes: _.clone(state.victory[9]) });
       commit('add', { bucket: 'victory', name: 10, beatTick: '01:144', note: loNote});
     }
-    if (goal) {
+    if (_.isArray(goal)) {
       dispatch('setTracks', { name: 'goal', tracks: goal });
+    } else if (_.isObject(goal)) {
+      commit('set', { name: 'goal', notes: goal });
     }
   },
   setVictory({commit, state}, number) {

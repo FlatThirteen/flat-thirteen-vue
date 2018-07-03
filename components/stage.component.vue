@@ -1,14 +1,12 @@
 <template lang="pug">
-  .container
+  .container(v-if="surfaces.length")
     key-handler(:player="true")
     .top-container
       bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
       .controls.whole(v-if="goalNoteCount")
-        play-icon(@click.native="onPlayback()", :scene="scene", :nextScene="nextScene",
-            :goalNotes="goalNoteCount", :playNotes="noteCount",
-            :showCount="playing && nextScene === 'playback'")
+        play-button(@click.native="onPlayback()")
         goal-button(@click.native="onGoal()")
-        .stop-icon.button(@click="onStop()", :class="{active: autoLoop && scene !== 'standby'}")
+        loop-button(@click.native="onStop()")
 
     svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
         :scene="scene", :showPosition="showPosition")
@@ -30,7 +28,8 @@
   import GoalButton from '~/components/goal-button.component';
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
-  import PlayIcon from '~/components/play-icon.component';
+  import LoopButton from '~/components/loop-button.component';
+  import PlayButton from '~/components/play-button.component';
   import Transport from '~/components/transport.component';
 
   export default {
@@ -41,11 +40,12 @@
       'goal-button': GoalButton,
       'svg-grid': SvgGrid,
       'key-handler': KeyHandler,
-      'play-icon': PlayIcon,
+      'loop-button': LoopButton,
+      'play-button': PlayButton,
       'transport': Transport
     },
     props: {
-      pbb: {
+      pulseBeat: {
         type: String,
         default: '1111'
       },
@@ -93,19 +93,6 @@
       }
     },
     computed: {
-      pbbPerMeasure() {
-        return _.map(_.split(this.pbb, ','), (pbb) => {
-          return _.chain(_.split(pbb, '')).map(_.toNumber).filter(value => {
-            return _.inRange(value, 1, 5);
-          }).value();
-        });
-      },
-      beatsPerMeasure() {
-        return _.map(this.pbbPerMeasure, 'length');
-      },
-      pulsesByBeat() {
-        return _.flatten(this.pbbPerMeasure);
-      },
       showBall() {
         return this.lastBeat ? this.nextScene === 'goal' : this.scene === 'goal';
       },
@@ -130,6 +117,8 @@
         }
       },
       ...mapGetters({
+        beatsPerMeasure: 'beatsPerMeasure',
+        pulsesByBeat: 'pulsesByBeat',
         keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
         notes: 'player/notes',
@@ -138,7 +127,6 @@
         nextScene: 'stage/nextScene',
         basePoints: 'stage/basePoints',
         autoLoop: 'stage/autoLoop',
-        playing: 'transport/playing',
         active: 'transport/active'
       })
     },
@@ -147,8 +135,6 @@
         if (key === 'Enter') {
           this.$store.commit('player/unselect');
           this.$store.dispatch('stage/onAction');
-        } else if (_.includes('012', key)) {
-          this.setAuto(_.toNumber(key));
         }
       },
       active(active) {
@@ -159,6 +145,12 @@
       notes() {
         if (this.goalNoteCount) {
           this.$store.dispatch('stage/autoPlay');
+        }
+      },
+      pulseBeat: {
+        immediate: true,
+        handler(pulseBeat) {
+          this.$store.commit('pulseBeat', pulseBeat);
         }
       },
       pulsesByBeat: {
@@ -194,8 +186,4 @@
     justify-content: space-between;
     align-items: flex-end;
     padding-bottom: 10px;
-
-  .stop-icon.active
-    background-color: dark-grey;
-
 </style>

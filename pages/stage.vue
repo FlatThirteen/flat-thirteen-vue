@@ -1,6 +1,6 @@
 <template lang="pug">
   .container
-    stage(:pbb="pbb", :surfaces="surfaces")
+    stage(:pulseBeat="pulseBeat", :surfaces="surfaces")
       note-counter.notes
     .bottom-controls
       .points(v-if="goalNoteCount") {{ basePoints }}
@@ -28,11 +28,10 @@
     layout: 'debug',
     data: function() {
       return {
-        pbb: '1111',
+        pulseBeat: '1111',
         surfaces: [
           { soundByKey: { q: 'snare', a: 'kick' } },
-        ],
-        lastBeat: false
+        ]
       }
     },
     methods: {
@@ -49,6 +48,7 @@
     },
     computed: {
       ...mapGetters({
+        keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
         autoLevel: 'stage/autoLevel',
         autoLevels: 'stage/autoLevels',
@@ -57,6 +57,13 @@
         basePoints: 'stage/basePoints',
         numBeats: 'transport/numBeats'
       })
+    },
+    watch: {
+      keyDown(key) {
+        if (_.includes('012', key)) {
+          this.setAuto(_.toNumber(key));
+        }
+      }
     }
   }
 

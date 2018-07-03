@@ -103,8 +103,10 @@ export const actions = {
       if (scene === 'goal' && getters.goalCount > 1) {
         commit('penalty', { type: 'goal', amount: 10 });
       }
-      dispatch('transport/start', playTime, { root: true });
       commit('phrase/clear', { name: 'playback' }, { root: true });
+      Vue.nextTick(() => {
+        dispatch('transport/start', playTime, { root: true });
+      });
     }
   },
   autoPlay({commit, dispatch, state, getters, rootGetters}) {
@@ -130,10 +132,10 @@ export const actions = {
   toNext({commit, dispatch, state, getters, rootGetters}) {
     let scene = state.nextScene;
     if (state.scene === 'victory') {
-      commit('reset');
       commit('player/setup', {}, { root: true });
-      if (getters.autoGoal) {
-        // TODO: Make new goal
+      dispatch('lesson/next', { points: getters.basePoints }, { root: true });
+      if (rootGetters['lesson/done']) {
+        scene = 'standby';
       }
     } else if (state.scene === 'goal') {
       if (rootGetters['player/noteCount'] === rootGetters['phrase/goalNoteCount'] &&
@@ -157,7 +159,6 @@ export const actions = {
     } else if (scene === 'playback') {
       commit('phrase/clear', { name: 'playback' }, { root: true });
     } else if (scene === 'victory') {
-      commit('player/unselect', undefined, { root: true });
       dispatch('phrase/setVictory', _.floor(getters.basePoints / 10), { root: true });
     }
   },
