@@ -132,7 +132,7 @@ export const actions = {
   toNext({commit, dispatch, state, getters, rootGetters}) {
     let scene = state.nextScene;
     if (state.scene === 'victory') {
-      commit('player/setup', {}, { root: true });
+      dispatch('player/clear', undefined, { root: true });
       dispatch('lesson/next', { points: getters.basePoints }, { root: true });
       if (rootGetters['lesson/done']) {
         scene = 'standby';

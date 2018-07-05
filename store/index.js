@@ -1,7 +1,6 @@
 import Vue from 'vue';
 
 export const state = () => ({
-  pulseBeat: '1111',
   keyMode: false,
   keysHeld: {},
   keyDown: null,
@@ -10,13 +9,6 @@ export const state = () => ({
 });
 
 export const getters = {
-  pulseBeat: state => state.pulseBeat,
-  pulseBeatPerMeasure: state => _.map(_.split(state.pulseBeat, ','), (pulses) =>
-    _.chain(_.split(pulses, '')).map(_.toNumber).filter(value =>
-      _.inRange(value, 1, 5)).value()
-  ),
-  beatsPerMeasure: (state, getters) => _.map(getters.pulseBeatPerMeasure, 'length'),
-  pulsesByBeat: (state, getters) => _.flatten(getters.pulseBeatPerMeasure),
   keyMode: state => state.keyMode,
   keysHeld: state => state.keysHeld,
   oneKeyHeld: state => _.size(state.keysHeld) === 1,
@@ -27,9 +19,6 @@ export const getters = {
 };
 
 export const mutations = {
-  pulseBeat(state, pulseBeat) {
-    state.pulseBeat = pulseBeat;
-  },
   keyDown(state, {key, location}) {
     state.keyMode = key !== 'Enter';
     Vue.set(state.keysHeld, key, true);

@@ -3,19 +3,23 @@
     .lesson-control(v-if="lessonIndex === null")
       .lesson.button(v-for="(lesson, i) in lessons", @click="setLesson(i)",
           :class="{done: points[i]}") {{ points[i] || i }}
-    .quit.button(v-else, @click="clearLesson()") X
-    stage(:pulseBeat="pulseBeat", :surfaces="surfaces")
-      note-counter.notes
+    .lesson-container(v-else)
+      .quit.button(@click="clearLesson()") X
+      stage
+        note-counter.notes
 
 </template>
 
 <script>
   import { mapGetters } from 'vuex';
 
+  import LessonBuilderMixin from '~/mixins/lesson-builder.mixin';
+
   import NoteCounter from '~/components/note-counter.component';
   import Stage from '~/components/stage.component';
 
   export default {
+    mixins: [LessonBuilderMixin],
     components: {
       'note-counter': NoteCounter,
       'stage': Stage
@@ -42,33 +46,40 @@
           surfaces: [
             { soundByKey: { q: 'snare', a: 'kick' } }
           ],
-//          stages: []
+          stages: 4,
+          buildParams: () => ({ requiredBeatTicks: ['00:000'] })
         }, {
-          autoLevel: 1
+          autoLevel: 1,
+          buildParams: () => {}
         }, {
           autoLevel: 2
         }, {
-          pulseBeat: '2111'
+          pulseBeat: '2111',
+          buildParams: (i) => i < 3 ? { requiredBeatTicks: ['00:096'] } : {}
         }, {
-          pulseBeat: '2211'
+          pulseBeat: '2211',
+          buildParams: (i) => i < 3 ? { requiredBeatTicks: ['01:096'] } : {}
         }, {
-          pulseBeat: '2221'
+          pulseBeat: '2221',
+          buildParams: (i) => i < 3 ? { requiredBeatTicks: ['02:096'] } : {}
         }, {
-          pulseBeat: '2222'
+          pulseBeat: '2222',
+          buildParams: (i) => i < 3 ? { requiredBeatTicks: ['03:096'] } : {}
+        },{
+          pulseBeat: '3333',
+          buildParams: () => {}
+        },{
+          pulseBeat: '4444'
         }],
         lessonIndex: null,
+        stages: null,
         points: []
       }
     },
     methods: {
       setLesson(index) {
+        this.setupLesson(this.getLesson(index));
         this.lessonIndex = index;
-        let lesson = this.getLesson(index);
-        if (!lesson.stages) {
-          this.$store.commit('pulseBeat', lesson.pulseBeat);
-          console.log('TODO: Make stages!');
-        }
-        this.$store.dispatch('lesson/initialize', lesson);
       },
       getLesson(index) {
         let lesson = this.lessons[index];
@@ -91,12 +102,11 @@
     computed: {
       ...mapGetters({
         done: 'lesson/done',
-        surfaces: 'lesson/surfaces',
-        pulseBeat: 'lesson/pulseBeat',
         totalPoints: 'lesson/totalPoints',
         autoLevel: 'stage/autoLevel',
         autoLevels: 'stage/autoLevels',
-        numBeats: 'transport/numBeats'
+        pulseBeat: 'player/pulseBeat',
+        surfaces: 'player/surfaces'
       })
     },
     watch: {

@@ -79,24 +79,19 @@
     },
     methods: {
       beatTickHandler({time, beat, beatTick}) {
-        this.$store.dispatch('stage/onBeatTick', {time, beat, beatTick});
+        this.$store.dispatch('stage/onBeatTick', { time, beat, beatTick });
       }
     },
     computed: {
-      ...mapGetters(['beatsPerMeasure', 'pulsesByBeat'])
+      ...mapGetters({
+        beatsPerMeasure: 'player/beatsPerMeasure'
+      })
     },
     watch: {
       pulseBeat: {
         immediate: true,
         handler(pulseBeat) {
-          this.$store.commit('pulseBeat', pulseBeat);
-        }
-      },
-      pulsesByBeat: {
-        deep: true,
-        immediate: true,
-        handler(pulsesByBeat) {
-          this.$store.dispatch('player/update', pulsesByBeat);
+          this.$store.dispatch('player/update', { pulseBeat, surfaces: this.surfaces });
         }
       }
     }

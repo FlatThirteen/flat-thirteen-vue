@@ -44,16 +44,6 @@
       'play-button': PlayButton,
       'transport': Transport
     },
-    props: {
-      pulseBeat: {
-        type: String,
-        default: '1111'
-      },
-      surfaces: {
-        type: Array,
-        default() { return []; }
-      }
-    },
     data: function() {
       return {
         lastBeat: false
@@ -121,10 +111,10 @@
         }
       },
       ...mapGetters({
-        beatsPerMeasure: 'beatsPerMeasure',
-        pulsesByBeat: 'pulsesByBeat',
         keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
+        beatsPerMeasure: 'player/beatsPerMeasure',
+        surfaces: 'player/surfaces',
         notes: 'player/notes',
         noteCount: 'player/noteCount',
         scene: 'stage/scene',
@@ -149,19 +139,6 @@
       notes() {
         if (this.goalNoteCount) {
           this.$store.dispatch('stage/autoPlay');
-        }
-      },
-      pulseBeat: {
-        immediate: true,
-        handler(pulseBeat) {
-          this.$store.commit('pulseBeat', pulseBeat);
-        }
-      },
-      pulsesByBeat: {
-        deep: true,
-        immediate: true,
-        handler(pulsesByBeat) {
-          this.$store.dispatch('player/update', pulsesByBeat);
         }
       }
     }

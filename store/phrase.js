@@ -85,7 +85,7 @@ export const actions = {
     }
   },
   setTracks({commit}, {name, tracks}) {
-    commit('clear', { name });
+    let notes = {};
     _.forEach(tracks, track => {
       if (parser[track.type] && track.notes) {
         _.forEach(track.notes.split('|'), (beatNote, beatIndex) => {
@@ -99,7 +99,7 @@ export const actions = {
               try {
                 let note = parser[track.type](chordNote, duration(pulses));
                 if (note) {
-                  commit('add', {name, beatTick, note});
+                  (notes[beatTick] || (notes[beatTick] = [])).push(note);
                 }
               } catch (error) {
                 console.log('Parse error:', error);
@@ -109,6 +109,7 @@ export const actions = {
         });
       }
     });
+    commit('set', { name, notes})
   }
 };
 

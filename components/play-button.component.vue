@@ -1,12 +1,12 @@
 <template lang="pug">
   .play.button(ref="play", :class="playClass")
     svg(height="60", width="60", viewBox="0 0 60 60")
-      defs(v-if="goalNotes")
+      defs(v-if="!noGoal")
         linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
           stop(:offset="stopTop", stop-color="white")
           stop(:offset="stopBottom", :stop-color="color")
       path.play-icon(:d="playPath",
-          :fill="goalNotes ? 'url(#playGradient)' : color",
+          :fill="noGoal ? color: 'url(#playGradient)'",
           :stroke="color" stroke-width="6px")
     .counter(v-if="showCount") {{ count }}
 </template>
@@ -120,7 +120,7 @@
     methods: {
       beatHandler({count}) {
         this.count = count;
-        if (this.goalNotes && this.showCount) {
+        if (!this.noGoal && this.showCount) {
           this.animate('bounce');
         }
       }
@@ -142,7 +142,7 @@
       },
       playClass() {
         return {
-          wrong: this.goalNotes && !this.ready
+          wrong: !this.noGoal && !this.ready
         };
       },
       showCount() {

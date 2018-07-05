@@ -1,14 +1,10 @@
 export const state = () => ({
-  surfaces: [],
-  pulseBeat: '1111',
   stages: [],
   index: -1,
   points: []
 });
 
 export const getters = {
-  surfaces: state => state.surfaces,
-  pulseBeat: state => state.pulseBeat,
   stages: state => state.stages,
   stageGoal: state => state.stages[state.index],
   done: state => state.index === state.stages.length,
@@ -17,9 +13,7 @@ export const getters = {
 };
 
 export const mutations = {
-  reset(state, {surfaces = state.surfaces, pulseBeat = state.pulseBeat, stages = state.stages} = {}) {
-    state.surfaces = surfaces;
-    state.pulseBeat = pulseBeat;
+  reset(state, stages = state.stages) {
     state.stages = stages;
     state.index = stages.length ? 0 : -1;
     state.points = [];
@@ -33,12 +27,9 @@ export const mutations = {
 };
 
 export const actions = {
-  initialize({commit, dispatch, getters}, lesson) {
-    commit('reset', lesson);
-    dispatch('stage/initialize', {
-      autoLevel: lesson.autoLevel,
-      goal: getters.stageGoal
-    }, { root: true });
+  initialize({commit, dispatch, getters}, {stages, autoLevel}) {
+    commit('reset', stages);
+    dispatch('stage/initialize', { autoLevel, goal: getters.stageGoal }, { root: true });
   },
   next({commit, dispatch, state, getters}, {points}) {
     if (state.index > -1) {

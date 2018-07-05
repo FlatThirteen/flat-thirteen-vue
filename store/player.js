@@ -4,7 +4,8 @@ import { beatTickFrom, ticks } from '~/common/core/beat-tick.model';
 import Note from '~/common/core/note.model'
 
 export const state = () => ({
-  pulsesByBeat: [],
+  pulseBeat: '', // '1234,4321'
+  surfaces: [], // [{ q: 'snare', a: 'kick' }]
   data: {}, // data[beatTick][soundId] = soundName
   selected: null,
   cursor: 0,
@@ -12,13 +13,23 @@ export const state = () => ({
 });
 
 export const getters = {
-  pulsesByBeat: state => state.pulsesByBeat,
-  numPulses: state => _.sum(state.pulsesByBeat),
-  cursorsByBeat: state => _.reduce(state.pulsesByBeat, ({result, offset}, pulses) => ({
+  pulseBeat: state => state.pulseBeat,
+  pulseBeatPerMeasure: state => _.map(_.split(state.pulseBeat, ','), (pulses) =>
+    _.chain(_.split(pulses, '')).map(_.toNumber).filter(value =>
+      _.inRange(value, 1, 5)).value()
+  ),
+  beatsPerMeasure: (state, getters) => _.map(getters.pulseBeatPerMeasure, 'length'),
+  pulsesByBeat: (state, getters) => _.flatten(getters.pulseBeatPerMeasure),
+  numPulses: (state, getters) => _.sum(getters.pulsesByBeat),
+  cursorsByBeat: (state, getters) => _.reduce(getters.pulsesByBeat, ({result, offset}, pulses) => ({
     result: _.concat(result, [_.times(pulses, (i) => offset + i)]),
     offset: offset + pulses
   }), { result: [], offset: 0 }).result,
-  beatTicks: state => beatTicksFrom(state.pulsesByBeat),
+  beatTicks: (state, getters) => beatTicksFrom(getters.pulsesByBeat),
+  surfaces: state => state.surfaces,
+  soundByKey: state => _.map(state.surfaces, 'soundByKey'),
+  soundIds: (state, getters) => _.map(getters.soundByKey, (soundByKey) => _.join(_.keys(soundByKey))),
+  soundNames: (state, getters) => _.flatMap(getters.soundByKey, _.values),
   getDataFor: state => ({beatTick, soundId}) => (state.data[beatTick] || {})[soundId],
   getNotes: state => beatTick => _.map(_.values(state.data[beatTick]),
       soundName => new Note(soundName)),
@@ -26,7 +37,7 @@ export const getters = {
   noteCount: (state, getters) => _.size(getters.notes),
   selected: state => state.selected,
   cursor: state => state.cursor,
-  beatPulse: state => _.reduce(state.pulsesByBeat, ([beat, pulse, working], pulses) =>
+  beatPulse: (state, getters) => _.reduce(getters.pulsesByBeat, ([beat, pulse, working], pulses) =>
       working && pulse >= pulses ? [beat + 1, pulse - pulses, true] : [beat, pulse],
       [0, state.cursor, true]),
   beatTick: (state, getters) => beatTickFrom(...getters.beatPulse),
@@ -34,8 +45,9 @@ export const getters = {
 };
 
 export const mutations = {
-  setup(state, {pulsesByBeat = state.pulsesByBeat, data = {}}) {
-    state.pulsesByBeat = pulsesByBeat;
+  setup(state, {pulseBeat, surfaces, data = {}}) {
+    state.pulseBeat = pulseBeat;
+    state.surfaces = surfaces;
     state.data = data;
     state.selected = null;
     state.cursor = 0;
@@ -72,10 +84,15 @@ export const mutations = {
 };
 
 export const actions = {
-  update({commit, state}, pulsesByBeat) {
-    commit('setup', {pulsesByBeat,
-      data: _.pick(state.data, beatTicksFrom(pulsesByBeat))
+  update({commit, state, getters}, {pulseBeat, surfaces}) {
+    commit('setup', { pulseBeat, surfaces, data: state.data });
+    commit('setup', { pulseBeat, surfaces,
+      data: _.mapValues(_.pick(state.data, getters.beatTicks),
+          (soundData) => _.pick(soundData, getters.soundIds))
     });
+  },
+  clear({commit, state}) {
+    commit('setup', { pulseBeat: state.pulseBeat, surfaces: state.surfaces });
   },
   move({commit, state, getters, rootGetters}, move) {
     if (rootGetters['stage/scene'] !== 'victory') {

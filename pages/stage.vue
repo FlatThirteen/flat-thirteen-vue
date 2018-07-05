@@ -1,6 +1,6 @@
 <template lang="pug">
   .container
-    stage(:pulseBeat="pulseBeat", :surfaces="surfaces")
+    stage
       note-counter.notes
     .bottom-controls
       .points(v-if="goalNoteCount") {{ basePoints }}
@@ -62,6 +62,12 @@
       keyDown(key) {
         if (_.includes('012', key)) {
           this.setAuto(_.toNumber(key));
+        }
+      },
+      pulseBeat: {
+        immediate: true,
+        handler(pulseBeat) {
+          this.$store.dispatch('player/update', { pulseBeat, surfaces: this.surfaces });
         }
       }
     }
