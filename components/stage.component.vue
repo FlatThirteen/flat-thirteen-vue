@@ -1,5 +1,5 @@
 <template lang="pug">
-  .container(v-if="surfaces.length")
+  .container(ref="stage", v-if="surfaces.length")
     key-handler(:player="true")
     .top-container
       bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
@@ -19,6 +19,8 @@
 <script>
   import { mapGetters } from 'vuex';
 
+  import AnimatedMixin from '~/mixins/animated.mixin';
+
   import BeatTick from '~/common/core/beat-tick.model';
   import Tone from '~/common/tone';
 
@@ -33,6 +35,7 @@
   import Transport from '~/components/transport.component';
 
   export default {
+    mixins: [AnimatedMixin],
     components: {
       'bouncing-ball': BouncingBall,
       'bouncing-points': BouncingPoints,
@@ -43,6 +46,21 @@
       'loop-button': LoopButton,
       'play-button': PlayButton,
       'transport': Transport
+    },
+    constants: {
+      animationTarget: 'stage',
+      animationDefinitions: {
+        next: [[.15, {
+          transform: 'translateX(-30vw)',
+          opacity: 0
+        }], [.01, {
+          transform: 'translateX(30vw)',
+          opacity: 0
+        }], [.3, {
+          transform: 'translateX(0)',
+          opacity: 1
+        }]]
+      }
     },
     data: function() {
       return {
@@ -121,6 +139,7 @@
         nextScene: 'stage/nextScene',
         basePoints: 'stage/basePoints',
         autoLoop: 'stage/autoLoop',
+        stage: 'lesson/stage',
         active: 'transport/active'
       })
     },
@@ -140,6 +159,9 @@
         if (this.goalNoteCount) {
           this.$store.dispatch('stage/autoPlay');
         }
+      },
+      stage() {
+        this.animate('next');
       }
     }
   }

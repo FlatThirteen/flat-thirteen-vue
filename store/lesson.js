@@ -6,6 +6,7 @@ export const state = () => ({
 
 export const getters = {
   stages: state => state.stages,
+  stage: state => state.index,
   stageGoal: state => state.stages[state.index],
   done: state => state.index === state.stages.length,
   points: state => state.points,

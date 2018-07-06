@@ -39,14 +39,16 @@
         appear: [[0, {
           transform: 'translateY(5vh) scale(0)'
         }], [.8, {
-          transform: 'translateY(-1vh) scale(1.05)'
+          transform: 'translateY(-1vh) scale(1.05)',
+          opacity: 1
         }], [.2, {
           transform: 'translateY(0) scale(1)'
         }]],
         disappear: [[.4, {
           transform: 'scale(1.05)'
         }], [.6, {
-          transform: 'scale(0)'
+          transform: 'scale(0)',
+          opacity: 0
         }]]
       }
     },

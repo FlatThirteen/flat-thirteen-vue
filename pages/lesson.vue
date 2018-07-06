@@ -1,12 +1,13 @@
 <template lang="pug">
   .container
-    .lesson-control(v-if="lessonIndex === null")
-      .lesson.button(v-for="(lesson, i) in lessons", @click="setLesson(i)",
-          :class="{done: points[i]}") {{ points[i] || i }}
-    .lesson-container(v-else)
-      .quit.button(@click="clearLesson()") X
-      stage
-        note-counter.notes
+    transition(name="lesson-container")
+      .lesson-container(v-if="lessonIndex === null", key="choose")
+        .lesson.button(v-for="(lesson, i) in lessons", @click="setLesson(i)",
+            :class="{done: points[i]}") {{ points[i] || i }}
+      .lesson-container(v-else, key="stage")
+        .quit.button(@click="clearLesson()") X
+        stage
+          note-counter.notes
 
 </template>
 
@@ -102,11 +103,7 @@
     computed: {
       ...mapGetters({
         done: 'lesson/done',
-        totalPoints: 'lesson/totalPoints',
-        autoLevel: 'stage/autoLevel',
-        autoLevels: 'stage/autoLevels',
-        pulseBeat: 'player/pulseBeat',
-        surfaces: 'player/surfaces'
+        totalPoints: 'lesson/totalPoints'
       })
     },
     watch: {
@@ -124,6 +121,9 @@
   .container
     position: relative;
 
+  .lesson-container
+    posit(absolute);
+
   .lesson
     background-color: primary-blue;
     color: primary-blue;
@@ -138,6 +138,12 @@
 
     &.done
       background-color: primary-green;
+
+  .lesson-container-enter-active, .lesson-container-leave-active
+    transition: transform 250ms;
+
+  .lesson-container-enter, .lesson-container-leave-to
+    transform: scale(0)
 
   .quit
     posit(fixed, 50px, 0, x, x)
