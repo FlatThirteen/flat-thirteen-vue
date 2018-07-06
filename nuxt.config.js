@@ -30,7 +30,8 @@ module.exports = {
     { src: '~/plugins/pixi', ssr: false }
   ],
   router: {
-    middleware: 'transport'
+    middleware: 'transport',
+    base: process.env.DEPLOY_ENV === 'GH_PAGES' ? '/flat-thirteen-vue/' : ''
   },
   /*
   ** Build configuration
