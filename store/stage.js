@@ -184,7 +184,7 @@ export const actions = {
       case 'playback':
         _.forEach(playedNotes, note => {
           note.play(time);
-          if (state.scene === 'playback' && goalNotes) {
+          if (state.scene === 'playback' && rootGetters['phrase/goalNoteCount']) {
             commit('phrase/add', { name: 'playback', beatTick, note }, { root: true })
           }
         });
