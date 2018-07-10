@@ -5,15 +5,16 @@
       bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
       .controls.whole(v-if="goalNoteCount")
         play-button(@click.native="onPlayback()")
-        goal-button(@click.native="onGoal()")
+        goal-button(@click.native="onGoal()", :class="{weenie: weenie === 'goal'}")
         loop-button(@click.native="onStop()")
 
     svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
-        :scene="scene", :showPosition="showPosition")
+        :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
     faces
     bouncing-points(:show="scene === 'victory'", :points="basePoints")
+    transition(name="notes")
+      note-counter.notes(v-show="weenie !== 'goal' && scene !== 'victory'")
     transport(v-bind="transportProps")
-    slot
 </template>
 
 <script>
@@ -31,6 +32,7 @@
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
   import LoopButton from '~/components/loop-button.component';
+  import NoteCounter from '~/components/note-counter.component';
   import PlayButton from '~/components/play-button.component';
   import Transport from '~/components/transport.component';
 
@@ -44,6 +46,7 @@
       'svg-grid': SvgGrid,
       'key-handler': KeyHandler,
       'loop-button': LoopButton,
+      'note-counter': NoteCounter,
       'play-button': PlayButton,
       'transport': Transport
     },
@@ -64,6 +67,7 @@
     },
     data: function() {
       return {
+        weenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false
       }
     },
@@ -77,7 +81,7 @@
     },
     methods: {
       topHandler({first}) {
-        if (!first && this.goalNoteCount) {
+        if (!first && this.goalNoteCount && this.active) {
           this.$store.dispatch('stage/toNext');
         }
         this.lastBeat = false;
@@ -102,6 +106,9 @@
         } else {
           this.$store.commit('stage/next', { nextScene: 'standby' });
         }
+      },
+      setWeenie(weenie) {
+        this.weenie = this.autoGoal ? undefined : weenie;
       }
     },
     computed: {
@@ -138,6 +145,7 @@
         scene: 'stage/scene',
         nextScene: 'stage/nextScene',
         basePoints: 'stage/basePoints',
+        autoGoal: 'stage/autoGoal',
         autoLoop: 'stage/autoLoop',
         stage: 'lesson/stage',
         active: 'transport/active'
@@ -155,8 +163,18 @@
           this.lastBeat = false;
         }
       },
+      scene(scene, oldScene) {
+        if (oldScene === 'victory') {
+          this.setWeenie('goal');
+        } else if (scene === 'goal' && this.weenie === 'goal') {
+          this.setWeenie('grid');
+        }
+      },
       notes() {
-        if (this.goalNoteCount) {
+        if (this.weenie === 'grid') {
+          this.setWeenie();
+        }
+        if (this.goalNoteCount && this.weenie !== 'goal') {
           this.$store.dispatch('stage/autoPlay');
         }
       },
@@ -189,4 +207,24 @@
     justify-content: space-between;
     align-items: flex-end;
     padding-bottom: 10px;
+
+  .notes
+    margin: 5vh;
+    transform-origin: top;
+
+  .notes-enter-active, .notes-leave-active
+    transition: transform 250ms;
+
+  .notes-enter, .notes-leave-to
+    transform: scale(0)
+
+  .weenie:not(:hover)
+    animation: weenie 1s infinite 500ms;
+
+  @keyframes weenie
+    0%, 100%
+      shadow(#888, 0);
+    50%
+      shadow(#888, 5px);
+
 </style>

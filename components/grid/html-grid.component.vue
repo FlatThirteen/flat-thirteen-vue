@@ -79,7 +79,7 @@
         this.$store.dispatch('player/set', {cursor, soundName,
           soundId: this.soundId
         });
-        if (!this.active && soundName) {
+        if (!this.playing && soundName) {
           this.liveKeyCursor = key + this.cursor;
           Sound[soundName].play();
         }
@@ -137,6 +137,7 @@
         keyMode: 'keyMode',
         noKeysHeld: 'noKeysHeld',
         active: 'transport/active',
+        playing: 'transport/playing',
         counts: 'transport/counts',
         pulsesByBeat: 'player/pulsesByBeat',
         numPulses: 'player/numPulses',

@@ -1,4 +1,4 @@
-import { TimelineMax } from 'gsap';
+import { TimelineMax, TweenMax } from 'gsap';
 import { mapGetters } from 'vuex';
 
 export default {
@@ -13,6 +13,12 @@ export default {
             return timeline.from(element, time, style);
           }
         }, new TimelineMax(options)).duration(this.animationDuration).play(0);
+      }
+    },
+    set(properties) {
+      let element = this.$refs[this.animationTarget];
+      if (element) {
+        TweenMax.set(element, properties);
       }
     }
   },

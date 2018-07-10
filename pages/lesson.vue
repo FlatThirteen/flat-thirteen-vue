@@ -7,7 +7,6 @@
       .lesson-container(v-else, key="stage")
         .quit.button(@click="clearLesson()") X
         stage
-          note-counter.notes
 
 </template>
 
@@ -16,13 +15,11 @@
 
   import LessonBuilderMixin from '~/mixins/lesson-builder.mixin';
 
-  import NoteCounter from '~/components/note-counter.component';
   import Stage from '~/components/stage.component';
 
   export default {
     mixins: [LessonBuilderMixin],
     components: {
-      'note-counter': NoteCounter,
       'stage': Stage
     },
     head: {
@@ -158,8 +155,5 @@
     &:hover
       color: #888;
       border-color: #888;
-
-  .notes
-    margin: 5vh;
 
 </style>

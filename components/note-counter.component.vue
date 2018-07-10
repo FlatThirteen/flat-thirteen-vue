@@ -1,9 +1,9 @@
 <template lang="pug">
   .note-count(v-if="goalNoteCount")
     .note
-    .info(:class="{wrong}") {{ noteCount }}
-    span(:class="{wrong: goalWrong}") /
-    .info(:class="{wrong: goalWrong}") {{ goalNoteCount }}
+    .info(:class="noteCountClass") {{ noteCount }}
+    .info(:class="goalCountClass") /
+    .info(:class="goalCountClass") {{ goalNoteCount }}
 
 </template>
 
@@ -12,14 +12,23 @@
 
   export default {
     computed: {
-      wrong() {
-        return this.goalNoteCount && (this.scene === 'playback' ?
-            this.noteCount !== this.goalNoteCount : this.noteCount > this.goalNoteCount);
+      noteCountClass() {
+        let red = this.scene === 'playback' ? this.wrong : this.noteCount > this.goalNoteCount;
+        return { red,
+          pulse: !this.starting && red
+        }
       },
-      goalWrong() {
-        return this.scene === 'playback' && this.noteCount !== this.goalNoteCount;
+      goalCountClass() {
+        let red = this.wrong && this.scene === 'playback';
+        return { red,
+          pulse: !this.starting && red
+        }
+      },
+      wrong() {
+        return this.noteCount !== this.goalNoteCount;
       },
       ...mapGetters({
+        starting: 'transport/starting',
         goalNoteCount: 'phrase/goalNoteCount',
         noteCount: 'player/noteCount',
         scene: 'stage/scene'
@@ -44,7 +53,13 @@
       width: 8vh;
       vertical-align: bottom;
 
-    .wrong
+    .red
+      color: red;
+
+    .pulse
+        animation: pulse 1s linear infinite;
+
+    .wrong, .goalWrong
       color: red;
       animation: pulse 1s linear infinite;
 

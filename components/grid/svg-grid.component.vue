@@ -62,6 +62,10 @@
       showPosition: {
         type: Boolean,
         default: false
+      },
+      weenie: {
+        type: Boolean,
+        default: false
       }
     },
     data: function() {
@@ -118,7 +122,7 @@
         this.$store.dispatch('player/set', {cursor, soundName,
           soundId: this.soundId
         });
-        if (!this.active && soundName) {
+        if (!this.playing && soundName) {
           this.liveKeyCursor = key + this.cursor;
           Sound[soundName].play();
         } else {
@@ -207,15 +211,16 @@
         }));
       },
       noteClass() {
-        return _.times(this.numPulses, cursor => {
-          return _.mapValues(this.soundName, (soundName, key) => ({
+        return _.times(this.numPulses, cursor =>
+          _.mapValues(this.soundName, (soundName, key) => ({
             active: this.activeCursor === cursor,
-            cursor: this.scene !== 'victory' && this.cursor === cursor,
             live: this.liveKeyCursor === key + cursor,
+            cursor: this.scene !== 'victory' && this.cursor === cursor,
+            hover: this.scene !== 'victory' && this.cursor === cursor && this.keyMode,
             on: this.isOn[cursor][key],
-            hover: this.scene !== 'victory' && this.keyMode && this.cursor === cursor
-          }));
-        });
+            weenie: this.weenie && !this.active && !this.isSelected && !this.isOn[cursor][key]
+          })));
+
       },
       ...mapGetters({
         keyDown: 'keyDown',
@@ -223,6 +228,7 @@
         keyMode: 'keyMode',
         noKeysHeld: 'noKeysHeld',
         active: 'transport/active',
+        playing: 'transport/playing',
         numBeats: 'transport/numBeats',
         beatsPerMeasure: 'transport/beatsPerMeasure',
         duration: 'transport/duration',
@@ -359,6 +365,9 @@
         opacity: 0.3;
         box-shadow: 0 button-shadow-size 1px 0 rgba(0, 0, 0, 0.1);
 
+    &.weenie
+      animation: weenie 1s infinite 500ms;
+
     &.on
       opacity: 1;
 
@@ -366,5 +375,10 @@
         opacity: 0.9;
         filter: url(#shadow);
 
+  @keyframes weenie
+    0%, 100%
+      opacity: 0;
+    50%
+      opacity: 0.05;
 
 </style>

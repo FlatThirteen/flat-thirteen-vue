@@ -45,10 +45,18 @@ export const getters = {
 };
 
 export const mutations = {
-  setup(state, {pulseBeat, surfaces, data = {}}) {
+  setup(state, {pulseBeat, surfaces}) {
     state.pulseBeat = pulseBeat;
     state.surfaces = surfaces;
+    state.selected = null;
+    state.cursor = 0;
+    state.touched = false;
+  },
+  setData(state, data = {}) {
     state.data = data;
+  },
+  reset(state) {
+    state.data = {};
     state.selected = null;
     state.cursor = 0;
     state.touched = false;
@@ -85,14 +93,9 @@ export const mutations = {
 
 export const actions = {
   update({commit, state, getters}, {pulseBeat, surfaces}) {
-    commit('setup', { pulseBeat, surfaces, data: state.data });
-    commit('setup', { pulseBeat, surfaces,
-      data: _.mapValues(_.pick(state.data, getters.beatTicks),
-          (soundData) => _.pick(soundData, getters.soundIds))
-    });
-  },
-  clear({commit, state}) {
-    commit('setup', { pulseBeat: state.pulseBeat, surfaces: state.surfaces });
+    commit('setup', { pulseBeat, surfaces });
+    commit('setData', _.mapValues(_.pick(state.data, getters.beatTicks),
+          (soundData) => _.pick(soundData, getters.soundIds)));
   },
   move({commit, state, getters, rootGetters}, move) {
     if (rootGetters['stage/scene'] !== 'victory') {
@@ -101,25 +104,21 @@ export const actions = {
       });
     }
   },
-  set({commit, state, getters, rootGetters}, {cursor = state.cursor, soundId = state.selected, soundName}) {
+  set({commit, state, getters}, {cursor = state.cursor, soundId = state.selected, soundName}) {
     if (state.cursor !== cursor) {
       commit('select', { cursor, soundId });
     }
-    if (!rootGetters['transport/starting']) {
-      commit(soundName ? 'setNote' : 'unsetNote', {
-        beatTick: getters.beatTicks[cursor],
-        soundId,
-        soundName
-      });
-    }
+    commit(soundName ? 'setNote' : 'unsetNote', {
+      beatTick: getters.beatTicks[cursor],
+      soundId,
+      soundName
+    });
   },
-  unset({commit, state, getters, rootGetters}, soundId) {
-    if (!rootGetters['transport/starting']) {
-      commit('unsetNote', {
-        beatTick: getters.beatTicks[state.cursor],
-        soundId
-      });
-    }
+  unset({commit, state, getters}, soundId) {
+    commit('unsetNote', {
+      beatTick: getters.beatTicks[state.cursor],
+      soundId
+    });
   },
   select({commit, state, rootGetters}, {cursor, soundId = state.selected}) {
     if (!rootGetters['keyMode'] && (state.cursor !== cursor || state.selected !== soundId)) {

@@ -113,6 +113,9 @@
     },
     mounted() {
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
+      if (!this.autoLoop && this.preGoal) {
+        this.set({ opacity: 0 });
+      }
     },
     destroyed() {
       this.$bus.$off(BeatTick.BEAT, this.beatHandler);
@@ -153,6 +156,7 @@
         autoLoop: 'stage/autoLoop',
         scene: 'stage/scene',
         nextScene: 'stage/nextScene',
+        preGoal: 'stage/preGoal',
         playNotes: 'player/noteCount',
         goalNotes: 'phrase/goalNoteCount'
       })
@@ -168,14 +172,18 @@
             stopLevelTop: this.ready ? 0 : this.stopCalculation,
             stopLevelBottom: this.ready ? 0 : this.stopCalculation + 15
           });
-          this.animate('twitch');
+          if (!this.preGoal) {
+            this.animate('twitch');
+          }
         }
       },
       scene(scene, oldScene) {
         if (this.noGoal) {
           return;
         }
-        if (scene === 'playback') {
+        if (!this.autoLoop && this.preGoal) {
+          this.set({ opacity: 0 });
+        } else if (scene === 'playback') {
           this.animate('drop');
         } else if (scene === 'standby' && oldScene === 'playback') {
           this.animate('toast');

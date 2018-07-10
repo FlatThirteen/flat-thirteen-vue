@@ -1,7 +1,6 @@
 <template lang="pug">
   .container
     stage
-      note-counter.notes
     .bottom-controls
       .points(v-if="goalNoteCount") {{ basePoints }}
         .info ({{ goalCount }} {{ playCount }})
@@ -14,19 +13,17 @@
 <script>
   import { mapGetters } from 'vuex';
 
-  import NoteCounter from '~/components/note-counter.component';
   import Stage from '~/components/stage.component';
 
   export default {
     components: {
-      'note-counter': NoteCounter,
       'stage': Stage
     },
     head: {
       title: 'Flat Thirteen | Stage'
     },
     layout: 'debug',
-    data: function() {
+    data() {
       return {
         pulseBeat: '1111',
         surfaces: [
@@ -34,12 +31,15 @@
         ]
       }
     },
+    mounted() {
+      this.setAuto(-1);
+    },
     methods: {
       setAuto(autoLevel) {
         if (this.autoLevel === autoLevel) {
           this.$store.dispatch('stage/clear');
         } else {
-          let notes = _.join(_.fill(Array(this.numBeats), 'K'), '|');
+          let notes = _.join(_.fill(Array(this.numBeats - 1), 'K'), '|');
           this.$store.dispatch('stage/initialize', { autoLevel,
             goal: [{ type: 'drums', notes }]
           });
@@ -78,9 +78,6 @@
 <style scoped lang="stylus" type="text/stylus">
   .container
     position: relative;
-
-  .notes
-    margin: 5vh;
 
   .bottom-controls
     posit(fixed, x, 0, 0, 0)

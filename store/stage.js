@@ -3,6 +3,7 @@ import Vue from 'vue';
 export const state = () => ({
   scene: 'standby',
   nextScene: 'standby',
+  preGoal: false,
   changed: false,
   autoLevel: -1,
   counts: {},
@@ -16,6 +17,7 @@ export const getters = {
   scene: state => state.scene,
   nextScene: state => state.nextScene,
   isOrNext: state => scene => state.scene === scene || state.nextScene === scene,
+  preGoal: state => state.preGoal,
   autoLevels: state => _.times(nextMap.length),
   autoLevel: state => state.autoLevel,
   autoGoal: state => state.autoLevel > 0,
@@ -32,13 +34,17 @@ export const mutations = {
       state.scene = 'standby';
     }
     state.nextScene = 'standby';
+    state.preGoal = true;
     state.autoLevel = _.clamp(autoLevel, -1, nextMap.length - 1);
     state.counts = { goal: 0, playback: 0 };
     state.penalty = {};
     state.penaltyMax = penaltyMax;
     state.penaltyLast = {};
   },
-  scene(state, {scene, nextScene = state.nextScene}) {
+  scene(state, {scene, nextScene = scene === 'standby' ? 'standby' : state.nextScene}) {
+    if (state.scene === 'goal') {
+      state.preGoal = false;
+    }
     state.scene = scene;
     state.nextScene = nextScene;
     state.changed = false;
@@ -73,7 +79,7 @@ export const actions = {
     dispatch('transport/stop', undefined, { root: true });
   },
   initialize({commit, dispatch, state, rootGetters}, {autoLevel, goal} = {}) {
-    let startAction = autoLevel && autoLevel !== state.autoLevel &&
+    let startAction = autoLevel > 0 && autoLevel !== state.autoLevel &&
         rootGetters['transport/paused'];
     dispatch('phrase/initialize', { goal }, { root: true });
     commit('reset', { autoLevel, penaltyMax: { goal: 45, wrong: 50 } });
@@ -124,7 +130,7 @@ export const actions = {
       } else if (state.scene !== 'count') {
         commit('next', { nextScene: 'count'});
       }
-    } else if (getters.isOrNext('playback')) {
+    } else if (getters.isOrNext('playback') || rootGetters['transport/starting']) {
       commit('scene', { scene: 'standby' });
       dispatch('transport/stop', undefined, { root: true });
     }
@@ -132,7 +138,7 @@ export const actions = {
   toNext({commit, dispatch, state, getters, rootGetters}) {
     let scene = state.nextScene;
     if (state.scene === 'victory') {
-      dispatch('player/clear', undefined, { root: true });
+      commit('player/reset', undefined, { root: true });
       dispatch('lesson/next', { points: getters.basePoints }, { root: true });
       if (rootGetters['lesson/done']) {
         scene = 'standby';
@@ -165,10 +171,12 @@ export const actions = {
   onBeatTick({commit, state, rootGetters}, {time, beat, beatTick}) {
     let goalNotes = rootGetters['phrase/getNotes']('goal', beatTick);
     let playedNotes = rootGetters['player/getNotes'](beatTick);
-    if (_.xor(_.invokeMap(goalNotes, 'toString'), _.invokeMap(playedNotes, 'toString')).length) {
-      commit('beatWrong', beat);
-    } else if (state.beatWrong !== null && state.beatWrong !== beat) {
-      commit('beatWrong', null);
+    if (state.scene === 'playback' || state.scene === 'goal') {
+      if (_.xor(_.invokeMap(goalNotes, 'toString'), _.invokeMap(playedNotes, 'toString')).length) {
+        commit('beatWrong', beat);
+      } else if (state.beatWrong !== null && state.beatWrong !== beat) {
+        commit('beatWrong', null);
+      }
     }
     switch(state.scene) {
       case 'victory':
