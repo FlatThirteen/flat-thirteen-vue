@@ -10,7 +10,7 @@ export const getters = {
   stageGoal: state => state.stages[state.index],
   done: state => state.index === state.stages.length,
   points: state => state.points,
-  totalPoints: state => _.sum(state.points)
+  totalPoints: state => _.floor(_.mean(state.points))
 };
 
 export const mutations = {

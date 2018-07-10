@@ -223,8 +223,10 @@
 
   @keyframes weenie
     0%, 100%
+      opacity: 1;
       shadow(#888, 0);
     50%
+      opacity: 0.9;
       shadow(#888, 5px);
 
 </style>

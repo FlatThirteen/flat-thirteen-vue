@@ -71,6 +71,9 @@
         ]
       }
     },
+    created() {
+      this.$store.dispatch('stage/clear');
+    },
     mounted() {
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
     },

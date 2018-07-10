@@ -366,7 +366,7 @@
         box-shadow: 0 button-shadow-size 1px 0 rgba(0, 0, 0, 0.1);
 
     &.weenie
-      animation: weenie 1s infinite 500ms;
+      animation: weenie 2s infinite 500ms;
 
     &.on
       opacity: 1;

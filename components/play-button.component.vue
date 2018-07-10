@@ -113,7 +113,7 @@
     },
     mounted() {
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
-      if (!this.autoLoop && this.preGoal) {
+      if (this.preGoal) {
         this.set({ opacity: 0 });
       }
     },
@@ -181,7 +181,7 @@
         if (this.noGoal) {
           return;
         }
-        if (!this.autoLoop && this.preGoal) {
+        if (this.preGoal) {
           this.set({ opacity: 0 });
         } else if (scene === 'playback') {
           this.animate('drop');

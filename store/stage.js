@@ -34,7 +34,7 @@ export const mutations = {
       state.scene = 'standby';
     }
     state.nextScene = 'standby';
-    state.preGoal = true;
+    state.preGoal = autoLevel === 0 || autoLevel === 1;
     state.autoLevel = _.clamp(autoLevel, -1, nextMap.length - 1);
     state.counts = { goal: 0, playback: 0 };
     state.penalty = {};

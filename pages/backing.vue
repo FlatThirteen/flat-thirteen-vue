@@ -80,6 +80,9 @@
         }
       }
     },
+    created() {
+      this.$store.dispatch('stage/clear');
+    },
     mounted() {
       window.addEventListener('keydown', this.onKeyDown);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
