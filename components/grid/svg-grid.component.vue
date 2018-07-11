@@ -305,7 +305,7 @@
   .grid
     margin: 5px auto;
     position: relative;
-
+    padding-left: 4px;
 
     svg
       overflow: visible;
