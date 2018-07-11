@@ -190,7 +190,7 @@
       },
       gridClass() {
         return [this.scene, {
-          standby: !this.scene && !this.active,
+          standby: this.scene ? this.starting : !this.active,
           playback: !this.scene && this.active,
           selected: this.isSelected
         }];
@@ -227,6 +227,7 @@
         keyUp: 'keyUp',
         keyMode: 'keyMode',
         noKeysHeld: 'noKeysHeld',
+        starting: 'transport/starting',
         active: 'transport/active',
         playing: 'transport/playing',
         numBeats: 'transport/numBeats',
@@ -259,8 +260,8 @@
           this.$store.dispatch('player/move', 1);
         }
       },
-      active(active) {
-        if (active) {
+      playing(playing) {
+        if (playing) {
           this.liveKeyCursor = null;
         } else {
           this.activeCursor = -1;
