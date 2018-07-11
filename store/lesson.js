@@ -28,9 +28,9 @@ export const mutations = {
 };
 
 export const actions = {
-  initialize({commit, dispatch, getters}, {stages = [], autoLevel = -1} = {}) {
+  initialize({commit, dispatch, getters}, {stages = [], autoMax = 0, autoLevel = autoMax} = {}) {
     commit('reset', stages);
-    dispatch('stage/initialize', { autoLevel, goal: getters.stageGoal }, { root: true });
+    dispatch('stage/initialize', { autoLevel, autoMax, goal: getters.stageGoal }, { root: true });
   },
   next({commit, dispatch, state, getters}, {points}) {
     if (state.index > -1) {

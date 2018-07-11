@@ -1,5 +1,5 @@
 <template lang="pug">
-  .loop.button(ref="loop", :class="{show: autoLoop}")
+  .loop(ref="loop", :class="loopClass")
 </template>
 
 <script>
@@ -46,9 +46,6 @@
         }], [.8, {
           opacity: 0,
           transform: 'translateY(3vh)'
-        }]],
-        fade: [[1, {
-          opacity: 0
         }]]
       }
     },
@@ -61,15 +58,24 @@
     methods: {
       beatHandler() {
         if (this.autoLoop && this.nextScene !== 'playback') {
-          this.animate('pulse');
+          this.animate('pulse', { unless: 'drop'});
         }
       }
     },
     computed: {
+      loopClass() {
+        return {
+          button: this.showLoop,
+          off: !this.autoLoop,
+          repeat: this.autoRepeat
+        }
+      },
       ...mapGetters({
-        autoLoop: 'stage/autoLoop',
         scene: 'stage/scene',
-        nextScene: 'stage/nextScene'
+        nextScene: 'stage/nextScene',
+        autoLoop: 'stage/autoLoop',
+        autoRepeat: 'stage/autoRepeat',
+        showLoop: 'stage/showLoop'
       })
     },
     watch: {
@@ -77,12 +83,10 @@
         if (!this.autoLoop) {
           return;
         }
-        if (scene === 'standby') {
-          this.animate('fade');
-        } else if ((scene === 'count' && this.nextScene === 'goal') && oldScene === 'goal') {
+        if (this.nextScene === 'goal' && oldScene === 'goal') {
           this.animate('bumper');
         } else if (scene === 'goal' && this.nextScene === 'count') {
-          this.animate('toast');
+          this.animate('toast', { when: 'drop' });
         }
       },
       nextScene(nextScene, oldNextScene) {
@@ -90,7 +94,7 @@
           return;
         }
         if (nextScene === 'goal') {
-          this.animate('toast');
+          this.animate('toast', { when: 'drop' });
         } else if (nextScene === 'standby' ||
             nextScene === 'playback' && (oldNextScene === 'goal' || oldNextScene === 'count')) {
           this.animate('drop');
@@ -108,16 +112,32 @@
     align-items: flex-end;
     justify-content: space-between;
     height: 60px;
-    width: 60px;
+    width: 30px;
+    margin-left: 30px;
 
-    &.show:before, &.show:after
-      content: '';
-      border-radius: 50%;
-      background-color: white;
-      border: solid 5px primary-blue;
-      display: block;
-      margin: 1px;
-      height: 18px;
-      width: @height;
+    &.button
+      &:before, &:after
+        content: '';
+        border-radius: 50%;
+        background-color: white;
+        border: solid 5px primary-blue;
+        display: block;
+        margin: 1px;
+        height: 18px;
+        width: @height;
+        transition: all 150ms;
+
+      &:hover:before, &:hover:after
+        border-color: primary-blue + 50%;
+
+      &.off
+        &:before, &:after
+          border-color: faint-grey;
+
+        &:hover:before, &:hover:after
+          border-color: faint-grey - 20%;
+
+    &.repeat:before, &.repeat:after
+      background-color: primary-blue;
 
   </style>

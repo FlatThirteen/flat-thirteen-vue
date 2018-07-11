@@ -153,10 +153,10 @@
       },
       ...mapGetters({
         playing: 'transport/playing',
-        autoLoop: 'stage/autoLoop',
         scene: 'stage/scene',
         nextScene: 'stage/nextScene',
         preGoal: 'stage/preGoal',
+        showLoop: 'stage/showLoop',
         playNotes: 'player/noteCount',
         goalNotes: 'phrase/goalNoteCount'
       })
@@ -178,18 +178,16 @@
         }
       },
       scene(scene, oldScene) {
-        if (this.noGoal) {
+        if (this.noGoal || this.preGoal) {
           return;
         }
-        if (this.preGoal) {
-          this.set({ opacity: 0 });
-        } else if (scene === 'playback') {
+        if (scene === 'playback') {
           this.animate('drop');
         } else if (scene === 'standby' && oldScene === 'playback') {
           this.animate('toast');
-        } else if (scene === 'goal' && !this.autoLoop) {
+        } else if (scene === 'goal' && !this.showLoop) {
           this.animate('leave');
-        } else if (this.autoLoop ?
+        } else if (this.showLoop ?
             scene !== 'victory' && oldScene === 'playback' || oldScene === 'victory' :
             scene === 'standby' || scene === 'count' && oldScene !== 'standby') {
           this.animate('enter');
@@ -199,6 +197,9 @@
         if (!this.noGoal && nextScene === 'playback' && this.scene !== 'count') {
           this.animate('enter');
         }
+      },
+      preGoal(preGoal) {
+        this.set({ opacity: preGoal ? 0 : 1 });
       }
     }
   }

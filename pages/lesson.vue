@@ -39,7 +39,7 @@
             [{ type: 'drums', notes: 'K||K|K' }],
             [{ type: 'drums', notes: 'K|K||K' }]
           ],
-          autoLevel: 0
+          autoMax: 0
         }, {
           surfaces: [
             { soundByKey: { q: 'snare', a: 'kick' } }
@@ -47,10 +47,12 @@
           stages: 4,
           buildParams: () => ({ requiredBeatTicks: ['00:000'] })
         }, {
-          autoLevel: 1,
+          autoMax: 1,
           buildParams: () => {}
         }, {
-          autoLevel: 2
+          autoMax: 2
+        }, {
+          autoMax: 3
         }, {
           pulseBeat: '2111',
           buildParams: (i) => i < 3 ? { requiredBeatTicks: ['00:096'] } : {}

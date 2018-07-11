@@ -6,7 +6,7 @@
         .info ({{ goalCount }} {{ playCount }})
 
       .toggle.auto.button(v-for="i in autoLevels", @click="setAuto(i)",
-          :class="{active: autoLevel >= i}") {{ i }}
+          :class="{active: autoMax >= i}") {{ i }}
 
 </template>
 
@@ -32,29 +32,29 @@
       }
     },
     mounted() {
-      this.setAuto(-1);
+      this.setAuto(0);
     },
     methods: {
-      setAuto(autoLevel) {
-        if (this.autoLevel === autoLevel) {
+      setAuto(autoMax) {
+        if (this.active) {
           this.$store.dispatch('stage/clear');
-        } else {
-          let notes = _.join(_.fill(Array(this.numBeats - 1), 'K'), '|');
-          this.$store.dispatch('stage/initialize', { autoLevel,
-            goal: [{ type: 'drums', notes }]
-          });
         }
+        let notes = _.join(_.fill(Array(this.numBeats - 1), 'K'), '|');
+        this.$store.dispatch('stage/initialize', { autoMax,
+          goal: [{ type: 'drums', notes }]
+        });
       }
     },
     computed: {
       ...mapGetters({
         keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
-        autoLevel: 'stage/autoLevel',
+        autoMax: 'stage/autoMax',
         autoLevels: 'stage/autoLevels',
         goalCount: 'stage/goalCount',
         playCount: 'stage/playCount',
         basePoints: 'stage/basePoints',
+        active: 'transport/active',
         numBeats: 'transport/numBeats'
       })
     },

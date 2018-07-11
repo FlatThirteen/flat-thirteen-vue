@@ -6,7 +6,7 @@
       .controls.whole(v-if="goalNoteCount")
         play-button(@click.native="onPlayback()")
         goal-button(@click.native="onGoal()", :class="{weenie: weenie === 'goal'}")
-        loop-button(@click.native="onStop()")
+        loop-button(@click.native="onLoop()")
 
     svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
         :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
@@ -100,12 +100,8 @@
       onPlayback() {
         this.$store.dispatch('stage/onAction', { scene: 'playback' });
       },
-      onStop() {
-        if (this.scene === 'count') {
-          this.$store.dispatch('stage/onAction', { scene: 'standby' });
-        } else {
-          this.$store.commit('stage/next', { nextScene: 'standby' });
-        }
+      onLoop() {
+        this.$store.dispatch('stage/onLoop');
       },
       setWeenie(weenie) {
         this.weenie = this.autoGoal ? undefined : weenie;
@@ -116,7 +112,7 @@
         return this.lastBeat ? this.nextScene === 'goal' : this.scene === 'goal';
       },
       showCounter() {
-        return this.nextScene === 'goal';
+        return this.scene !== 'goal' && this.nextScene === 'goal';
       },
       showPosition() {
         return this.scene === 'playback'
@@ -147,6 +143,7 @@
         basePoints: 'stage/basePoints',
         autoGoal: 'stage/autoGoal',
         autoLoop: 'stage/autoLoop',
+        autoRepeat: 'stage/autoRepeat',
         stage: 'lesson/stage',
         active: 'transport/active'
       })
