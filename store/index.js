@@ -4,8 +4,7 @@ export const state = () => ({
   keyMode: false,
   keysHeld: {},
   keyDown: null,
-  keyUp: null,
-  keyLocation: null
+  keyUp: null
 });
 
 export const getters = {
@@ -15,16 +14,14 @@ export const getters = {
   noKeysHeld: state => !_.size(state.keysHeld),
   keyDown: state => state.keyDown,
   keyUp: state => state.keyUp,
-  keyLocation: state => state.keyLocation
 };
 
 export const mutations = {
-  keyDown(state, {key, location}) {
+  keyDown(state, {key}) {
     state.keyMode = key !== 'Enter';
     Vue.set(state.keysHeld, key, true);
     state.keyDown = key;
     state.keyUp = null;
-    state.keyLocation = location;
   },
   keyUp(state, {key}) {
     Vue.delete(state.keysHeld, key);
