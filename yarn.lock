@@ -5736,9 +5736,11 @@ token-stream@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/token-stream/-/token-stream-0.0.1.tgz#ceeefc717a76c4316f126d0b9dbaa55d7e7df01a"
 
-tone@13.1.31:
-  version "13.1.31"
-  resolved "https://registry.yarnpkg.com/tone/-/tone-13.1.31.tgz#568bf9dfcbbb7062d25afc712623f28a642872d7"
+tone@13.2:
+  version "13.2.0"
+  resolved "https://registry.yarnpkg.com/tone/-/tone-13.2.0.tgz#93b28111575fe9bb9ae41268a683a6ece5559429"
+  dependencies:
+    webmidi "^2.0.5"
 
 toposort@^1.0.0:
   version "1.0.7"
@@ -6071,6 +6073,10 @@ watchpack@^1.4.0:
     chokidar "^2.0.2"
     graceful-fs "^4.1.2"
     neo-async "^2.5.0"
+
+webmidi@^2.0.5:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/webmidi/-/webmidi-2.2.0.tgz#9f6c54f95e9c6baf5dca26d8307a299bb1b6feb5"
 
 webpack-bundle-analyzer@^2.10.0:
   version "2.11.3"
