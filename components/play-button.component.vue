@@ -3,8 +3,8 @@
     svg(height="60", width="60", viewBox="0 0 60 60")
       defs(v-if="!noGoal")
         linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
-          stop(:offset="stopTop", stop-color="white")
-          stop(:offset="stopBottom", :stop-color="color")
+          stop(:offset="stopLevel + '%'", stop-color="white")
+          stop(:offset="(stopLevel ? stopLevel + 15 : 0) + '%'", :stop-color="color")
       path.play-icon(:d="playPath",
           :fill="noGoal ? color: 'url(#playGradient)'",
           :stroke="color" stroke-width="6px")
@@ -104,16 +104,15 @@
         }]]
       }
     },
-    data: function() {
+    data() {
       return {
         count: 0,
-        stopLevelTop: 0,
-        stopLevelBottom: 0
+        stopLevel: 0
       };
     },
     mounted() {
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
-      if (this.preGoal) {
+      if (!this.noGoal && this.preGoal) {
         this.set({ opacity: 0 });
       }
     },
@@ -131,17 +130,6 @@
     computed: {
       ready() {
         return this.playNotes === this.goalNotes;
-      },
-      stopCalculation() {
-        let highest = this.goalNotes > 4 ? 15 : 45 - this.goalNotes * 6;
-        let notch = (75 - highest) / (this.goalNotes - 1);
-        return 75 - notch * this.playNotes;
-      },
-      stopTop() {
-        return this.stopLevelTop + '%';
-      },
-      stopBottom() {
-        return this.stopLevelBottom + '%';
       },
       playClass() {
         return {
@@ -168,10 +156,10 @@
           if (this.noGoal) {
             return;
           }
-          TweenMax.to(this.$data, this.animationDuration, {
-            stopLevelTop: this.ready ? 0 : this.stopCalculation,
-            stopLevelBottom: this.ready ? 0 : this.stopCalculation + 15
-          });
+          let highest = this.goalNotes > 4 ? 15 : 45 - this.goalNotes * 6;
+          let notch = (75 - highest) / (this.goalNotes - 1);
+          let stopLevel = this.ready ? 0 : 75 - notch * this.playNotes;
+          TweenMax.to(this.$data, this.animationDuration, { stopLevel });
           if (!this.preGoal) {
             this.animate('twitch');
           }
@@ -199,7 +187,9 @@
         }
       },
       preGoal(preGoal) {
-        this.set({ opacity: preGoal ? 0 : 1 });
+        if (!this.noGoal) {
+          this.set({ opacity: preGoal ? 0 : 1 });
+        }
       }
     }
   }

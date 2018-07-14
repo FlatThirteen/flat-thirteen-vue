@@ -5,7 +5,7 @@ export const state = () => ({
   nextScene: 'standby',
   preGoal: false,
   changed: false,
-  autoLevel: -1,
+  autoLevel: 0,
   autoMax: 0,
   counts: {},
   penalty: {},
@@ -25,6 +25,8 @@ export const getters = {
   autoLoop: state => state.autoLevel > 1,
   autoRepeat: state => state.autoLevel > 2,
   autoMax: state => state.autoMax,
+  autoNext: state => state.autoMax === nextMap.length - 1 ||
+      state.autoLevel !== state.autoMax ? 0 : state.autoMax + 1,
   showLoop: state => state.autoMax > 1,
   goalCount: state => state.counts['goal'],
   playCount: state => state.counts['playback'],
@@ -35,9 +37,7 @@ export const getters = {
 export const mutations = {
   reset(state, {autoLevel = state.autoLevel, autoMax = state.autoMax,
       penaltyMax = state.penaltyMax} = {}) {
-    if (autoLevel === -1) {
-      state.scene = 'standby';
-    }
+    state.scene = 'standby';
     state.nextScene = 'standby';
     state.preGoal = autoLevel === 0 || autoLevel === 1;
     state.autoMax = _.clamp(autoMax, 0, nextMap.length - 1);
@@ -63,11 +63,18 @@ export const mutations = {
     state.nextScene = nextScene;
   },
   autoAdjust(state, {max} = {}) {
-    if (max) {
-      state.autoMax = _.clamp(state.autoMax + 1, 0, nextMap.length - 1);
+    if (max === 0) {
+      state.autoMax = 0;
+      state.autoLevel = 0;
+    } else {
+      if (max) {
+        state.autoMax = _.clamp(state.autoMax + 1, 0, nextMap.length - 1);
+      }
+      state.autoLevel = max || state.autoLevel <= 1 ? state.autoMax : state.autoLevel - 1;
     }
-    state.autoLevel = max || state.autoLevel <= 1 ? state.autoMax : state.autoLevel - 1;
-    state.nextScene = getNext(state.autoLevel, state.scene);
+    if (state.nextScene !== 'playback') {
+      state.nextScene = getNext(state.autoLevel, state.scene);
+    }
   },
   changed(state) {
     state.changed = true;
@@ -87,21 +94,28 @@ export const mutations = {
 
 export const actions = {
   clear({commit, dispatch}) {
-    commit('reset', { autoLevel: -1, penaltyMax: {} });
+    commit('reset', { penaltyMax: {} });
     commit('phrase/clear', { name: 'goal' }, { root: true });
     dispatch('transport/stop', undefined, { root: true });
   },
-  initialize({commit, dispatch, rootGetters}, {autoMax, autoLevel = autoMax, goal} = {}) {
-    let startAction = autoLevel > 0 && rootGetters['transport/paused'];
+  initialize({commit, dispatch, getters, rootGetters}, {autoMax, autoLevel = autoMax, goal} = {}) {
+    let paused = rootGetters['transport/paused'];
     dispatch('phrase/initialize', { goal }, { root: true });
     commit('reset', { autoLevel, autoMax, penaltyMax: { goal: 45, wrong: 50 } });
-    if (startAction && rootGetters['phrase/goalNoteCount']) {
+    if (paused && getters['autoGoal'] && rootGetters['phrase/goalNoteCount']) {
       dispatch('onAction', { scene: 'count' });
     }
   },
   onLoop({commit, getters}) {
     if (getters.showLoop) {
       commit('autoAdjust');
+    }
+  },
+  onPowerUp({commit, dispatch, state, rootGetters}) {
+    commit('autoAdjust', { max: true });
+    if (state.autoLevel > 0 && rootGetters['transport/paused'] &&
+        rootGetters['phrase/goalNoteCount']) {
+      dispatch('onAction', { scene: 'count' });
     }
   },
   onAction({commit, dispatch, getters, rootGetters}, {playTime,
@@ -223,7 +237,6 @@ function getNext(autoLevel, scene) {
 }
 
 const nextMap = [{}, {
-  standby: 'count',
   count: 'goal',
   victory: 'count'
 }, {

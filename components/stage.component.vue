@@ -4,9 +4,10 @@
     .top-container
       bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
       .controls.whole(v-if="goalNoteCount")
-        play-button(@click.native="onPlayback()")
-        goal-button(@click.native="onGoal()", :class="{weenie: weenie === 'goal'}")
         loop-button(@click.native="onLoop()")
+        power-auto(ref="auto", @click="onPowerUp()")
+        goal-button(@click.native="onGoal()", :class="{weenie: weenie === 'goal'}")
+        play-button(@click.native="onPlayback()")
 
     svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
         :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
@@ -34,6 +35,7 @@
   import LoopButton from '~/components/loop-button.component';
   import NoteCounter from '~/components/note-counter.component';
   import PlayButton from '~/components/play-button.component';
+  import PowerAuto from '~/components/power-auto.component';
   import Transport from '~/components/transport.component';
 
   export default {
@@ -48,7 +50,11 @@
       'loop-button': LoopButton,
       'note-counter': NoteCounter,
       'play-button': PlayButton,
+      'power-auto': PowerAuto,
       'transport': Transport
+    },
+    props: {
+      showNextPower: false
     },
     constants: {
       animationTarget: 'stage',
@@ -65,10 +71,11 @@
         }]]
       }
     },
-    data: function() {
+    data() {
       return {
         weenie: this.autoGoal ? undefined : 'goal',
-        lastBeat: false
+        lastBeat: false,
+        powerTrigger: -1
       }
     },
     mounted() {
@@ -103,8 +110,14 @@
       onLoop() {
         this.$store.dispatch('stage/onLoop');
       },
+      onPowerUp() {
+        this.$store.dispatch('stage/onPowerUp');
+      },
       setWeenie(weenie) {
         this.weenie = this.autoGoal ? undefined : weenie;
+      },
+      randomTrigger() {
+        return _.random(this.numPulses - 1);
       }
     },
     computed: {
@@ -136,11 +149,14 @@
         goalNoteCount: 'phrase/goalNoteCount',
         beatsPerMeasure: 'player/beatsPerMeasure',
         surfaces: 'player/surfaces',
+        cursor: 'player/cursor',
         notes: 'player/notes',
         noteCount: 'player/noteCount',
+        numPulses: 'player/numPulses',
         scene: 'stage/scene',
         nextScene: 'stage/nextScene',
         basePoints: 'stage/basePoints',
+        autoNext: 'stage/autoNext',
         autoGoal: 'stage/autoGoal',
         autoLoop: 'stage/autoLoop',
         autoRepeat: 'stage/autoRepeat',
@@ -155,6 +171,20 @@
           this.$store.dispatch('stage/onAction');
         }
       },
+      numPulses: {
+        immediate: true,
+        handler(numPulses) {
+          if (numPulses) {
+            this.powerTrigger = this.randomTrigger();
+          }
+        }
+      },
+      cursor(cursor) {
+        if (this.showNextPower && this.autoNext && cursor === this.powerTrigger) {
+          this.powerTrigger = this.randomTrigger();
+          this.$refs.auto.appear(this.autoNext);
+        }
+      },
       active(active) {
         if (!active) {
           this.lastBeat = false;
@@ -165,6 +195,8 @@
           this.setWeenie('goal');
         } else if (scene === 'goal' && this.weenie === 'goal') {
           this.setWeenie('grid');
+        } else if (scene === 'victory') {
+          this.$refs.auto.fade();
         }
       },
       notes() {
@@ -201,6 +233,7 @@
 
   .controls
     display: flex;
+    flex-direction: row-reverse;
     justify-content: space-between;
     align-items: flex-end;
     padding-bottom: 10px;

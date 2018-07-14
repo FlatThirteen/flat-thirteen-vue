@@ -3,14 +3,19 @@
     transition(name="lesson-container")
       .lesson-container(v-if="lessonIndex === null", key="choose")
         .lesson.button(v-for="(lesson, i) in lessons", @click="setLesson(i)",
-            :class="{done: points[i]}") {{ points[i] || i }}
+            :class="{done: stagePoints[i]}") {{ stagePoints[i] || i }}
       .lesson-container(v-else, key="stage")
         .quit.button(@click="clearLesson()") X
-        stage
-
+        stage(:showNextPower="showNextPower")
+    .bottom-controls
+      .auto
+        .icon(@click="$store.commit('stage/autoAdjust', { max: 0 })") o
+        | :{{ autoMax }}
+      .points {{ showPoints | floor }}
 </template>
 
 <script>
+  import { TweenMax } from 'gsap';
   import { mapGetters } from 'vuex';
 
   import LessonBuilderMixin from '~/mixins/lesson-builder.mixin';
@@ -38,21 +43,13 @@
             [{ type: 'drums', notes: 'K|K|K' }],
             [{ type: 'drums', notes: 'K||K|K' }],
             [{ type: 'drums', notes: 'K|K||K' }]
-          ],
-          autoMax: 0
+          ]
         }, {
           surfaces: [
             { soundByKey: { q: 'snare', a: 'kick' } }
           ],
           stages: 4,
           buildParams: () => ({ requiredBeatTicks: ['00:000'] })
-        }, {
-          autoMax: 1,
-          buildParams: () => {}
-        }, {
-          autoMax: 2
-        }, {
-          autoMax: 3
         }, {
           pulseBeat: '2111',
           buildParams: (i) => i < 3 ? { requiredBeatTicks: ['00:096'] } : {}
@@ -73,8 +70,12 @@
         }],
         lessonIndex: null,
         stages: null,
-        points: []
-      }
+        stagePoints: [],
+        showPoints: 0
+      };
+    },
+    mounted() {
+      this.$store.dispatch('stage/clear');
     },
     methods: {
       setLesson(index) {
@@ -93,23 +94,33 @@
       },
       clearLesson(points) {
         if (points) {
-          this.points[this.lessonIndex] = points;
+          this.stagePoints[this.lessonIndex] = points;
         }
         this.$store.dispatch('lesson/clear');
         this.lessonIndex = null;
       }
     },
     computed: {
+      showNextPower() {
+        return this.showPoints >= this.autoNext * 200;
+      },
       ...mapGetters({
+        autoMax: 'stage/autoMax',
+        autoNext: 'stage/autoNext',
         done: 'lesson/done',
-        totalPoints: 'lesson/totalPoints'
+        lessonPoints: 'lesson/totalPoints'
       })
     },
     watch: {
       done(done) {
         if (done) {
-          this.clearLesson(this.totalPoints);
+          this.clearLesson(this.lessonPoints);
         }
+      },
+      lessonPoints(lessonPoints) {
+        TweenMax.to(this.$data, .5, {
+          showPoints: _.sum(this.stagePoints) + lessonPoints
+        });
       }
     }
   }
@@ -158,4 +169,25 @@
       color: #888;
       border-color: #888;
 
+  .bottom-controls
+    posit(fixed, x, 0, 0, 0)
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    user-select: none;
+
+    .auto
+      font-size: 40px;
+      font-weight: bold;
+      margin: 5px 10px;
+
+      .icon
+        display: inline-block;
+        color: primary-blue;
+        line-height: 30px;
+
+    .points
+      color: active-blue;
+      font-size: 40px;
+      font-weight: 600;
 </style>

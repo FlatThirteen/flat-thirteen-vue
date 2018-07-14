@@ -58,7 +58,7 @@
     methods: {
       beatHandler() {
         if (this.autoLoop && this.nextScene !== 'playback') {
-          this.animate('pulse', { unless: 'drop'});
+          this.animate('pulse', { unless: 'drop', skip: ['bumper', 'toast'] });
         }
       }
     },
@@ -84,7 +84,7 @@
           return;
         }
         if (this.nextScene === 'goal' && oldScene === 'goal') {
-          this.animate('bumper');
+          this.animate('bumper', { unless: 'drop' });
         } else if (scene === 'goal' && this.nextScene === 'count') {
           this.animate('toast', { when: 'drop' });
         }
@@ -95,8 +95,8 @@
         }
         if (nextScene === 'goal') {
           this.animate('toast', { when: 'drop' });
-        } else if (nextScene === 'standby' ||
-            nextScene === 'playback' && (oldNextScene === 'goal' || oldNextScene === 'count')) {
+        } else if (nextScene === 'playback' &&
+            (oldNextScene === 'goal' || oldNextScene === 'count')) {
           this.animate('drop');
         }
       }

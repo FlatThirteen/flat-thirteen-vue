@@ -1,12 +1,12 @@
 <template lang="pug">
   .container
-    stage
+    stage(:showNextPower="true")
     .bottom-controls
+      .auto
+        .icon(@click="setAuto(0)") o
+        | :{{ autoMax }}
       .points(v-if="goalNoteCount") {{ basePoints }}
         .info ({{ goalCount }} {{ playCount }})
-
-      .toggle.auto.button(v-for="i in autoLevels", @click="setAuto(i)",
-          :class="{active: autoMax >= i}") {{ i }}
 
 </template>
 
@@ -50,7 +50,6 @@
         keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
         autoMax: 'stage/autoMax',
-        autoLevels: 'stage/autoLevels',
         goalCount: 'stage/goalCount',
         playCount: 'stage/playCount',
         basePoints: 'stage/basePoints',
@@ -60,7 +59,7 @@
     },
     watch: {
       keyDown(key) {
-        if (_.includes('012', key)) {
+        if (_.includes('0123', key)) {
           this.setAuto(_.toNumber(key));
         }
       },
@@ -81,9 +80,22 @@
 
   .bottom-controls
     posit(fixed, x, 0, 0, 0)
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    user-select: none;
+
+    .auto
+      font-size: 40px;
+      font-weight: bold;
+      margin: 5px 10px;
+
+      .icon
+        display: inline-block;
+        color: primary-blue;
+        line-height: 30px;
 
     .points
-      posit(absolute, x, 0, 0, x)
       color: active-blue;
       font-size: 40px;
       font-weight: 600;
@@ -92,14 +104,5 @@
         color: gray;
         display: inline-block;
 
-    .toggle
-      display: inline-block;
-      font-size: 40px;
-      line-height: 60px;
-      font-weight: bold;
-      border-radius: 5px;
-      border-width: 5px;
-
-  toggle-color('.auto', primary-red);
 
 </style>

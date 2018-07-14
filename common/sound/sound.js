@@ -16,7 +16,15 @@ let Sound = {
     } else {
       return Promise.resolve();
     }
+  },
+  playSequence(soundName, pitches, duration, variation) {
+    let sound = Sound[soundName];
+    _.forEach(pitches, (pitch, index) => {
+      let time = new Tone.Time(duration) * index;
+      sound.play('+' + time, {pitch: pitch, variation: variation});
+    });
   }
+
 };
 
 if (process.browser) {

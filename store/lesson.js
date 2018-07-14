@@ -10,7 +10,7 @@ export const getters = {
   stageGoal: state => state.stages[state.index],
   done: state => state.index === state.stages.length,
   points: state => state.points,
-  totalPoints: state => _.floor(_.mean(state.points))
+  totalPoints: state => _.sum(state.points)
 };
 
 export const mutations = {
@@ -28,9 +28,9 @@ export const mutations = {
 };
 
 export const actions = {
-  initialize({commit, dispatch, getters}, {stages = [], autoMax = 0, autoLevel = autoMax} = {}) {
+  initialize({commit, dispatch, getters}, {stages = []} = {}) {
     commit('reset', stages);
-    dispatch('stage/initialize', { autoLevel, autoMax, goal: getters.stageGoal }, { root: true });
+    dispatch('stage/initialize', { goal: getters.stageGoal }, { root: true });
   },
   next({commit, dispatch, state, getters}, {points}) {
     if (state.index > -1) {

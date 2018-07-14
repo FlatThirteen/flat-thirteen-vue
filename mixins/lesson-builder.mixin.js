@@ -5,7 +5,7 @@ import Note from '~/common/core/note.model';
 
 export default {
   methods: {
-    setupLesson({pulseBeat, surfaces, stages, autoMax, buildParams}) {
+    setupLesson({pulseBeat, surfaces, stages, buildParams}) {
       this.$store.dispatch('player/update', { pulseBeat, surfaces });
 
       if (_.isNumber(stages)) {
@@ -17,7 +17,7 @@ export default {
         });
       }
 
-      this.$store.dispatch('lesson/initialize', { stages, autoMax });
+      this.$store.dispatch('lesson/initialize', { stages });
     }
   },
   computed: {
