@@ -1,23 +1,14 @@
 <template lang="pug">
-  .goal.button(ref="goal", v-show="mode === 'listen'")
-    img(src="~/assets/listen-music-128.png", v-if="mode === 'listen'")
-    svg(height="60", width="60", viewBox="0 0 60 60")
-      svg:path.auto(v-if="mode === 'auto'", :d="autoPath",
-          fill="white", stroke="white", stroke-width="1px")
+  .goal.button(ref="goal", :class="{count: animatedLast === 'count'}")
+    img(src="~/assets/listen-music-128.png", v-show="animatedLast !== 'count'")
 </template>
 
 <script>
-
-  import { mapGetters } from 'vuex';
-
   import AnimatedMixin from '~/mixins/animated.mixin';
-
-  import BeatTick from '~/common/core/beat-tick.model';
 
   export default {
     mixins: [AnimatedMixin],
     constants: {
-      autoPath: 'M15,27 H32 V23 L47,30 L32,37 V33 H15 Z',
       animationTarget: 'goal',
       animationDefinitions: {
         launch: [[.2, {
@@ -36,6 +27,15 @@
         }], [.2, {
           transform: 'translateY(0) scale(1)'
         }]],
+        count: [[.2, {
+          transform: 'translateY(-1vh)'
+        }], [.2, {
+          transform: 'translateY(0vh)'
+        }], [.2, {
+          transform: 'translateY(0vh)'
+        }], [.2, {
+          transform: 'translateY(10vh)'
+        }]],
         appear: [[0, {
           transform: 'translateY(5vh) scale(0)'
         }], [.8, {
@@ -49,37 +49,6 @@
           transform: 'translateY(0) scale(0)'
         }]]
       }
-    },
-    data: function() {
-      return {
-        mode: 'listen'
-      };
-    },
-    mounted() {
-      this.mode = this.autoGoal ? 'auto' : 'listen';
-    },
-    computed: {
-      ...mapGetters({
-        autoGoal: 'stage/autoGoal',
-        scene: 'stage/scene',
-        nextScene: 'stage/nextScene'
-      })
-    },
-    watch: {
-      scene: {
-        immediate: true,
-        handler(scene, oldScene) {
-          if (scene === 'goal' && oldScene === 'standby') {
-            this.animate('launch');
-          } else if (!this.autoGoal && scene === 'count' && oldScene !== 'victory' ||
-              oldScene === 'standby') {
-            this.animate('disappear');
-          } else if (scene === 'standby') {
-            this.mode = 'listen';
-            this.animate(oldScene === 'goal' ? 'land' : 'appear');
-          }
-        }
-      }
     }
   }
 </script>
@@ -88,12 +57,19 @@
   .goal
     position: relative;
     background-color: primary-blue;
+    border: solid 6px primary-blue;
     border-radius: 50%;
+    height: 48px;
+    width: 48px;
+
+    &.count
+      background-color: white;
+      transition: background-color 200ms;
 
   img
     posit(absolute, 0, x, x, 0);
     height: 40px;
     width: 40px;
-    margin: 10px;
+    margin: 5px;
 
 </style>

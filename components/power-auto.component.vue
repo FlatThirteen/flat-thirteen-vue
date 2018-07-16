@@ -102,7 +102,9 @@
         });
       },
       onMouseEnter() {
-        this.animated.pause();
+        if (this.active) {
+          this.animated.pause();
+        }
       },
       onMouseLeave() {
         if (this.active) {

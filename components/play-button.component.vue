@@ -1,32 +1,27 @@
 <template lang="pug">
-  .play.button(ref="play", :class="playClass")
+  .play.button(ref="play", :class="{wrong}")
     svg(height="60", width="60", viewBox="0 0 60 60")
-      defs(v-if="!noGoal")
+      defs(v-if="wrong !== undefined")
         linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
           stop(:offset="stopLevel + '%'", stop-color="white")
           stop(:offset="(stopLevel ? stopLevel + 15 : 0) + '%'", :stop-color="color")
       path.play-icon(:d="playPath",
-          :fill="noGoal ? color: 'url(#playGradient)'",
+          :fill="wrong === undefined ? color : 'url(#playGradient)'",
           :stroke="color" stroke-width="6px")
-    .counter(v-if="showCount") {{ count }}
+    .counter(v-if="counter") {{ counter }}
 </template>
 
 <script>
   import { TweenMax } from 'gsap';
-  import { mapGetters } from 'vuex';
 
   import AnimatedMixin from '~/mixins/animated.mixin';
-
-  import { primaryGreen } from '~/common/colors'
-
-  import BeatTick from '~/common/core/beat-tick.model';
 
   export default {
     mixins: [AnimatedMixin],
     props: {
-      noGoal: {
+      wrong: {
         type: Boolean,
-        default: false
+        default: undefined
       }
     },
     constants: {
@@ -106,90 +101,22 @@
     },
     data() {
       return {
-        count: 0,
+        counter: 0,
         stopLevel: 0
       };
     },
-    mounted() {
-      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
-      if (!this.noGoal && this.preGoal) {
-        this.set({ opacity: 0 });
-      }
-    },
-    destroyed() {
-      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
-    },
     methods: {
-      beatHandler({count}) {
-        this.count = count;
-        if (!this.noGoal && this.showCount) {
+      count(count) {
+        this.counter = count;
+        if (count && this.wrong !== undefined) {
           this.animate('bounce');
         }
-      }
-    },
-    computed: {
-      ready() {
-        return this.playNotes === this.goalNotes;
       },
-      playClass() {
-        return {
-          wrong: !this.noGoal && !this.ready
-        };
-      },
-      showCount() {
-        return this.playing && (this.noGoal || this.nextScene === 'playback');
-      },
-      ...mapGetters({
-        playing: 'transport/playing',
-        scene: 'stage/scene',
-        nextScene: 'stage/nextScene',
-        preGoal: 'stage/preGoal',
-        showLoop: 'stage/showLoop',
-        playNotes: 'player/noteCount',
-        goalNotes: 'phrase/goalNoteCount'
-      })
-    },
-    watch: {
-      playNotes: {
-        immediate: true,
-        handler() {
-          if (this.noGoal) {
-            return;
-          }
-          let highest = this.goalNotes > 4 ? 15 : 45 - this.goalNotes * 6;
-          let notch = (75 - highest) / (this.goalNotes - 1);
-          let stopLevel = this.ready ? 0 : 75 - notch * this.playNotes;
-          TweenMax.to(this.$data, this.animationDuration, { stopLevel });
-          if (!this.preGoal) {
-            this.animate('twitch');
-          }
-        }
-      },
-      scene(scene, oldScene) {
-        if (this.noGoal || this.preGoal) {
-          return;
-        }
-        if (scene === 'playback') {
-          this.animate('drop');
-        } else if (scene === 'standby' && oldScene === 'playback') {
-          this.animate('toast');
-        } else if (scene === 'goal' && !this.showLoop) {
-          this.animate('leave');
-        } else if (this.showLoop ?
-            scene !== 'victory' && oldScene === 'playback' || oldScene === 'victory' :
-            scene === 'standby' || scene === 'count' && oldScene !== 'standby') {
-          this.animate('enter');
-        }
-      },
-      nextScene(nextScene) {
-        if (!this.noGoal && nextScene === 'playback' && this.scene !== 'count') {
-          this.animate('enter');
-        }
-      },
-      preGoal(preGoal) {
-        if (!this.noGoal) {
-          this.set({ opacity: preGoal ? 0 : 1 });
-        }
+      toStopLevel(playNotes, goalNotes) {
+        let highest = goalNotes > 4 ? 15 : 45 - goalNotes * 6;
+        let notch = (75 - highest) / (goalNotes - 1);
+        let stopLevel = playNotes === goalNotes ? 0 : 75 - notch * playNotes;
+        TweenMax.to(this.$data, this.animationDuration, { stopLevel });
       }
     }
   }
@@ -198,6 +125,8 @@
 <style scoped lang="stylus" type="text/stylus">
   .play
     position: relative;
+    height: 60px;
+    width: 60px;
 
     &.wrong.button:hover:not(.disabled)
       shadow(primary-red)

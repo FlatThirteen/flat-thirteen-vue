@@ -1,7 +1,7 @@
 <template lang="pug">
   .controls
     transport(ref="transport", v-bind="transportProps")
-    play-button(@click.native="onPlay()", :noGoal="true")
+    play-button(ref="play", @click.native="onPlay()")
     slot
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
       input(type="number", v-model.number="tempo", placeholder="tempo", @keydown.stop="")
@@ -24,6 +24,8 @@
   import PlayButton from '~/components/play-button.component';
   import Transport from '~/components/transport.component';
 
+  import BeatTick from '~/common/core/beat-tick.model';
+
   export default {
     components: {
       'play-button': PlayButton,
@@ -43,20 +45,22 @@
         default: false
       },
     },
-    data: function() {
+    data() {
       return {
         transport: { bpm: () => 120, isValidBpm: _.stubTrue, isValidLatencyHint: _.stubTrue },
         tempo: 120,
         latencyHint: 'balanced',
-        showSuggestions: false,
+        showSuggestions: false
       }
     },
     mounted() {
       this.transport = this.$refs.transport;
       window.addEventListener('keydown', this.onKeyDown);
+      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
     destroyed: function() {
       window.removeEventListener('keydown', this.onKeyDown);
+      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
 
     methods: {
@@ -65,6 +69,9 @@
           this.$store.commit('player/unselect');
           this.onPlay();
         }
+      },
+      beatHandler({count}) {
+        this.$refs.play.count(count);
       },
       onPlay() {
         Sound.resume().then(() => {
@@ -101,6 +108,13 @@
       ...mapGetters({
         playing: 'transport/playing'
       })
+    },
+    watch: {
+      playing(playing) {
+        if (!playing) {
+          this.$refs.play.count(0);
+        }
+      }
     }
   }
 

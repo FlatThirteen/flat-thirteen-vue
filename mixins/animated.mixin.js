@@ -1,7 +1,7 @@
 import { TimelineMax, TweenMax } from 'gsap';
 import { mapGetters } from 'vuex';
 
-const DEBUG = '';
+const DEBUG = 'loop';
 
 function matches(target, condition) {
   if (_.isArray(condition)) {
@@ -15,57 +15,51 @@ export default {
   data() {
     return {
       animated: null,
-      animatedLast: ''
+      animatedLast: '',
+      animatedSkip: false
     }
   },
   methods: {
     animate(name, options = {}) {
       let element = this.$refs[this.animationTarget];
-      if (element &&
-          (options.when ? !this.animatedLast || matches(this.animatedLast, options.when) :
-          (!options.unless || !matches(this.animatedLast, options.unless)) &&
-          (!options.skip || !matches(this.animatedLast, options.skip) || !this.animated))) {
-        if (matches(this.animationTarget, DEBUG)) {
-          console.info('Animation', this.animationTarget, name, '{--');
-          let onRepeat = options.onRepeat || _.noop;
-          options.onRepeat = () => {
-            console.info('Animation', this.animationTarget, name, ' --');
-            onRepeat();
-          };
-        }
+      if (!element) {
+        this.animateDebug(name, 'failed without element', this.$refs);
+      } else if (options.when && !matches(this.animatedLast, options.when)) { // animatedLast?
+        this.animateDebug(name, 'prevented because last', this.animatedLast, 'not', options.when);
+      } else if (options.unless && matches(this.animatedLast, options.unless)) {
+        this.animateDebug(name, 'prevented because last', this.animatedLast, 'in', options.unless);
+      } else if (options.skip && this.animatedSkip) {
+        this.animatedLast = name;
+        this.animateDebug(name, 'skipped because last', this.animatedLast);
+      } else {
+        this.animateDebug(name, '{-- was', this.animatedLast);
+        let onRepeat = options.onRepeat || _.noop;
+        options.onRepeat = () => {
+          this.animateDebug(name, ' --');
+          onRepeat();
+        };
         let onComplete = options.onComplete || _.noop;
         options.onComplete = () => {
           onComplete();
+          this.animatedSkip = false;
           this.animated = null;
-          if (matches(this.animationTarget, DEBUG)) {
-            console.info('Animation', this.animationTarget, name, ' --}');
-          }
+          this.animateDebug(name, ' --}');
         };
         if (this.animated) {
           this.animated.pause();
         }
         this.animatedLast = name;
-        this.animated = _.reduce(this.animationDefinitions[name], (timeline, [time, style]) => {
-          if (time) {
-            return timeline.to(element, time, style);
-          } else {
-            return timeline.from(element, time, style);
-          }
-        }, new TimelineMax(options)).duration(options.duration || this.animationDuration).play(0);
-        return this.animated;
-      } else if (matches(this.animatedLast, options.skip)) {
-        this.animatedLast = name;
-        if (matches(this.animationTarget, DEBUG)) {
-          console.info('Skipped', name, 'because last', this.animatedLast, 'in', options.skip);
-        }
-      } else if (matches(this.animationTarget, DEBUG)) {
-        if (options.when) {
-          console.info('Prevented', name, 'because last', this.animatedLast, 'in', options.when);
-        } else if (options.unless) {
-          console.info('Prevented', name, 'because last', this.animatedLast, 'in', options.unless);
-        } else {
-          console.info('Could not animate', name, 'without element', this.animationTarget, this.$refs);
-        }
+        this.animatedSkip = true;
+        this.$nextTick(() => {
+          this.animated = _.reduce(this.animationDefinitions[name],
+              (timeline, [time, style]) => timeline.to(element, time, style),
+              new TimelineMax(options)).duration(options.duration || this.animationDuration).play(0);
+        });
+      }
+    },
+    animateDebug(name, ...messages) {
+      if (matches(this.animationTarget, DEBUG)) {
+        console.info('Animation', this.animationTarget, name, ...messages);
       }
     },
     set(properties) {

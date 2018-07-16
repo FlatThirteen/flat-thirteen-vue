@@ -1,16 +1,17 @@
 <template lang="pug">
-  .loop(ref="loop", :class="loopClass")
+  .loop(ref="loop", :class="{button: show, off, repeat}")
 </template>
 
 <script>
-  import { mapGetters } from 'vuex';
-
   import AnimatedMixin from '~/mixins/animated.mixin';
-
-  import BeatTick from '~/common/core/beat-tick.model';
 
   export default {
     mixins: [AnimatedMixin],
+    props: {
+      show: false,
+      off: false,
+      repeat: false
+    },
     constants: {
       animationTarget: 'loop',
       animationDefinitions: {
@@ -49,56 +50,9 @@
         }]]
       }
     },
-    mounted() {
-      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
-    },
-    destroyed() {
-      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
-    },
     methods: {
-      beatHandler() {
-        if (this.autoLoop && this.nextScene !== 'playback') {
-          this.animate('pulse', { unless: 'drop', skip: ['bumper', 'toast'] });
-        }
-      }
-    },
-    computed: {
-      loopClass() {
-        return {
-          button: this.showLoop,
-          off: !this.autoLoop,
-          repeat: this.autoRepeat
-        }
-      },
-      ...mapGetters({
-        scene: 'stage/scene',
-        nextScene: 'stage/nextScene',
-        autoLoop: 'stage/autoLoop',
-        autoRepeat: 'stage/autoRepeat',
-        showLoop: 'stage/showLoop'
-      })
-    },
-    watch: {
-      scene(scene, oldScene) {
-        if (!this.autoLoop) {
-          return;
-        }
-        if (this.nextScene === 'goal' && oldScene === 'goal') {
-          this.animate('bumper', { unless: 'drop' });
-        } else if (scene === 'goal' && this.nextScene === 'count') {
-          this.animate('toast', { when: 'drop' });
-        }
-      },
-      nextScene(nextScene, oldNextScene) {
-        if (!this.autoLoop) {
-          return;
-        }
-        if (nextScene === 'goal') {
-          this.animate('toast', { when: 'drop' });
-        } else if (nextScene === 'playback' &&
-            (oldNextScene === 'goal' || oldNextScene === 'count')) {
-          this.animate('drop');
-        }
+      pulse() {
+        this.animate('pulse', { unless: 'drop', skip: true });
       }
     }
   }

@@ -4,10 +4,11 @@
     .top-container
       bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
       .controls.whole(v-if="goalNoteCount")
-        loop-button(@click.native="onLoop()")
+        loop-button(ref="loop", @click.native="onLoop()",
+            :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
         power-auto(ref="auto", @click="onPowerUp()")
-        goal-button(@click.native="onGoal()", :class="{weenie: weenie === 'goal'}")
-        play-button(@click.native="onPlayback()")
+        goal-button(ref="goal", @click.native="onGoal()", :class="{weenie: weenie === 'goal'}")
+        play-button(ref="play", @click.native="onPlayback()", :wrong="wrong")
 
     svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
         :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
@@ -81,10 +82,22 @@
     mounted() {
       this.$bus.$on(BeatTick.TOP, this.topHandler);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
+      // Wait until children are mounted
+      this.$nextTick(() => {
+        if (this.autoGoal) {
+          this.$refs.goal.animate('count');
+        }
+        this.$refs.play.toStopLevel(this.noteCount, this.goalNoteCount);
+        if (this.preGoal) {
+          this.$refs.play.set({ opacity: 0 })
+        }
+      })
     },
     destroyed() {
       this.$bus.$off(BeatTick.TOP, this.topHandler);
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
+      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
     methods: {
       topHandler({first}) {
@@ -93,12 +106,23 @@
         }
         this.lastBeat = false;
       },
-      beatTickHandler({time, beat, beatTick, lastBeat}) {
+      beatTickHandler({time, beat, tick, beatTick, lastBeat}) {
         this.$store.dispatch('stage/onBeatTick', {time, beat, beatTick});
         if (this.lastBeat !== lastBeat) {
           Tone.Draw.schedule(() => {
             this.lastBeat = lastBeat;
           }, time);
+        }
+        if (lastBeat && tick === 64 && this.scene === 'goal' &&
+            (this.nextScene === 'goal' || this.nextScene === 'count')) {
+          this.$refs.loop.animate('bumper', { unless: 'drop' })
+        }
+      },
+      beatHandler({count}) {
+        if (this.nextScene === 'playback') {
+          this.$refs.play.count(count);
+        } else if (this.autoLoop) {
+          this.$refs.loop.pulse();
         }
       },
       onGoal() {
@@ -128,14 +152,10 @@
         return this.scene !== 'goal' && this.nextScene === 'goal';
       },
       showPosition() {
-        return this.scene === 'playback'
+        return this.scene === 'playback';
       },
       wrong() {
-        return this.scene === 'playback' ? this.noteCount !== this.goalNoteCount :
-          this.noteCount > this.goalNoteCount;
-      },
-      goalWrong() {
-        return this.scene === 'playback' && this.noteCount !== this.goalNoteCount;
+        return this.noteCount !== this.goalNoteCount;
       },
       transportProps() {
         return {
@@ -155,13 +175,16 @@
         numPulses: 'player/numPulses',
         scene: 'stage/scene',
         nextScene: 'stage/nextScene',
+        preGoal: 'stage/preGoal',
         basePoints: 'stage/basePoints',
         autoNext: 'stage/autoNext',
         autoGoal: 'stage/autoGoal',
         autoLoop: 'stage/autoLoop',
         autoRepeat: 'stage/autoRepeat',
+        showLoop: 'stage/showLoop',
         stage: 'lesson/stage',
-        active: 'transport/active'
+        active: 'transport/active',
+        playing: 'transport/playing'
       })
     },
     watch: {
@@ -191,12 +214,57 @@
         }
       },
       scene(scene, oldScene) {
-        if (oldScene === 'victory') {
-          this.setWeenie('goal');
-        } else if (scene === 'goal' && this.weenie === 'goal') {
-          this.setWeenie('grid');
+        if (scene === 'standby') {
+          this.$refs.goal.animate(oldScene === 'goal' ? 'land' : 'appear');
+          if (!this.preGoal) {
+            this.$refs.play.animate('toast', { when: 'drop' });
+            this.$refs.play.animate('enter', { when: 'leave' });
+          }
+          if (oldScene === 'victory') {
+            this.setWeenie('goal');
+          }
+        } else if (scene === 'count') {
+          if (oldScene === 'standby') {
+            this.$refs.goal.animate(this.nextScene === 'goal' ? 'count' : 'disappear');
+          } else if (!this.preGoal) {
+            this.$refs.play.animate('toast', { when: 'drop' });
+            this.$refs.play.animate('enter', { when: 'leave'});
+          }
+        } else if (scene === 'goal') {
+          if (this.weenie === 'goal') {
+            this.setWeenie('grid');
+          }
+          if (!this.showLoop) {
+            this.$refs.play.animate('leave');
+          }
+          if (oldScene === 'standby') {
+            this.$refs.goal.animate('launch');
+          }
+        } else if (scene === 'playback') {
+          this.$refs.play.animate('drop');
+          if (oldScene === 'standby') {
+            this.$refs.goal.animate('disappear');
+          }
         } else if (scene === 'victory') {
           this.$refs.auto.fade();
+        }
+      },
+      nextScene(nextScene) {
+        if (nextScene === 'playback') {
+          if (this.scene !== 'count') {
+            this.$refs.play.animate('enter');
+          }
+          this.$refs.loop.animate('drop');
+        } else {
+          this.$refs.play.count(0);
+          if (nextScene === 'goal') {
+            this.$refs.loop.animate('toast', { when: 'drop' });
+          }
+        }
+      },
+      preGoal(preGoal) {
+        if (this.$refs.play) {
+          this.$refs.play.set({ opacity: preGoal ? 0 : 1 });
         }
       },
       notes() {
@@ -205,6 +273,10 @@
         }
         if (this.goalNoteCount && this.weenie !== 'goal') {
           this.$store.dispatch('stage/autoPlay');
+        }
+        this.$refs.play.toStopLevel(this.noteCount, this.goalNoteCount);
+        if (!this.preGoal) {
+          this.$refs.play.animate('twitch', { unless: 'drop' });
         }
       },
       stage() {
