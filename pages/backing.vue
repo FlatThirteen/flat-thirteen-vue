@@ -1,7 +1,6 @@
 <template lang="pug">
   .container
-    backing(:fixed="fixed", :show="showFx", :skip="showFx === undefined")
-
+    backing(:fixed="fixed", :show="showFx", :skip="showFx === undefined", :showCounts="true")
     .left
       transport-controls(:playTime="'+0.1'", :beatsPerMeasure="bpm")
         .beats-input

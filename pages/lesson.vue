@@ -1,10 +1,15 @@
 <template lang="pug">
   .container
+    composer(ref="composer")
     transition(name="lesson-container")
       .lesson-container(v-if="lessonIndex === null", key="choose")
+        .settings
+          backing-button.button(:level="hasBacking ? 1 : 0",
+              @click.native="$refs.composer.toggle()")
         .lesson.button(v-for="(lesson, i) in lessons", @click="setLesson(i)",
             :class="{done: stagePoints[i]}") {{ stagePoints[i] || i }}
       .lesson-container(v-else, key="stage")
+        backing
         .quit.button(@click="clearLesson()") X
         stage(:showNextPower="showNextPower")
     .bottom-controls
@@ -20,11 +25,17 @@
 
   import LessonBuilderMixin from '~/mixins/lesson-builder.mixin';
 
+  import Backing from '~/components/backing.component';
+  import BackingButton from '~/components/backing-button.component';
+  import Composer from '~/components/composer.component';
   import Stage from '~/components/stage.component';
 
   export default {
     mixins: [LessonBuilderMixin],
     components: {
+      'backing': Backing,
+      'backing-button': BackingButton,
+      'composer': Composer,
       'stage': Stage
     },
     head: {
@@ -105,13 +116,24 @@
         return this.showPoints >= this.autoNext * 200;
       },
       ...mapGetters({
+        hasBacking: 'phrase/hasBacking',
         autoMax: 'stage/autoMax',
         autoNext: 'stage/autoNext',
+        stage: 'lesson/stage',
         done: 'lesson/done',
         lessonPoints: 'lesson/totalPoints'
       })
     },
     watch: {
+      stage(stage) {
+        if (this.hasBacking) {
+          if (stage) {
+            this.$refs.composer.updateRhythm();
+          } else {
+            this.$refs.composer.reset();
+          }
+        }
+      },
       done(done) {
         if (done) {
           this.clearLesson(this.lessonPoints);
@@ -133,6 +155,21 @@
 
   .lesson-container
     posit(absolute);
+
+  .settings
+    background-color: faint-grey;
+    padding: 50px;
+
+  .backing
+    width: 60px;
+    height: 60px;
+    background-color: white;
+    border: solid 1px;
+
+    &.active
+      color: white;
+
+  toggle-color('.backing', primary-green);
 
   .lesson
     background-color: primary-blue;
@@ -184,7 +221,6 @@
       .icon
         display: inline-block;
         color: primary-blue;
-        line-height: 30px;
 
     .points
       color: active-blue;

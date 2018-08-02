@@ -1,5 +1,5 @@
 <template lang="pug">
-  .container(v-if="show && !skip")
+  .backing-container(v-if="show && !skip")
     .fx(v-for="note in notes", :key="note.id", :id="note.id", :class="note.fxClass")
       .tilt(:style="{transform: note.tiltTransform}")
         .scale(:style="{transform: note.scaleTransform}")
@@ -33,11 +33,11 @@
       },
       skip: {
         type: Boolean,
-        default: true
+        default: false
       },
       showCounts: {
         type: Boolean,
-        default: true
+        default: false
       }
     },
     data: function() {
@@ -154,7 +154,7 @@
 <style scoped lang="stylus" type="text/stylus">
   @import "~assets/stylus/note.styl"
 
-  .container
+  .backing-container
     posit(fixed);
     overflow: hidden;
     user-select: none;

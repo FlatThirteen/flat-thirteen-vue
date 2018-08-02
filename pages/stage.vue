@@ -1,10 +1,15 @@
 <template lang="pug">
   .container
+    backing
     stage(:showNextPower="true")
     .bottom-controls
       .auto
         .icon(@click="setAuto(0)") o
         | :{{ autoMax }}
+      .backing
+        backing-button.icon(:level="hasBacking ? 1 : 0",
+            @click.native="$refs.composer.toggle()")
+        composer(ref="composer", :show="true")
       .points(v-if="goalNoteCount") {{ basePoints }}
         .info ({{ goalCount }} {{ playCount }})
 
@@ -13,10 +18,16 @@
 <script>
   import { mapGetters } from 'vuex';
 
+  import Backing from '~/components/backing.component';
+  import BackingButton from '~/components/backing-button.component';
+  import Composer from '~/components/composer.component';
   import Stage from '~/components/stage.component';
 
   export default {
     components: {
+      'backing': Backing,
+      'backing-button': BackingButton,
+      'composer': Composer,
       'stage': Stage
     },
     head: {
@@ -49,6 +60,7 @@
       ...mapGetters({
         keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
+        hasBacking: 'phrase/hasBacking',
         autoMax: 'stage/autoMax',
         goalCount: 'stage/goalCount',
         playCount: 'stage/playCount',
@@ -85,15 +97,23 @@
     align-items: flex-end;
     user-select: none;
 
-    .auto
+    .auto, .backing
       font-size: 40px;
       font-weight: bold;
       margin: 5px 10px;
 
       .icon
         display: inline-block;
-        color: primary-blue;
-        line-height: 30px;
+
+    .auto .icon
+      color: primary-blue;
+
+    .backing
+      color: lightgrey;
+
+      .icon
+        transform: translateY(6px);
+        vertical-align: bottom;
 
     .points
       color: active-blue;

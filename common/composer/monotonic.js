@@ -24,10 +24,7 @@ function build(notes = [], beatTicks = [], requiredBeatTicks = [], count = 3,
     seed = Math.floor(seed / n);
     return chosen;
   });
-  let chosenBeatTicks = Combinatorics.combination(beatTicks, count).find(() => {
-    seed = seed - 1;
-    return seed < 0;
-  });
+  let chosenBeatTicks = Combinatorics.combination(beatTicks, count).find(() => --seed < 0);
   return _.zipObject(_.sortBy(_.concat(requiredBeatTicks, chosenBeatTicks)), chosenNotes);
 }
 

@@ -15,6 +15,7 @@ export const state = () => ({
 
 export const getters = {
   goalNoteCount: state => _.flatten(_.values(state.live.goal)).length,
+  hasBacking: state => !!_.flatten(_.values(state.live.backing)).length,
   getNotes: state => (name, beatTick) => state.live[name][beatTick],
   numNotes: state => (name, beatTick) => beatTick === undefined ?
       _.flatten(_.values(state.live[name])).length :

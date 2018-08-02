@@ -92,9 +92,9 @@ export const mutations = {
 };
 
 export const actions = {
-  update({commit, state, getters}, {pulseBeat, surfaces}) {
+  update({commit, state, getters}, {pulseBeat, surfaces, clear}) {
     commit('setup', { pulseBeat, surfaces });
-    commit('setData', _.mapValues(_.pick(state.data, getters.beatTicks),
+    commit('setData', clear ? {} : _.mapValues(_.pick(state.data, getters.beatTicks),
           (soundData) => _.pick(soundData, getters.soundIds)));
   },
   move({commit, state, getters, rootGetters}, move) {

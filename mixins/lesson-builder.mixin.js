@@ -6,7 +6,7 @@ import Note from '~/common/core/note.model';
 export default {
   methods: {
     setupLesson({pulseBeat, surfaces, stages, buildParams}) {
-      this.$store.dispatch('player/update', { pulseBeat, surfaces });
+      this.$store.dispatch('player/update', { pulseBeat, surfaces, clear: true });
 
       if (_.isNumber(stages)) {
         stages = _.times(stages, (i, params = buildParams(i)) => {
