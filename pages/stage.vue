@@ -1,15 +1,17 @@
 <template lang="pug">
   .container
     backing
-    stage(:showNextPower="true")
+    stage(:showNextPower="true", :showMetronome="showMetronome")
     .bottom-controls
       .auto
         .icon(@click="setAuto(0)") o
         | :{{ autoMax }}
       .backing
-        backing-button.icon(:level="hasBacking ? 1 : 0",
+        backing-button.button(:level="hasBacking ? 1 : 0",
             @click.native="$refs.composer.toggle()")
         composer(ref="composer", :show="true")
+      metronome.metronome.button(:disabled="!showMetronome",
+          @click.native="toggleMetronome()")
       .points(v-if="goalNoteCount") {{ basePoints }}
         .info ({{ goalCount }} {{ playCount }})
 
@@ -21,13 +23,17 @@
   import Backing from '~/components/backing.component';
   import BackingButton from '~/components/backing-button.component';
   import Composer from '~/components/composer.component';
+  import Metronome from '~/components/metronome.component';
   import Stage from '~/components/stage.component';
+
+  import Sound from '~/common/sound/sound';
 
   export default {
     components: {
       'backing': Backing,
       'backing-button': BackingButton,
       'composer': Composer,
+      'metronome': Metronome,
       'stage': Stage
     },
     head: {
@@ -39,7 +45,8 @@
         pulseBeat: '1111',
         surfaces: [
           { soundByKey: { q: 'snare', a: 'kick' } },
-        ]
+        ],
+        showMetronome: false
       }
     },
     mounted() {
@@ -54,6 +61,10 @@
         this.$store.dispatch('stage/initialize', { autoMax,
           goal: [{ type: 'drums', notes }]
         });
+      },
+      toggleMetronome() {
+        this.showMetronome = !this.showMetronome;
+        Sound.click.play('+0.1', { variation: this.showMetronome ? 'heavy' : 'normal'});
       }
     },
     computed: {
@@ -102,18 +113,19 @@
       font-weight: bold;
       margin: 5px 10px;
 
-      .icon
-        display: inline-block;
-
     .auto .icon
       color: primary-blue;
+      display: inline-block;
 
     .backing
       color: lightgrey;
 
-      .icon
+      .button
         transform: translateY(6px);
         vertical-align: bottom;
+
+    .metronome
+      margin-bottom: 1px;
 
     .points
       color: active-blue;

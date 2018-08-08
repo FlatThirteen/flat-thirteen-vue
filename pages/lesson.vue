@@ -6,12 +6,14 @@
         .settings
           backing-button.button(:level="hasBacking ? 1 : 0",
               @click.native="$refs.composer.toggle()")
+          metronome.button(:disabled="!showMetronome",
+              @click.native="toggleMetronome()")
         .lesson.button(v-for="(lesson, i) in lessons", @click="setLesson(i)",
             :class="{done: stagePoints[i]}") {{ stagePoints[i] || i }}
       .lesson-container(v-else, key="stage")
         backing
         .quit.button(@click="clearLesson()") X
-        stage(:showNextPower="showNextPower")
+        stage(:showNextPower="showNextPower", :showMetronome="showMetronome")
     .bottom-controls
       .auto
         .icon(@click="$store.commit('stage/autoAdjust', { max: 0 })") o
@@ -28,7 +30,10 @@
   import Backing from '~/components/backing.component';
   import BackingButton from '~/components/backing-button.component';
   import Composer from '~/components/composer.component';
+  import Metronome from '~/components/metronome.component';
   import Stage from '~/components/stage.component';
+
+  import Sound from '~/common/sound/sound';
 
   export default {
     mixins: [LessonBuilderMixin],
@@ -36,6 +41,7 @@
       'backing': Backing,
       'backing-button': BackingButton,
       'composer': Composer,
+      'metronome': Metronome,
       'stage': Stage
     },
     head: {
@@ -82,13 +88,18 @@
         lessonIndex: null,
         stages: null,
         stagePoints: [],
-        showPoints: 0
+        showPoints: 0,
+        showMetronome: false
       };
     },
     mounted() {
       this.$store.dispatch('stage/clear');
     },
     methods: {
+      toggleMetronome() {
+        this.showMetronome = !this.showMetronome;
+        Sound.click.play('+0.1', { variation: this.showMetronome ? 'heavy' : 'normal'});
+      },
       setLesson(index) {
         this.setupLesson(this.getLesson(index));
         this.lessonIndex = index;
@@ -104,7 +115,7 @@
         return lesson;
       },
       clearLesson(points) {
-        if (points) {
+        if (points > (this.stagePoints[this.lessonIndex] || 0)) {
           this.stagePoints[this.lessonIndex] = points;
         }
         this.$store.dispatch('lesson/clear');
@@ -159,6 +170,9 @@
   .settings
     background-color: faint-grey;
     padding: 50px;
+
+    .button
+      margin: 0 20px;
 
   .backing
     width: 60px;

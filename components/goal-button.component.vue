@@ -19,7 +19,7 @@
           transform: 'translateY(-30vh) scale(0.5, 1)'
         }]],
         land: [[0, {
-          transform: 'translateY(-30vh) scale(0.5, 1)'
+          transform: 'translateY(-100vh) scale(0.5, 1)'
         }], [.6, {
           transform: 'translateY(0vh) scale(0.5, 1.2)'
         }], [.2, {

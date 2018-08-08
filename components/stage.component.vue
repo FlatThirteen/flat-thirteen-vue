@@ -14,8 +14,10 @@
         :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
     faces
     bouncing-points(:show="scene === 'victory'", :points="basePoints")
-    transition(name="notes")
-      note-counter.notes(v-show="weenie !== 'goal' && scene !== 'victory'")
+    transition(name="footer")
+      .footer(v-show="showMetronome || weenie !== 'goal' && scene !== 'victory'")
+        note-counter
+        tempo-control(v-if="showMetronome", v-bind:tempo.sync="tempo")
     transport(v-bind="transportProps")
 </template>
 
@@ -37,6 +39,7 @@
   import NoteCounter from '~/components/note-counter.component';
   import PlayButton from '~/components/play-button.component';
   import PowerAuto from '~/components/power-auto.component';
+  import TempoControl from '~/components/tempo-control.component';
   import Transport from '~/components/transport.component';
 
   export default {
@@ -52,10 +55,18 @@
       'note-counter': NoteCounter,
       'play-button': PlayButton,
       'power-auto': PowerAuto,
+      'tempo-control': TempoControl,
       'transport': Transport
     },
     props: {
-      showNextPower: false
+      showNextPower: {
+        type: Boolean,
+        default: false
+      },
+      showMetronome: {
+        type: Boolean,
+        default: true
+      }
     },
     constants: {
       animationTarget: 'stage',
@@ -74,6 +85,7 @@
     },
     data() {
       return {
+        tempo: 120,
         weenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
         powerTrigger: -1
@@ -108,17 +120,19 @@
       },
       beatTickHandler({time, beat, tick, beatTick, lastBeat}) {
         this.$store.dispatch('stage/onBeatTick', {time, beat, beatTick});
-        if (this.lastBeat !== lastBeat) {
-          Tone.Draw.schedule(() => {
-            this.lastBeat = lastBeat;
-          }, time);
-        }
         if (lastBeat && tick === 64 && this.scene === 'goal' &&
             (this.nextScene === 'goal' || this.nextScene === 'count')) {
           this.$refs.loop.animate('bumper', { unless: 'drop' })
         }
       },
-      beatHandler({count}) {
+      beatHandler({time, lastBeat, count}) {
+        if (this.lastBeat !== lastBeat) {
+          Tone.Draw.schedule(() => {
+            if (this.playing) {
+              this.lastBeat = lastBeat;
+            }
+          }, time);
+        }
         if (this.nextScene === 'playback') {
           this.$refs.play.count(count);
         } else if (this.autoLoop) {
@@ -160,7 +174,7 @@
       transportProps() {
         return {
           beatsPerMeasure: this.beatsPerMeasure,
-          tempo: 120,
+          tempo: this.tempo,
           metronome: true
         }
       },
@@ -310,14 +324,21 @@
     align-items: flex-end;
     padding-bottom: 10px;
 
-  .notes
-    margin: 5vh;
+  .footer
+    margin: 5vh 11vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    user-select: none;
     transform-origin: top;
 
-  .notes-enter-active, .notes-leave-active
+  .footer > div:only-child
+    width: 100%;
+
+  .footer-enter-active, .footer-leave-active
     transition: transform 250ms;
 
-  .notes-enter, .notes-leave-to
+  .footer-enter, .footer-leave-to
     transform: scale(0)
 
   .weenie:not(:hover)

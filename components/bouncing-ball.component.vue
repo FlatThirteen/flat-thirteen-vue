@@ -1,6 +1,6 @@
 <template lang="pug">
   .container
-    #bouncing.ball(:class="{active: showBall && active}")
+    .bouncing.ball(ref="ball", :class="{active: showBall && active}")
     .counter.ball(v-for="(left, i) in lefts", :style="{left}",
         :class="{active: playing && showCounter && beat === i}") {{ counts[i] }}
 </template>
@@ -9,13 +9,16 @@
   import { TimelineMax, TweenMax, Circ } from 'gsap'
   import { mapGetters } from 'vuex';
 
+  import AnimatedMixin from '~/mixins/animated.mixin';
+
   import BeatTick from '~/common/core/beat-tick.model';
   import Tone from '~/common/tone';
 
   const inactiveLeft = '50%';
-  const inactiveBottom = '20vh';
+  const inactiveBottom = '25vh';
 
   export default {
+    mixins: [AnimatedMixin],
     props: {
       showBall: {
         type: Boolean,
@@ -26,7 +29,36 @@
         default: false
       }
     },
-    data: function() {
+    constants: {
+      animationTarget: 'ball',
+      animationDefinitions: {
+        bounce: [[.2, {
+          transform: 'translateY(-7vh) scale(0.9, 1.1)'
+        }], [.2, {
+          transform: 'translateY(-10vh) scale(1.1, 0.9)'
+        }], [.3, {
+          transform: 'translateY(0.1vh) scale(0.8, 1.2)',
+          ease: Circ.easeIn
+        }], [.1, {
+          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
+        }], [.2, {
+          transform: 'translateY(0.2vh) scale(0.8, 1.2)'
+        }]],
+        enter: [[.2, {
+          opacity: 1,
+          bottom: inactiveBottom,
+          transform: 'translateY(-5vh) scale(0.8, 1.2)'
+        }], [.4, {
+          bottom: 0,
+          transform: 'translateY(0.1vh) scale(0.8, 1.2)',
+        }], [.2, {
+          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
+        }], [.2, {
+          transform: 'translateY(0.2vh) scale(1, 1)'
+        }]]
+      },
+    },
+    data() {
       return {
         ballIn: false,
         beat: 0,
@@ -47,12 +79,12 @@
         this.nextBeat = nextBeat;
         if (this.showBall) {
           Tone.Draw.schedule(() => {
-            if (!this.paused && this.showBall) {
-              this.bounceAnimation.play(0);
-              TweenMax.to('#bouncing', .8 * this.duration, {
+            if (this.ballIn) {
+              TweenMax.to(this.$refs.ball, .8 * this.duration, {
                 left: this.lefts[nextBeat],
                 delay: nextBeat ? .1 * this.duration : 0
               });
+              this.animate('bounce', { duration: this.duration });
             }
           }, time);
         }
@@ -62,51 +94,35 @@
           return;
         }
         this.ballIn = true;
-        TweenMax.fromTo('#bouncing', this.duration, {
-          opacity: 1,
+        TweenMax.fromTo(this.$refs.ball, (starting ? 1 : .6) * this.duration, {
           left: inactiveLeft
         }, {
           left: this.lefts[this.nextBeat]
         });
-        TweenMax.fromTo('#bouncing', .9 * this.duration, {
-          bottom: inactiveBottom,
-        }, {
-          bottom: 0,
-          ease: Circ.easeIn,
-          delay: starting ? .3 * this.duration : 0
-        });
+        this.animate('enter', { duration: starting ? 1.8 * this.duration : this.duration });
       },
       ballExit() {
         if (this.ballIn) {
           this.ballIn = false;
-          TweenMax.killTweensOf('#bouncing', { bottom: true });
-          TweenMax.to('#bouncing', .5 * this.duration, {
+          TweenMax.killTweensOf(this.$refs.ball);
+          TweenMax.fromTo(this.$refs.ball, .5 * this.duration, {
+            transform: 'scale(.6, 1.2)'
+          }, {
             opacity: 0,
             bottom: inactiveBottom
+          });
+          TweenMax.to(this.$refs.ball, .5 * this.duration, {
+            left: inactiveLeft,
+            ease: Circ.easeInOut
           });
         }
       }
     },
     computed: {
-      bounceAnimation() {
-        return new TimelineMax().to('#bouncing', .2 * this.duration, {
-          transform: 'translateY(-7vh) scale(0.9, 1.1)'
-        }).to('#bouncing', .2 * this.duration, {
-          transform: 'translateY(-10vh) scale(1.1, 0.9)'
-        }).to('#bouncing', .3 * this.duration, {
-          transform: 'translateY(0.1vh) scale(0.8, 1.2)',
-          ease: Circ.easeIn
-        }).to('#bouncing', .2 * this.duration, {
-          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
-        }).to('#bouncing', .1 * this.duration, {
-          transform: 'translateY(0.2vh) scale(0.8, 1.2)'
-        });
-      },
       ...mapGetters({
         playing: 'transport/playing',
         active: 'transport/active',
         counts: 'transport/counts',
-        duration: 'transport/duration',
         numBeats: 'transport/numBeats'
       })
     },
@@ -136,7 +152,6 @@
 
 </script>
 <style scoped lang="stylus" type="text/stylus">
-
   .container
     user-select: none;
 
@@ -150,7 +165,7 @@
     margin-left: -0.5 * @height;
     width: @height;
 
-  #bouncing
+  .bouncing
     background-color: primary-blue;
     transform-origin: bottom;
     opacity: 0;
@@ -164,9 +179,8 @@
     transition: all 150ms cubic-bezier(0.81, 0.16, 0.38, 0.56);
     transform: scale(0.1, 1.2);
 
-    &.active {
+    &.active
       bottom: 0;
       opacity: 1;
       transform: scale(1, 1);
-    }
 </style>

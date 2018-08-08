@@ -95,7 +95,7 @@
         return Tone.Transport && _.round(Tone.Transport.bpm.value);
       },
       setBpm(bpm) {
-        if (bpm !== this.bpm() && this.isValidBpm(bpm)) {
+        if (Tone.Transport && bpm !== this.bpm() && this.isValidBpm(bpm)) {
           Tone.Transport.bpm.rampTo(bpm, 1);
           Tone.Transport.setLoopPoints(0, this.loopTime());
           this.$store.commit('transport/setup', {tempo: bpm});
@@ -128,6 +128,7 @@
               time: time,
               beat: this.beat,
               nextBeat: this.nextBeat,
+              lastBeat: this.lastBeat,
               count: this.count
             });
           });
@@ -189,9 +190,6 @@
           this.measure = -1;
           this.beat = -1;
         }
-      },
-      tempo(bpm) {
-        this.setBpm(bpm);
       },
       latencyHint(latencyHint) {
         if (latencyHint === 'fastest' || latencyHint === 'interactive' ||
@@ -279,6 +277,12 @@
             });
 
           }
+        }
+      },
+      tempo: { // Must go after beatsPerMeasure so that bpm is able to finish adjusting
+        immediate: true,
+        handler(bpm) {
+          this.setBpm(bpm);
         }
       }
     }

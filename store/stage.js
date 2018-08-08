@@ -151,7 +151,8 @@ export const actions = {
     if (rootGetters['phrase/goalNoteCount'] === rootGetters['player/noteCount']) {
       if (state.scene === 'standby') {
         commit('scene', { scene: 'count', nextScene: 'playback' });
-        dispatch('transport/start', '+1', { root: true });
+        let delay = rootGetters['transport/tempo'] >= 120 ? '+2n' : '+1s';
+        dispatch('transport/start', delay, { root: true });
       } else if (state.scene !== 'playback' && state.nextScene !== 'playback') {
         commit('next', { nextScene: 'playback' });
       }
@@ -192,7 +193,8 @@ export const actions = {
     if (scene === 'standby') {
       dispatch('transport/stop', undefined, { root: true });
     } else if (scene === 'count') {
-      dispatch('transport/start', '+1', { root: true });
+      let delay = rootGetters['transport/tempo'] >= 120 ? '+2n' : '+1s';
+      dispatch('transport/start', delay, { root: true });
     } else if (scene === 'playback') {
       commit('phrase/clear', { name: 'playback' }, { root: true });
     } else if (scene === 'victory') {
