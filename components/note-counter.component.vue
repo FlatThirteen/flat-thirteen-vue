@@ -11,6 +11,9 @@
   import { mapGetters } from 'vuex';
 
   export default {
+    props: {
+      scene: String
+    },
     computed: {
       noteCountClass() {
         let red = this.scene === 'playback' ? this.wrong : this.noteCount > this.goalNoteCount;
@@ -30,8 +33,7 @@
       ...mapGetters({
         starting: 'transport/starting',
         goalNoteCount: 'phrase/goalNoteCount',
-        noteCount: 'player/noteCount',
-        scene: 'stage/scene'
+        noteCount: 'player/noteCount'
       })
     }
   }

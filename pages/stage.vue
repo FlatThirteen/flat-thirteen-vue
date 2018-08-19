@@ -1,7 +1,7 @@
 <template lang="pug">
   .container
     backing
-    stage(:showNextAuto="true", :tempo="tempo")
+    stage(:showNextAuto="true", :tempo="tempo", @basePoints="basePoints = $event")
     .top
       .backing.left
         backing-button.button(:level="hasBacking ? 1 : 0",
@@ -12,9 +12,7 @@
       .auto.left
         .icon(@click="setAuto(false)") o
         span(@click="setAuto(next.auto)") :{{ power.auto }}
-      .points.right
-        .info ({{ goalCount }} {{ playCount }})
-        | {{ basePoints }}
+      .points.right {{ basePoints }}
 </template>
 
 <script>
@@ -46,7 +44,8 @@
         surfaces: [
           { soundByKey: { q: 'snare', a: 'kick' } },
         ],
-        tempo: 120
+        tempo: 120,
+        basePoints: 0
       }
     },
     mounted() {
@@ -83,9 +82,6 @@
         hasBacking: 'phrase/hasBacking',
         power: 'progress/power',
         next: 'progress/next',
-        goalCount: 'stage/goalCount',
-        playCount: 'stage/playCount',
-        basePoints: 'stage/basePoints',
         active: 'transport/active',
         numBeats: 'transport/numBeats'
       })

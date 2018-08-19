@@ -16,7 +16,7 @@
     bouncing-points(:show="scene === 'victory'", :points="basePoints")
     transition(name="footer")
       .footer(v-show="weenie !== 'goal' && scene !== 'victory'")
-        note-counter
+        note-counter(:scene="scene")
     transport(v-bind="transportProps")
 </template>
 
@@ -63,7 +63,7 @@
       tempo: {
         type: Number,
         default: 120
-      }
+      },
     },
     constants: {
       animationTarget: 'stage',
@@ -224,6 +224,12 @@
       active(active) {
         if (!active) {
           this.lastBeat = false;
+        }
+      },
+      basePoints: {
+        immediate: true,
+        handler(basePoints) {
+          this.$emit('basePoints', basePoints);
         }
       },
       scene(scene, oldScene) {
