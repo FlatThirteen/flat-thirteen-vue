@@ -41,7 +41,7 @@
     data() {
       return {
         pulseBeat: '1111',
-        surfaces: [
+        layout: [
           { soundByKey: { q: 'snare', a: 'kick' } },
         ],
         tempo: 120,
@@ -95,7 +95,7 @@
       pulseBeat: {
         immediate: true,
         handler(pulseBeat) {
-          this.$store.dispatch('player/update', { pulseBeat, surfaces: this.surfaces });
+          this.$store.dispatch('player/update', { pulseBeat, layout: this.layout });
         }
       }
     }

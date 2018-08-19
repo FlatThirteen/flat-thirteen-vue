@@ -43,7 +43,7 @@ export const actions = {
     }
   },
   clear({commit, dispatch}) {
-    commit('reset', { surfaces: [], stages: []});
+    commit('reset', { stages: []});
     dispatch('stage/clear', undefined, { root: true });
   }
 };

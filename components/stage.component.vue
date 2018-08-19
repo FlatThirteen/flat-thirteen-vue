@@ -1,5 +1,5 @@
 <template lang="pug">
-  .stage(ref="stage", v-if="surfaces.length")
+  .stage(ref="stage", v-if="layout.length")
     key-handler(:player="true")
     .top-container
       bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
@@ -10,7 +10,7 @@
         goal-button(ref="goal", @click.native="onGoal()", :class="{weenie: weenie === 'goal'}")
         play-button(ref="play", @click.native="onPlayback()", :wrong="wrong")
 
-    svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
+    svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
         :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
     faces
     bouncing-points(:show="scene === 'victory'", :points="basePoints")
@@ -180,7 +180,7 @@
         keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
         beatsPerMeasure: 'player/beatsPerMeasure',
-        surfaces: 'player/surfaces',
+        layout: 'player/layout',
         cursor: 'player/cursor',
         notes: 'player/notes',
         noteCount: 'player/noteCount',

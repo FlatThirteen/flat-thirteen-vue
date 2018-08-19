@@ -87,7 +87,7 @@
       },
       onLesson(pulseBeat) {
         this.setupLesson({pulseBeat,
-          surfaces: this.layouts[this.layoutIndex],
+          layout: this.layouts[this.layoutIndex],
           stages: 4,
           buildParams: () => {}
         });

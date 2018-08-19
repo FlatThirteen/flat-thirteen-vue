@@ -5,7 +5,7 @@ import Note from '~/common/core/note.model'
 
 export const state = () => ({
   pulseBeat: '', // '1234,4321'
-  surfaces: [], // [{ q: 'snare', a: 'kick' }]
+  layout: [], // [{ q: 'snare', a: 'kick' }]
   data: {}, // data[beatTick][soundId] = soundName
   selected: null,
   cursor: 0,
@@ -26,8 +26,8 @@ export const getters = {
     offset: offset + pulses
   }), { result: [], offset: 0 }).result,
   beatTicks: (state, getters) => beatTicksFrom(getters.pulsesByBeat),
-  surfaces: state => state.surfaces,
-  soundByKey: state => _.map(state.surfaces, 'soundByKey'),
+  layout: state => state.layout,
+  soundByKey: state => _.map(state.layout, 'soundByKey'),
   soundIds: (state, getters) => _.map(getters.soundByKey, (soundByKey) => _.join(_.keys(soundByKey))),
   soundNames: (state, getters) => _.flatMap(getters.soundByKey, _.values),
   getDataFor: state => ({beatTick, soundId}) => (state.data[beatTick] || {})[soundId],
@@ -45,9 +45,9 @@ export const getters = {
 };
 
 export const mutations = {
-  setup(state, {pulseBeat, surfaces}) {
+  setup(state, {pulseBeat, layout}) {
     state.pulseBeat = pulseBeat;
-    state.surfaces = surfaces;
+    state.layout = layout;
     state.selected = null;
     state.cursor = 0;
     state.touched = false;
@@ -92,8 +92,8 @@ export const mutations = {
 };
 
 export const actions = {
-  update({commit, state, getters}, {pulseBeat, surfaces, clear}) {
-    commit('setup', { pulseBeat, surfaces });
+  update({commit, state, getters}, {pulseBeat, layout, clear}) {
+    commit('setup', { pulseBeat, layout });
     commit('setData', clear ? {} : _.mapValues(_.pick(state.data, getters.beatTicks),
           (soundData) => _.pick(soundData, getters.soundIds)));
   },

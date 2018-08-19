@@ -4,10 +4,10 @@
     .content
       bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
       .svg-grids(v-if="showSvgGrid")
-        svg-grid(v-for="(surface, i) in surfaces", :key="i", :grid="surface",
+        svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
             :showPosition="showPosition")
       .html-grids(v-if="showHtmlGrid")
-        html-grid(v-for="(surface, i) in surfaces", :key="'h' + i", :grid="surface")
+        html-grid(v-for="(surface, i) in layout", :key="'h' + i", :grid="surface")
           transport-position.transport-container(:show="showPosition")
       faces(:react="false")
     .left
@@ -57,18 +57,20 @@
       title: 'Flat Thirteen | Grid'
     },
     layout: 'debug',
-    data: function() {
+    constants: {
+      layout: [
+        { soundByKey: { q: 'snare', a: 'kick' } },
+        { soundByKey: { z: 'cowbell' } }
+      ]
+    },
+    data() {
       return {
         showBall: true,
         showCounter: true,
         showPosition: true,
         showSvgGrid: true,
         showHtmlGrid: false,
-        pulseBeat: 1111,
-        surfaces: [
-          { soundByKey: { q: 'snare', a: 'kick' } },
-          { soundByKey: { z: 'cowbell' } }
-        ]
+        pulseBeat: 1111
       }
     },
     created() {
@@ -94,7 +96,7 @@
       pulseBeat: {
         immediate: true,
         handler(pulseBeat) {
-          this.$store.dispatch('player/update', { pulseBeat, surfaces: this.surfaces });
+          this.$store.dispatch('player/update', { pulseBeat, layout: this.layout });
         }
       }
     }
