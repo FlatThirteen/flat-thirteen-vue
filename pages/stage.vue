@@ -1,20 +1,20 @@
 <template lang="pug">
   .container
     backing
-    stage(:showNextPower="true", :showMetronome="showMetronome")
-    .bottom-controls
-      .auto
-        .icon(@click="setAuto(0)") o
-        | :{{ autoMax }}
-      .backing
+    stage(:showNextAuto="true", :tempo="tempo")
+    .top
+      .backing.left
         backing-button.button(:level="hasBacking ? 1 : 0",
-            @click.native="$refs.composer.toggle()")
+            @click.native="toggleBackingLevel()")
         composer(ref="composer", :show="true")
-      metronome.metronome.button(:disabled="!showMetronome",
-          @click.native="toggleMetronome()")
-      .points(v-if="goalNoteCount") {{ basePoints }}
+      tempo-control.right(:tempo.sync="tempo", :min="60", :max="240", v-on="$listeners")
+    .bottom
+      .auto.left
+        .icon(@click="setAuto(false)") o
+        span(@click="setAuto(next.auto)") :{{ power.auto }}
+      .points.right
         .info ({{ goalCount }} {{ playCount }})
-
+        | {{ basePoints }}
 </template>
 
 <script>
@@ -23,8 +23,8 @@
   import Backing from '~/components/backing.component';
   import BackingButton from '~/components/backing-button.component';
   import Composer from '~/components/composer.component';
-  import Metronome from '~/components/metronome.component';
   import Stage from '~/components/stage.component';
+  import TempoControl from '~/components/tempo-control.component';
 
   import Sound from '~/common/sound/sound';
 
@@ -33,8 +33,8 @@
       'backing': Backing,
       'backing-button': BackingButton,
       'composer': Composer,
-      'metronome': Metronome,
-      'stage': Stage
+      'stage': Stage,
+      'tempo-control': TempoControl
     },
     head: {
       title: 'Flat Thirteen | Stage'
@@ -46,25 +46,34 @@
         surfaces: [
           { soundByKey: { q: 'snare', a: 'kick' } },
         ],
-        showMetronome: false
+        tempo: 120
       }
     },
     mounted() {
-      this.setAuto(0);
+      this.setAuto(false);
     },
     methods: {
-      setAuto(autoMax) {
+      setAuto(next) {
         if (this.active) {
           this.$store.dispatch('stage/clear');
         }
+        if (next) {
+          this.$store.dispatch('progress/next', 'auto');
+        } else {
+          this.$store.dispatch('progress/reset');
+        }
         let notes = _.join(_.fill(Array(this.numBeats - 1), 'K'), '|');
-        this.$store.dispatch('stage/initialize', { autoMax,
+        this.$store.dispatch('stage/initialize', {
+          autoLevel: next ? undefined : 0,
           goal: [{ type: 'drums', notes }]
         });
       },
-      toggleMetronome() {
-        this.showMetronome = !this.showMetronome;
-        Sound.click.play('+0.1', { variation: this.showMetronome ? 'heavy' : 'normal'});
+      toggleBackingLevel() {
+        if (this.hasBacking) {
+          this.$refs.composer.clear();
+        } else {
+          this.$refs.composer.reset();
+        }
       }
     },
     computed: {
@@ -72,7 +81,8 @@
         keyDown: 'keyDown',
         goalNoteCount: 'phrase/goalNoteCount',
         hasBacking: 'phrase/hasBacking',
-        autoMax: 'stage/autoMax',
+        power: 'progress/power',
+        next: 'progress/next',
         goalCount: 'stage/goalCount',
         playCount: 'stage/playCount',
         basePoints: 'stage/basePoints',
@@ -82,8 +92,8 @@
     },
     watch: {
       keyDown(key) {
-        if (_.includes('0123', key)) {
-          this.setAuto(_.toNumber(key));
+        if (key === 'o') {
+          this.setAuto(this.next.auto);
         }
       },
       pulseBeat: {
@@ -100,41 +110,56 @@
 <style scoped lang="stylus" type="text/stylus">
   .container
     position: relative;
-
-  .bottom-controls
-    posit(fixed, x, 0, 0, 0)
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
     user-select: none;
 
-    .auto, .backing
-      font-size: 40px;
-      font-weight: bold;
+  .top
+    posit(absolute, 0, 0, x, 0)
+    height: 0;
+
+    .left, .right
+      top: 0;
+      margin: 20px;
+
+  .bottom
+    posit(fixed, x, 0, 0, 0)
+    height: 0;
+
+    .left, .right
+      bottom: 0;
+      background-color: white;
+      box-shadow: 0 0 25px 15px white;
       margin: 5px 10px;
 
-    .auto .icon
-      color: primary-blue;
-      display: inline-block;
+  .left
+    posit(absolute, x, x, x, 0);
 
-    .backing
-      color: lightgrey;
+  .right
+    posit(absolute, x, 0, x, x);
+    text-align: right;
 
-      .button
-        transform: translateY(6px);
-        vertical-align: bottom;
+  .auto, .backing
+    font-size: 40px;
+    font-weight: bold;
 
-    .metronome
-      margin-bottom: 1px;
+  .auto .icon
+    color: primary-blue;
+    display: inline-block;
 
-    .points
-      color: active-blue;
-      font-size: 40px;
-      font-weight: 600;
+  .backing
+    color: lightgrey;
+    margin-top: -10px;
 
-      .info
-        color: gray;
-        display: inline-block;
+    .composer
+      transform: translateY(8px);
 
+  .points
+    color: active-blue;
+    font-size: 40px;
+    font-weight: 600;
+
+  .info
+    color: gray;
+    font-size: 20px;
+    font-weight: 600;
 
 </style>

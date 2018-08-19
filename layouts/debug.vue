@@ -17,6 +17,7 @@
           Grid: '/grid',
           Stage: '/stage',
           Lesson: '/lesson',
+          Progress: '/progress',
           Backing: '/backing'
         }
       };

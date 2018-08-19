@@ -1,7 +1,7 @@
 <template lang="pug">
-  .auto.button(ref="auto", v-if="show", @click="onClick()",
-      @mouseenter="onMouseEnter()", @mouseleave="onMouseLeave()",
-      :class="{active}") o
+  .power-container(v-if="show", ref="auto")
+    .power.button(@click="onClick()", :class="{active}",
+        @mouseenter="onMouseEnter()", @mouseleave="onMouseLeave()") o
 </template>
 
 <script>
@@ -124,36 +124,15 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  power-color = #FF00A2;
+  @import "~assets/stylus/power.styl"
 
-  .auto
-    posit(absolute, x, x, -100%)
-    width: 40px;
-    height: @width;
-    border-radius: 10px;
-    background-color: power-color;
+  .power-container
+    posit(absolute, x, x, -100%);
+    margin-right: -20px;
+
+  .power
     font-size: 40px;
     line-height: 35px;
     color: white;
     font-weight: bold;
-    margin-right: -20px;
-
-    &.active
-      animation: auto 700ms infinite, floatX 3s infinite;
-
-  @keyframes floatX
-    0%, 100%
-      margin-right: -22px;
-    50%
-      margin-right: -18px;
-
-  @keyframes auto
-    0%, 100%
-      transform: translateY(0)
-      filter: drop-shadow(0 1px 1px #111);
-      opacity: 0.95;
-    50%
-      transform: translateY(-2px)
-      filter: drop-shadow(0 3px 2px #555);
-      opacity: 0.9;
 </style>

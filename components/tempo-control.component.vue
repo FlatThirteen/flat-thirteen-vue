@@ -1,7 +1,7 @@
 <template lang="pug">
-  .tempo
+  .tempo(v-if="min < max")
     metronome.icon(:playing="playing", :duration="duration")
-    .control {{ tempo }}
+    .control {{ tempo | three}}
       .up(v-show="tempo < max", @click="$emit('update:tempo', tempo + increment)") ▲
       .down(v-show="tempo > min", @click="$emit('update:tempo', tempo - increment)") ▼
 </template>
@@ -24,13 +24,12 @@
         type: Number,
         default: 10
       },
-      min: {
-        type: Number,
-        default: 60
-      },
-      max: {
-        type: Number,
-        default: 240
+      min: Number,
+      max: Number
+    },
+    filters: {
+      three(value) {
+        return _.padStart(value, 3, ' ');
       }
     },
     computed: {
@@ -44,15 +43,17 @@
 
 <style scoped lang="stylus" type="text/stylus">
   .tempo
-    font-size: 8vh;
+    display: inline-block;
+    font-size: 60px;
 
     .icon
-      height: 8vh;
+      height: 60px;
       vertical-align: sub;
 
   .control
     display: inline-block;
     position: relative;
+    text-align: center;
 
     &:hover .up, &:hover .down
       opacity: 1;

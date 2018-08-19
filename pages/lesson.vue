@@ -1,24 +1,20 @@
 <template lang="pug">
   .container
     composer(ref="composer")
-    transition(name="lesson-container")
-      .lesson-container(v-if="lessonIndex === null", key="choose")
-        .settings
-          backing-button.button(:level="hasBacking ? 1 : 0",
-              @click.native="$refs.composer.toggle()")
-          metronome.button(:disabled="!showMetronome",
-              @click.native="toggleMetronome()")
-        .lesson.button(v-for="(lesson, i) in lessons", @click="setLesson(i)",
-            :class="{done: stagePoints[i]}") {{ stagePoints[i] || i }}
-      .lesson-container(v-else, key="stage")
-        backing
-        .quit.button(@click="clearLesson()") X
-        stage(:showNextPower="showNextPower", :showMetronome="showMetronome")
-    .bottom-controls
-      .auto
-        .icon(@click="$store.commit('stage/autoAdjust', { max: 0 })") o
-        | :{{ autoMax }}
-      .points {{ showPoints | floor }}
+    corner-frame(:backingLevel.sync="backingLevel", :tempo.sync="tempo",
+        :totalPoints="points", :totalStars="totalStars")
+      transition(name="lesson-container")
+        curriculum(v-if="pulseBeat === null", key="choose", :allPlayable="!wasReset",
+            :backingLevel.sync="backingLevel", :layoutIndex.sync="layoutIndex",
+            v-bind:tempo.sync="tempo", v-on:click="onLesson($event)")
+          .reset.button(@click="reset()") Reset
+        .lesson-container(v-else, key="stage")
+          backing
+          stage(:showNextAuto="showNextAuto", :tempo="tempo")
+          .quit.button(@click="clearLesson()") X
+      .auto(slot="bottom-left")
+        .icon o
+        | :{{ power.auto }}
 </template>
 
 <script>
@@ -28,32 +24,30 @@
   import LessonBuilderMixin from '~/mixins/lesson-builder.mixin';
 
   import Backing from '~/components/backing.component';
-  import BackingButton from '~/components/backing-button.component';
   import Composer from '~/components/composer.component';
-  import Metronome from '~/components/metronome.component';
+  import CornerFrame from '~/components/corner-frame.component';
+  import Curriculum from '~/components/curriculum/curriculum.component';
   import Stage from '~/components/stage.component';
-
-  import Sound from '~/common/sound/sound';
 
   export default {
     mixins: [LessonBuilderMixin],
     components: {
       'backing': Backing,
-      'backing-button': BackingButton,
       'composer': Composer,
-      'metronome': Metronome,
-      'stage': Stage
+      'corner-frame': CornerFrame,
+      'curriculum': Curriculum,
+      'stage': Stage,
     },
     head: {
       title: 'Flat Thirteen | Lesson'
     },
     layout: 'debug',
-    data: function() {
+    data() {
       return {
+        backingLevel: 0,
+        layoutIndex: 0,
+        pulseBeat: null,
         lessons: [{
-          surfaces: [
-            { soundByKey: { a: 'kick' } }
-          ],
           pulseBeat: '1111',
           stages: [
             [{ type: 'drums', notes: 'K|K|K|K' }],
@@ -62,9 +56,6 @@
             [{ type: 'drums', notes: 'K|K||K' }]
           ]
         }, {
-          surfaces: [
-            { soundByKey: { q: 'snare', a: 'kick' } }
-          ],
           stages: 4,
           buildParams: () => ({ requiredBeatTicks: ['00:000'] })
         }, {
@@ -79,65 +70,72 @@
         }, {
           pulseBeat: '2222',
           buildParams: (i) => i < 3 ? { requiredBeatTicks: ['03:096'] } : {}
-        },{
-          pulseBeat: '3333',
-          buildParams: () => {}
-        },{
-          pulseBeat: '4444'
+
         }],
-        lessonIndex: null,
-        stages: null,
-        stagePoints: [],
-        showPoints: 0,
-        showMetronome: false
+        tempo: 120,
+        wasReset: false
       };
     },
     mounted() {
-      this.$store.dispatch('stage/clear');
+      this.$store.dispatch('progress/reset', { max: true });
+      this.$store.dispatch('stage/initialize', { autoLevel: this.power.auto });
     },
     methods: {
-      toggleMetronome() {
-        this.showMetronome = !this.showMetronome;
-        Sound.click.play('+0.1', { variation: this.showMetronome ? 'heavy' : 'normal'});
+      reset() {
+        this.wasReset = true;
+        this.$store.dispatch('progress/reset');
       },
-      setLesson(index) {
-        this.setupLesson(this.getLesson(index));
-        this.lessonIndex = index;
-      },
-      getLesson(index) {
-        let lesson = this.lessons[index];
-        if (!index) {
-          return lesson;
-        }
-        if (!lesson.surfaces || !lesson.pulseBeat) {
-          lesson = _.defaults(lesson, this.getLesson(index - 1));
-        }
-        return lesson;
+      onLesson(pulseBeat) {
+        this.setupLesson({pulseBeat,
+          surfaces: this.layouts[this.layoutIndex],
+          stages: 4,
+          buildParams: () => {}
+        });
+        this.pulseBeat = pulseBeat;
       },
       clearLesson(points) {
-        if (points > (this.stagePoints[this.lessonIndex] || 0)) {
-          this.stagePoints[this.lessonIndex] = points;
-        }
+        console.assert(this.pulseBeat);
+        this.$store.commit('progress/addPoints', {
+          layoutIndex: this.layoutIndex,
+          pulseBeat: this.pulseBeat,
+          tempo: this.tempo,
+          backingLevel: this.backingLevel,
+          amount: {
+            base: points
+          }
+        });
         this.$store.dispatch('lesson/clear');
-        this.lessonIndex = null;
+        this.pulseBeat = null;
       }
     },
     computed: {
-      showNextPower() {
-        return this.showPoints >= this.autoNext * 200;
+      points() {
+        return this.totalPoints + this.lessonPoints;
+      },
+      showNextAuto() {
+        return this.points >= this.next.auto * 200;
       },
       ...mapGetters({
-        hasBacking: 'phrase/hasBacking',
-        autoMax: 'stage/autoMax',
-        autoNext: 'stage/autoNext',
         stage: 'lesson/stage',
         done: 'lesson/done',
-        lessonPoints: 'lesson/totalPoints'
+        lessonPoints: 'lesson/totalPoints',
+        power: 'progress/power',
+        next: 'progress/next',
+        layouts: 'progress/layouts',
+        totalPoints: 'progress/totalPoints',
+        totalStars: 'progress/totalStars'
       })
     },
     watch: {
+      backingLevel(backingLevel) {
+        if (backingLevel) {
+          this.$refs.composer.reset();
+        } else {
+          this.$refs.composer.clear();
+        }
+      },
       stage(stage) {
-        if (this.hasBacking) {
+        if (this.backingLevel) {
           if (stage) {
             this.$refs.composer.updateRhythm();
           } else {
@@ -149,11 +147,6 @@
         if (done) {
           this.clearLesson(this.lessonPoints);
         }
-      },
-      lessonPoints(lessonPoints) {
-        TweenMax.to(this.$data, .5, {
-          showPoints: _.sum(this.stagePoints) + lessonPoints
-        });
       }
     }
   }
@@ -162,43 +155,11 @@
 
 <style scoped lang="stylus" type="text/stylus">
   .container
-    position: relative;
+    posit(absolute);
+    user-select: none;
 
   .lesson-container
     posit(absolute);
-
-  .settings
-    background-color: faint-grey;
-    padding: 50px;
-
-    .button
-      margin: 0 20px;
-
-  .backing
-    width: 60px;
-    height: 60px;
-    background-color: white;
-    border: solid 1px;
-
-    &.active
-      color: white;
-
-  toggle-color('.backing', primary-green);
-
-  .lesson
-    background-color: primary-blue;
-    color: primary-blue;
-    margin: 10px;
-    width: 120px;
-    font-size: 40px;
-    line-height: 60px;
-    transition: all 250ms;
-
-    &:hover:not(.done)
-      color: black;
-
-    &.done
-      background-color: primary-green;
 
   .lesson-container-enter-active, .lesson-container-leave-active
     transition: transform 250ms;
@@ -206,8 +167,14 @@
   .lesson-container-enter, .lesson-container-leave-to
     transform: scale(0)
 
+  .reset
+    posit(absolute, x, x, x, 20px);
+    background-color: white;
+    border: solid 1px #EEE;
+    padding: 5px;
+
   .quit
-    posit(fixed, 50px, 0, x, x)
+    posit(fixed, 50px, x, x, 0)
     background-color: white;
     border: solid 1px #EEE;
     border-radius: 5px;
@@ -220,24 +187,11 @@
       color: #888;
       border-color: #888;
 
-  .bottom-controls
-    posit(fixed, x, 0, 0, 0)
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    user-select: none;
+  .auto
+    font-size: 40px;
+    font-weight: 600;
 
-    .auto
-      font-size: 40px;
-      font-weight: bold;
-      margin: 5px 10px;
-
-      .icon
-        display: inline-block;
-        color: primary-blue;
-
-    .points
-      color: active-blue;
-      font-size: 40px;
-      font-weight: 600;
+    .icon
+      display: inline-block;
+      color: primary-blue;
 </style>

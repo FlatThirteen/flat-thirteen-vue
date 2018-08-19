@@ -1,5 +1,5 @@
 <template lang="pug">
-  .container(ref="stage", v-if="surfaces.length")
+  .stage(ref="stage", v-if="surfaces.length")
     key-handler(:player="true")
     .top-container
       bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
@@ -15,9 +15,8 @@
     faces
     bouncing-points(:show="scene === 'victory'", :points="basePoints")
     transition(name="footer")
-      .footer(v-show="showMetronome || weenie !== 'goal' && scene !== 'victory'")
+      .footer(v-show="weenie !== 'goal' && scene !== 'victory'")
         note-counter
-        tempo-control(v-if="showMetronome", v-bind:tempo.sync="tempo")
     transport(v-bind="transportProps")
 </template>
 
@@ -39,7 +38,6 @@
   import NoteCounter from '~/components/note-counter.component';
   import PlayButton from '~/components/play-button.component';
   import PowerAuto from '~/components/power-auto.component';
-  import TempoControl from '~/components/tempo-control.component';
   import Transport from '~/components/transport.component';
 
   export default {
@@ -55,17 +53,16 @@
       'note-counter': NoteCounter,
       'play-button': PlayButton,
       'power-auto': PowerAuto,
-      'tempo-control': TempoControl,
       'transport': Transport
     },
     props: {
-      showNextPower: {
+      showNextAuto: {
         type: Boolean,
         default: false
       },
-      showMetronome: {
-        type: Boolean,
-        default: true
+      tempo: {
+        type: Number,
+        default: 120
       }
     },
     constants: {
@@ -85,7 +82,6 @@
     },
     data() {
       return {
-        tempo: 120,
         weenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
         powerTrigger: -1
@@ -104,7 +100,7 @@
         if (this.preGoal) {
           this.$refs.play.set({ opacity: 0 })
         }
-      })
+      });
     },
     destroyed() {
       this.$bus.$off(BeatTick.TOP, this.topHandler);
@@ -146,10 +142,12 @@
         this.$store.dispatch('stage/onAction', { scene: 'playback' });
       },
       onLoop() {
-        this.$store.dispatch('stage/onLoop');
+        if (this.showLoop) {
+          this.$store.commit('stage/autoAdjust', { max: this.power.auto });
+        }
       },
       onPowerUp() {
-        this.$store.dispatch('stage/onPowerUp');
+        this.$store.dispatch('progress/next', 'auto');
       },
       setWeenie(weenie) {
         this.weenie = this.autoGoal ? undefined : weenie;
@@ -187,15 +185,16 @@
         notes: 'player/notes',
         noteCount: 'player/noteCount',
         numPulses: 'player/numPulses',
+        power: 'progress/power',
+        next: 'progress/next',
+        showLoop: 'progress/showLoop',
         scene: 'stage/scene',
         nextScene: 'stage/nextScene',
         preGoal: 'stage/preGoal',
         basePoints: 'stage/basePoints',
-        autoNext: 'stage/autoNext',
         autoGoal: 'stage/autoGoal',
         autoLoop: 'stage/autoLoop',
         autoRepeat: 'stage/autoRepeat',
-        showLoop: 'stage/showLoop',
         stage: 'lesson/stage',
         active: 'transport/active',
         playing: 'transport/playing'
@@ -217,9 +216,9 @@
         }
       },
       cursor(cursor) {
-        if (this.showNextPower && this.autoNext && cursor === this.powerTrigger) {
+        if (this.showNextAuto && this.next.auto && cursor === this.powerTrigger) {
           this.powerTrigger = this.randomTrigger();
-          this.$refs.auto.appear(this.autoNext);
+          this.$refs.auto.appear(this.next.auto);
         }
       },
       active(active) {
@@ -302,9 +301,9 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  .container
+  .stage
     position: relative;
-    margin-top: 10vh;
+    padding-top: 40px;
     text-align: center;
 
   .top-container
@@ -312,6 +311,7 @@
     width: 100%;
     max-width: 80vh;
     margin: auto;
+    padding-top: 40px;
     position: relative;
 
   .whole
@@ -327,13 +327,10 @@
   .footer
     margin: 5vh 11vw;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: flex-start;
     user-select: none;
     transform-origin: top;
-
-  .footer > div:only-child
-    width: 100%;
 
   .footer-enter-active, .footer-leave-active
     transition: transform 250ms;

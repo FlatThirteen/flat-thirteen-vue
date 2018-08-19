@@ -1,0 +1,26 @@
+power-color = #FF00A2;
+
+.power
+  width: 40px;
+  height: @width;
+  border-radius: 10px;
+  background-color: power-color;
+
+  &.active
+    animation: powerY 700ms infinite, powerX 3s infinite;
+
+@keyframes powerX
+  0%, 100%
+    margin-right: 2px;
+  50%
+    margin-right: -2px;
+
+@keyframes powerY
+  0%, 100%
+    transform: translateY(0)
+    filter: drop-shadow(0 1px 1px #111);
+    opacity: 0.95;
+  50%
+    transform: translateY(-2px)
+    filter: drop-shadow(0 3px 2px #555);
+    opacity: 0.9;
