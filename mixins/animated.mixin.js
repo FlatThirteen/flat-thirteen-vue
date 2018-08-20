@@ -42,12 +42,10 @@ export default {
         options.onComplete = () => {
           onComplete();
           this.animatedSkip = false;
-          this.animated = null;
           this.animateDebug(name, ' --}');
+          this.animated = null;
         };
-        if (this.animated) {
-          this.animated.pause();
-        }
+        this.animatePause();
         this.animatedLast = name;
         this.animatedSkip = true;
         this.$nextTick(() => {
@@ -55,6 +53,12 @@ export default {
               (timeline, [time, style]) => timeline.to(element, time, style),
               new TimelineMax(options)).duration(options.duration || this.animationDuration).play(0);
         });
+      }
+    },
+    animatePause() {
+      if (this.animated) {
+        this.animated.pause();
+        this.animateDebug(name, ' ||');
       }
     },
     animateDebug(name, ...messages) {

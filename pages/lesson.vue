@@ -4,13 +4,14 @@
     corner-frame(:backingLevel.sync="backingLevel", :tempo.sync="tempo",
         :totalPoints="points", :totalStars="totalStars")
       transition(name="lesson-container")
-        curriculum(v-if="pulseBeat === null", key="choose", :allPlayable="!wasReset",
+        curriculum(v-if="!stageGoal", key="choose", :allPlayable="!wasReset",
             :backingLevel.sync="backingLevel", :layoutIndex.sync="layoutIndex",
             v-bind:tempo.sync="tempo", v-on:click="onLesson($event)")
           .reset.button(@click="reset()") Reset
         .lesson-container(v-else, key="stage")
           backing
-          stage(:showNextAuto="showNextAuto", :tempo="tempo")
+          stage(:goal="stageGoal", :showNextAuto="showNextAuto", :tempo="tempo",
+              @complete="$store.dispatch('lesson/next', {points: $event})")
           .quit.button(@click="clearLesson()") X
       .auto(slot="bottom-left")
         .icon o
@@ -78,7 +79,6 @@
     },
     mounted() {
       this.$store.dispatch('progress/reset', { max: true });
-      this.$store.dispatch('stage/initialize', { autoLevel: this.power.auto });
     },
     methods: {
       reset() {
@@ -105,7 +105,6 @@
           }
         });
         this.$store.dispatch('lesson/clear');
-        this.pulseBeat = null;
       }
     },
     computed: {
@@ -117,6 +116,7 @@
       },
       ...mapGetters({
         stage: 'lesson/stage',
+        stageGoal: 'lesson/stageGoal',
         done: 'lesson/done',
         lessonPoints: 'lesson/totalPoints',
         power: 'progress/power',

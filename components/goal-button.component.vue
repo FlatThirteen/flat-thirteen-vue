@@ -34,7 +34,7 @@
         }], [.2, {
           transform: 'translateY(0vh)'
         }], [.2, {
-          transform: 'translateY(10vh)'
+          transform: 'translateY(12vh)'
         }]],
         appear: [[0, {
           transform: 'translateY(5vh) scale(0)'

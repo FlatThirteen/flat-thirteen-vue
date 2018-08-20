@@ -71,6 +71,7 @@
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
     destroyed() {
+      TweenMax.killTweensOf(this.$refs.ball);
       this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
     methods: {
@@ -79,7 +80,7 @@
         this.nextBeat = nextBeat;
         if (this.showBall) {
           Tone.Draw.schedule(() => {
-            if (this.ballIn) {
+            if (this.ballIn && this.$refs.ball) {
               TweenMax.to(this.$refs.ball, .8 * this.duration, {
                 left: this.lefts[nextBeat],
                 delay: nextBeat ? .1 * this.duration : 0

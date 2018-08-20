@@ -1,7 +1,8 @@
 <template lang="pug">
   .container
     backing
-    stage(:showNextAuto="true", :tempo="tempo", @basePoints="basePoints = $event")
+    stage(ref="stage", :goal="goal", :showNextAuto="true", :tempo="tempo",
+        @basePoints="basePoints = $event", @complete="$refs.stage.reset()")
     .top
       .backing.left
         backing-button.button(:level="hasBacking ? 1 : 0",
@@ -23,8 +24,6 @@
   import Composer from '~/components/composer.component';
   import Stage from '~/components/stage.component';
   import TempoControl from '~/components/tempo-control.component';
-
-  import Sound from '~/common/sound/sound';
 
   export default {
     components: {
@@ -48,24 +47,19 @@
         basePoints: 0
       }
     },
-    mounted() {
+    created() {
       this.setAuto(false);
+    },
+    mounted() {
+      this.$refs.stage.reset();
     },
     methods: {
       setAuto(next) {
-        if (this.active) {
-          this.$store.dispatch('stage/clear');
-        }
         if (next) {
           this.$store.dispatch('progress/next', 'auto');
         } else {
           this.$store.dispatch('progress/reset');
         }
-        let notes = _.join(_.fill(Array(this.numBeats - 1), 'K'), '|');
-        this.$store.dispatch('stage/initialize', {
-          autoLevel: next ? undefined : 0,
-          goal: [{ type: 'drums', notes }]
-        });
       },
       toggleBackingLevel() {
         if (this.hasBacking) {
@@ -76,13 +70,17 @@
       }
     },
     computed: {
+      goal() {
+        return !this.numBeats ? null : [{
+          type: 'drums',
+          notes: _.join(_.times(this.numBeats - 1, () => 'K'), '|')
+        }];
+      },
       ...mapGetters({
         keyDown: 'keyDown',
-        goalNoteCount: 'phrase/goalNoteCount',
         hasBacking: 'phrase/hasBacking',
         power: 'progress/power',
         next: 'progress/next',
-        active: 'transport/active',
         numBeats: 'transport/numBeats'
       })
     },

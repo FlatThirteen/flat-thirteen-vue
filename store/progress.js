@@ -26,9 +26,9 @@ const MAX_POWER = {
 export const state = () => ({
   points: [], // [layoutIndex][pulseBeat][tempo][backingsIndex] = [{base, heavy, light}]
   power: {
-    layout: -1,
-    auto: -1,
-    backing: -1,
+    layout: 0,
+    auto: 0,
+    backing: 0,
     notes: 0,
     tempoUp: 0,
     tempoDown: 0
@@ -179,9 +179,6 @@ export const actions = {
   },
   next({state, commit, dispatch}, power) {
     commit('nextPower', power);
-    if (power === 'auto') {
-      dispatch('stage/onAuto', { level: state.power.auto }, { root: true });
-    }
   }
 };
 

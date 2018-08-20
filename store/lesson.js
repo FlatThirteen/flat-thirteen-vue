@@ -28,22 +28,15 @@ export const mutations = {
 };
 
 export const actions = {
-  initialize({commit, dispatch, getters}, {stages = []} = {}) {
+  initialize({commit}, {stages = []} = {}) {
     commit('reset', stages);
-    dispatch('stage/initialize', { goal: getters.stageGoal }, { root: true });
   },
-  next({commit, dispatch, state, getters}, {points}) {
+  next({commit, state}, {points}) {
     if (state.index > -1) {
       commit('complete', { points });
     }
-    if (state.index === -1) {
-      commit('stage/reset', undefined, { root: true });
-    } else if (!getters.done) {
-      dispatch('stage/initialize', { goal: getters.stageGoal }, { root: true });
-    }
   },
-  clear({commit, dispatch}) {
-    commit('reset', { stages: []});
-    dispatch('stage/clear', undefined, { root: true });
+  clear({commit}) {
+    commit('reset', { stages: [] });
   }
 };

@@ -23,8 +23,7 @@ export const getters = {
   asArray: state => name => _.chain(state.live[name]).toPairs().sortBy([0]).
       map((pair) => _.replace(_.toString(pair), ',', ': ')).value(),
   asString: state => name => _.toString(_.toPairs(state.live[name])),
-  equal: (state, getters) => (name1, name2) =>
-      getters.asString(name1) === getters.asString(name2)
+  correct: (state, getters) => getters.asString('goal') === getters.asString('playback')
 };
 
 export const mutations = {
@@ -52,7 +51,8 @@ export const mutations = {
 
 export const actions = {
   initialize({commit, dispatch, state}, {goal}) {
-    if (!state.victory[10]) {
+    // Initialize victory only in browser to avoid receiving stripped Note object.
+    if (process.browser && !state.victory[10]) {
       const hiNote = new Note('cowbell', { pitch: 'A5' });
       const loNote = new Note('cowbell', { pitch: 'E5' });
       commit('set', { bucket: 'victory', name: 2, notes: { '01:096': [loNote], '02:000': [hiNote] } });

@@ -16,7 +16,7 @@
       animationTarget: 'notes',
       animationDefinitions: {
         appear: [[0, {
-          bottom: '-50px'
+          bottom: '-70px'
         }], [1, {
           bottom: '5px',
           delay: 1
