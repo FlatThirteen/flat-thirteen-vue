@@ -40,7 +40,7 @@
         default: false
       }
     },
-    data: function() {
+    data() {
       return {
         notes: {},
         playCount: 0,

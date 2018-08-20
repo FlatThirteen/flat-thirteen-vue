@@ -41,7 +41,7 @@
         default: null
       }
     },
-    data: function() {
+    data() {
       return {
         activeBeatTick: null,
         liveKeyCursor: null,

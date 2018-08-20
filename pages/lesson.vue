@@ -28,7 +28,7 @@
   import Composer from '~/components/composer.component';
   import CornerFrame from '~/components/corner-frame.component';
   import Curriculum from '~/components/curriculum/curriculum.component';
-  import Stage from '~/components/stage.component';
+  import Stage from '~/components/stage/stage.component';
 
   export default {
     mixins: [LessonBuilderMixin],

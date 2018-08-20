@@ -21,8 +21,8 @@
   import { mapGetters } from 'vuex'
 
   import Sound from '~/common/sound/sound';
-  import PlayButton from '~/components/play-button.component';
-  import Transport from '~/components/transport.component';
+  import PlayButton from '~/components/stage/play-button.component';
+  import Transport from '~/components/stage/transport.component';
 
   import BeatTick from '~/common/core/beat-tick.model';
 

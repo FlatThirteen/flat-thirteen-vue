@@ -47,7 +47,7 @@
         default: 'balanced'
       }
     },
-    data: function() {
+    data() {
       return {
         onTopId: null,
         quarterLoop: null,

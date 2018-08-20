@@ -29,17 +29,17 @@
   import BeatTick from '~/common/core/beat-tick.model';
   import Tone from '~/common/tone';
 
-  import BouncingBall from '~/components/bouncing-ball.component';
-  import BouncingPoints from '~/components/bouncing-points.component';
-  import Faces from '~/components/faces.component';
-  import GoalButton from '~/components/goal-button.component';
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
-  import LoopButton from '~/components/loop-button.component';
-  import NoteCounter from '~/components/note-counter.component';
-  import PlayButton from '~/components/play-button.component';
-  import PowerAuto from '~/components/power-auto.component';
-  import Transport from '~/components/transport.component';
+  import BouncingBall from '~/components/stage/bouncing-ball.component';
+  import BouncingPoints from '~/components/stage/bouncing-points.component';
+  import Faces from '~/components/stage/faces.component';
+  import GoalButton from '~/components/stage/goal-button.component';
+  import LoopButton from '~/components/stage/loop-button.component';
+  import NoteCounter from '~/components/stage/note-counter.component';
+  import PlayButton from '~/components/stage/play-button.component';
+  import PowerAuto from '~/components/stage/power-auto.component';
+  import Transport from '~/components/stage/transport.component';
 
   const nextMap = [{}, {
     count: 'goal',

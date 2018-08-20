@@ -35,11 +35,11 @@
 
   import BeatTick from '~/common/core/beat-tick.model';
 
-  import BouncingBall from '~/components/bouncing-ball.component';
-  import Faces from '~/components/faces.component';
   import HtmlGrid from '~/components/grid/html-grid.component';
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
+  import BouncingBall from '~/components/stage/bouncing-ball.component';
+  import Faces from '~/components/stage/faces.component';
   import TransportControls from '~/components/transport-controls.component';
   import TransportPosition from '~/components/transport-position.component';
 

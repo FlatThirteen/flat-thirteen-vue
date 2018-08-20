@@ -68,7 +68,7 @@
         default: false
       }
     },
-    data: function() {
+    data() {
       return {
         activeCursor: null,
         liveKeyCursor: null

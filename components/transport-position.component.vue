@@ -25,7 +25,7 @@
         default: true
       }
     },
-    data: function() {
+    data() {
       return {
         pixiApp: null,
         line: null,

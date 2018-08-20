@@ -29,7 +29,7 @@
       title: 'Flat Thirteen | Sound'
     },
     layout: 'debug',
-    data: function() {
+    data() {
       return {
         lastSound: null,
         lastSoundName: null,

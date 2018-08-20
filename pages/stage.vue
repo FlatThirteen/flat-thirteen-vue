@@ -22,7 +22,7 @@
   import Backing from '~/components/backing.component';
   import BackingButton from '~/components/backing-button.component';
   import Composer from '~/components/composer.component';
-  import Stage from '~/components/stage.component';
+  import Stage from '~/components/stage/stage.component';
   import TempoControl from '~/components/tempo-control.component';
 
   export default {

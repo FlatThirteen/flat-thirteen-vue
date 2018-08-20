@@ -36,7 +36,7 @@
         default: false
       }
     },
-    data: function() {
+    data() {
       return {
         pitches: [],
         shape: [],
