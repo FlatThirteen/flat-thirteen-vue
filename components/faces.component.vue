@@ -17,12 +17,14 @@
       'particle-fx': ParticleFx
     },
     props: {
-      react: {
-        type: Boolean,
-        default: true
-      }
+      scene: String,
+      nextScene: String,
+      basePoints: Number,
+      beatWrong: Number,
+      goalCount: Number,
+      playCount: Number
     },
-    data: function() {
+    data() {
       return {
         activeBeat: -1
       };
@@ -43,28 +45,28 @@
     computed: {
       facesClass() {
         return [this.scene, {
-          selected: this.selected
+          selected: this.selected || this.keyMode
         }];
       },
       faceClass() {
         return _.times(this.numBeats, beat => ({
           active: this.activeBeat === beat,
-          cursor: this.cursorBeat === beat && this.keyMode,
-          wrong: this.react && this.beatWrong === beat && this.goalCount > 2,
-          very: this.react && this.playCount > 3
+          cursor: this.cursorBeat === beat,
+          wrong: this.beatWrong === beat && this.goalCount > 2,
+          very: this.playCount > 3
         }));
       },
       eyesClass() {
         return _.times(this.numBeats, beat => ({
-          closed: this.react && this.isOrNext('goal'),
-          ready: this.react && this.isOrNext('playback'),
+          closed: this.scene === 'goal' || this.nextScene === 'goal',
+          ready: this.scene === 'playback' || this.nextScene === 'playback',
           up: this.cursorBeat === beat,
           left: this.cursorBeat + 1 === beat,
           right: this.cursorBeat - 1 === beat,
         }));
       },
       cursorBeat() {
-        return this.beatPulse[0];
+        return this.scene === 'victory' ? -1 : this.beatPulse[0];
       },
       particleType() {
         return this.scene === 'victory' ? 'confetti' : null;
@@ -78,13 +80,7 @@
         numBeats: 'transport/numBeats',
         pulsesByBeat: 'player/pulsesByBeat',
         selected: 'player/selected',
-        beatPulse: 'player/beatPulse',
-        scene: 'stage/scene',
-        isOrNext: 'stage/isOrNext',
-        basePoints: 'stage/basePoints',
-        beatWrong: 'stage/beatWrong',
-        goalCount: 'stage/goalCount',
-        playCount: 'stage/playCount'
+        beatPulse: 'player/beatPulse'
       })
     },
     watch: {

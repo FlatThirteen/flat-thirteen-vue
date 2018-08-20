@@ -9,7 +9,7 @@
       .html-grids(v-if="showHtmlGrid")
         html-grid(v-for="(surface, i) in layout", :key="'h' + i", :grid="surface")
           transport-position.transport-container(:show="showPosition")
-      faces(:react="false")
+      faces(:scene="playing ? 'playback' : 'standby'")
     .left
       transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure.join(',')")
         .pulses-input
@@ -73,9 +73,6 @@
         pulseBeat: 1111
       }
     },
-    created() {
-      this.$store.dispatch('stage/clear');
-    },
     mounted() {
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
     },
@@ -83,13 +80,17 @@
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
     methods: {
-      beatTickHandler({time, beat, beatTick}) {
-        this.$store.dispatch('stage/onBeatTick', { time, beat, beatTick });
+      beatTickHandler({time, beatTick}) {
+        _.forEach(this.getNotes(beatTick), note => {
+          note.play(time);
+        });
       }
     },
     computed: {
       ...mapGetters({
-        beatsPerMeasure: 'player/beatsPerMeasure'
+        beatsPerMeasure: 'player/beatsPerMeasure',
+        getNotes: 'player/getNotes',
+        playing: 'transport/playing'
       })
     },
     watch: {

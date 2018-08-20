@@ -12,7 +12,8 @@
 
     svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
         :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
-    faces
+    faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
+        :beatWrong="beatWrong", :goalCount="goalCount", :playCount="playCount")
     bouncing-points(:show="scene === 'victory'", :points="basePoints")
     transition(name="footer")
       .footer(v-show="weenie !== 'goal' && scene !== 'victory'")
@@ -195,6 +196,9 @@
         autoGoal: 'stage/autoGoal',
         autoLoop: 'stage/autoLoop',
         autoRepeat: 'stage/autoRepeat',
+        beatWrong: 'stage/beatWrong',
+        goalCount: 'stage/goalCount',
+        playCount: 'stage/playCount',
         stage: 'lesson/stage',
         active: 'transport/active',
         playing: 'transport/playing'

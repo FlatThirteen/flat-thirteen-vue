@@ -5,7 +5,7 @@ import Note from '~/common/core/note.model'
 
 export const state = () => ({
   pulseBeat: '', // '1234,4321'
-  layout: [], // [{ q: 'snare', a: 'kick' }]
+  layout: [], // [{ soundByKey: { q: 'snare', a: 'kick' } }]
   data: {}, // data[beatTick][soundId] = soundName
   selected: null,
   cursor: 0,
@@ -97,12 +97,10 @@ export const actions = {
     commit('setData', clear ? {} : _.mapValues(_.pick(state.data, getters.beatTicks),
           (soundData) => _.pick(soundData, getters.soundIds)));
   },
-  move({commit, state, getters, rootGetters}, move) {
-    if (rootGetters['stage/scene'] !== 'victory') {
-      commit('select', {
-        cursor: (state.cursor + move + getters.numPulses) % getters.numPulses
-      });
-    }
+  move({commit, state, getters}, move) {
+    commit('select', {
+      cursor: (state.cursor + move + getters.numPulses) % getters.numPulses
+    });
   },
   set({commit, state, getters}, {cursor = state.cursor, soundId = state.selected, soundName}) {
     if (state.cursor !== cursor) {

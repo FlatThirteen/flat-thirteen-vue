@@ -50,7 +50,7 @@
       title: 'Flat Thirteen | Backing'
     },
     layout: 'debug',
-    data: function() {
+    data() {
       return {
         bpm: '4,4',
         now: '',
@@ -78,9 +78,6 @@
           ]
         }
       }
-    },
-    created() {
-      this.$store.dispatch('stage/clear');
     },
     mounted() {
       window.addEventListener('keydown', this.onKeyDown);

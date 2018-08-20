@@ -75,10 +75,7 @@
       },
       onPlay() {
         Sound.resume().then(() => {
-          this.$store.dispatch('stage/onAction', {
-            scene: 'playback',
-            playTime : this.playTime
-          });
+          this.$store.dispatch('transport/toggle', this.playTime);
         });
       },
       hideSuggestions() {
