@@ -26,8 +26,8 @@
   import LayoutButton from '~/components/curriculum/layout-button.component';
   import LessonButton from '~/components/curriculum/lesson-button.component';
   import NoteCount from '~/components/curriculum/note-count.component';
-  import PowerLayout from '~/components/curriculum/power-layout.component';
-  import PowerNotes from '~/components/curriculum/power-notes.component';
+  import PowerLayout from '~/components/power/power-layout.component';
+  import PowerNotes from '~/components/power/power-notes.component';
 
   function splitPulseBeat(pulseBeat) {
     return _.map(_.split(pulseBeat, ''), _.toNumber);

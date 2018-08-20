@@ -31,6 +31,7 @@
 
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
+  import PowerAuto from '~/components/power/power-auto.component';
   import BouncingBall from '~/components/stage/bouncing-ball.component';
   import BouncingPoints from '~/components/stage/bouncing-points.component';
   import Faces from '~/components/stage/faces.component';
@@ -38,7 +39,6 @@
   import LoopButton from '~/components/stage/loop-button.component';
   import NoteCounter from '~/components/stage/note-counter.component';
   import PlayButton from '~/components/stage/play-button.component';
-  import PowerAuto from '~/components/stage/power-auto.component';
   import Transport from '~/components/stage/transport.component';
 
   const nextMap = [{}, {
