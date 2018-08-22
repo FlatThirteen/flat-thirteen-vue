@@ -1,10 +1,15 @@
 <template lang="pug">
   corner-frame(:backingLevel.sync="backingLevel", :tempo.sync="tempo",
+      :showNextBacking="showNextBacking",
       :totalPoints="totalPoints", :totalStars="totalStars")
     curriculum(:backingLevel.sync="backingLevel", :layoutIndex.sync="layoutIndex",
-        v-bind:tempo.sync="tempo", v-on:mousedown="onLesson($event)")
-    .points(slot="bottom-left") +
+        @showNextBacking="showNextBacking = $event", v-bind:tempo.sync="tempo",
+        @mousedown="onLesson($event)")
+    .points(slot="bottom-left")
+      span(@mouseover="showNextAuto()") +
       input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
+      .power
+        power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
 </template>
 
 <script>
@@ -12,13 +17,15 @@
 
   import CornerFrame from '~/components/corner-frame.component';
   import Curriculum from '~/components/curriculum/curriculum.component';
+  import PowerAuto from '~/components/power/power-auto.component';
 
   import { MAX_POINTS } from '~/store/progress';
 
   export default {
     components: {
       'corner-frame': CornerFrame,
-      'curriculum': Curriculum
+      'curriculum': Curriculum,
+      'power-auto': PowerAuto
     },
     head: {
       title: 'Flat Thirteen | Lesson'
@@ -32,7 +39,8 @@
         backingLevel: 0,
         layoutIndex: 0,
         tempo: 120,
-        addPoints: MAX_POINTS
+        addPoints: MAX_POINTS,
+        showNextBacking: false
       };
     },
     methods: {
@@ -48,6 +56,11 @@
             base: this.addPoints
           }
         });
+      },
+      showNextAuto() {
+        if (this.next.auto) {
+          this.$refs.auto.appear(this.next.auto);
+        }
       }
     },
     computed: {
@@ -55,6 +68,8 @@
         return this.addPoints <= 0 || this.addPoints > MAX_POINTS;
       },
       ...mapGetters({
+        power: 'progress/power',
+        next: 'progress/next',
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })
@@ -80,4 +95,8 @@
 
     &:focus
       outline: none;
+
+  .power
+    posit(absolute, x, x, 0, 160px)
+    height: 100%;
 </style>

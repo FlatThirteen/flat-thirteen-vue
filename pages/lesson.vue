@@ -2,15 +2,17 @@
   .container
     composer(ref="composer")
     corner-frame(:backingLevel.sync="backingLevel", :tempo.sync="tempo",
+        :showNextBacking="showNextBacking",
         :totalPoints="points", :totalStars="totalStars")
       transition(name="lesson-container")
         curriculum(v-if="!stageGoal", key="choose", :allPlayable="!wasReset",
+            @showNextBacking="showNextBacking = $event",
             :backingLevel.sync="backingLevel", :layoutIndex.sync="layoutIndex",
             v-bind:tempo.sync="tempo", v-on:click="onLesson($event)")
           .reset.button(@click="reset()") Reset
         .lesson-container(v-else, key="stage")
           backing
-          stage(:goal="stageGoal", :showNextAuto="showNextAuto", :tempo="tempo",
+          stage(:goal="stageGoal", :tempo="tempo", :showNextAuto="showNextAuto",
               @complete="$store.dispatch('lesson/next', {points: $event})")
           .quit.button(@click="clearLesson()") X
       .auto(slot="bottom-left")
@@ -74,7 +76,8 @@
 
         }],
         tempo: 120,
-        wasReset: false
+        wasReset: false,
+        showNextBacking: false
       };
     },
     mounted() {

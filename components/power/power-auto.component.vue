@@ -65,7 +65,6 @@
     },
     methods: {
       appear(level, duration = 2, repeat = 2, repeatDelay = 1) {
-        this.active = true;
         if (!this.show) {
           this.show = level;
           // Wait for nextTick so that power-up button shows up
@@ -81,6 +80,7 @@
                 this.set({ right: rights[i++]});
               }
             });
+            this.active = true;
           });
         }
       },
@@ -102,12 +102,12 @@
         });
       },
       onMouseEnter() {
-        if (this.active) {
+        if (this.active && this.animated) {
           this.animated.pause();
         }
       },
       onMouseLeave() {
-        if (this.active) {
+        if (this.active && this.animated) {
           this.animated.play();
         }
       }

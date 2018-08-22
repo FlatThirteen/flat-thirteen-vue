@@ -106,6 +106,9 @@
               pulseBeat => pointsByPulseBeat[pulseBeat].length);
         });
       },
+      showNextBacking() {
+        return _.every(this.playableForSetting) && this.power.auto > 1 && !!this.next.backing;
+      },
       showNextLayout() {
         return this.next.layout === this.layoutIndex + 1 &&
             _.every(this.nextLayoutConditions[this.layoutIndex],
@@ -125,6 +128,9 @@
       })
     },
     watch: {
+      showNextBacking(showNextBacking) {
+        this.$emit('showNextBacking', showNextBacking);
+      },
       showNextLayout(showNextLayout) {
         if (showNextLayout) {
           this.$refs.layout.appear();

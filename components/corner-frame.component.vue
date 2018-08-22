@@ -4,6 +4,7 @@
     .top
       backing-button.left.button(:level="backingLevel", v-if="power.backing",
           @click.native="$emit('update:backingLevel', backingLevel ? 0 : 1)")
+      power-backing(ref="backing", @click="$store.commit('progress/nextPower', 'backing')")
       tempo-control.right(:tempo="tempo", :min="minTempo", :max="maxTempo",
           v-on="$listeners")
     .bottom
@@ -20,12 +21,14 @@
   import { mapGetters } from 'vuex';
 
   import BackingButton from '~/components/backing-button.component';
+  import PowerBacking from '~/components/power/power-backing.component';
   import Star from '~/components/star.component';
   import TempoControl from '~/components/tempo-control.component';
 
   export default {
     components: {
       'backing-button': BackingButton,
+      'power-backing': PowerBacking,
       'star': Star,
       'tempo-control': TempoControl
     },
@@ -33,7 +36,8 @@
       backingLevel: Number,
       tempo: Number,
       totalPoints: Number,
-      totalStars: Number
+      totalStars: Number,
+      showNextBacking: Boolean
     },
     data() {
       return {
@@ -48,6 +52,11 @@
       })
     },
     watch: {
+      showNextBacking(showNextBacking) {
+        if (showNextBacking) {
+          this.$refs.backing.appear();
+        }
+      },
       totalPoints(totalPoints) {
         TweenMax.to(this.$data, .5, { showPoints: totalPoints });
       }

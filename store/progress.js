@@ -42,7 +42,7 @@ export const getters = {
   tempos: (state, getters) => _.range(getters.minTempo, getters.maxTempo + INCREMENT, INCREMENT),
   backings: state => _.take(BACKINGS, state.power.backing + 1),
   pulseBeats: state => _.concat(_.map(Combinatorics.baseN([1, 2], 4).toArray(),
-      _.partial(_.join, _, '')), ['3333', '4444']),
+      _.partial(_.join, _, ''))),
   points: state => state.points,
   displayPoints: (state, getters) => _.times(getters.layouts.length, layoutIndex => {
     return _.reduce(getters.pulseBeats, (pointsByPulseBeat, pulseBeat) => {

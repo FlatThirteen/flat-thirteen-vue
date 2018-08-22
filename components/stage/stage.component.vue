@@ -6,7 +6,7 @@
       .controls.whole
         loop-button(ref="loop", @click.native="showLoop && adjustAuto()",
             :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
-        power-auto(ref="auto", @click="onPowerUp()")
+        power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
         goal-button(ref="goal", @click.native="onAction('goal')",
             :class="{weenie: weenie === 'goal'}")
         play-button(ref="play", @click.native="onAction('playback')", :wrong="wrong")
