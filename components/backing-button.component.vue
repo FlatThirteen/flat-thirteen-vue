@@ -1,5 +1,5 @@
 <template lang="pug">
-  svg(height="60", width="60", viewBox="0 0 60 60")
+  svg(height="60", width="60", viewBox="0 0 60 60", @click="$emit('click')")
     path.backing-icon(:d="path", :fill="color", :stroke="color" stroke-width="5px")
 </template>
 

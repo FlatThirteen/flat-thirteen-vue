@@ -8,7 +8,7 @@
         backing-button.button(:level="hasBacking ? 1 : 0",
             @click.native="toggleBackingLevel()")
         composer(ref="composer", :show="true")
-      tempo-control.right(:tempo.sync="tempo", :min="60", :max="240", v-on="$listeners")
+      tempo-control.right(:tempo="tempo", @tempo="tempo = $event", :min="60", :max="240")
     .bottom
       .auto.left
         .icon(@click="setAuto(false)") o

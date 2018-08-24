@@ -5,15 +5,15 @@
         .layouts
           power-layout.power(ref="layout", @click="onNext('layout')")
           layout-button(v-for="(layout, i) in layouts", :key="i",
-              :layout="layout", :selected="layoutIndex === i",
-              @click="$emit('update:layoutIndex', i)")
+              :layout="layout", :selected="mode.layout === i",
+              @click="$store.dispatch('progress/mode', {power: 'layout', level: i})")
       slot
-      .lesson-group(v-for="lessonGroup in pulseBeatGroups", v-if="display")
+      .lesson-group(v-for="lessonGroup in pulseBeatGroups", v-if="pointsByPulseBeat")
         lesson-button(v-for="pulseBeat in lessonGroup", :key="pulseBeat",
+            :pulseBeat="pulseBeat", @click="$emit('click', pulseBeat)",
             @mousedown="$emit('mousedown', pulseBeat)",
-            @click="$emit('click', pulseBeat)", :pulseBeat="pulseBeat",
-            :playable="allPlayable || playableForSetting[pulseBeat]",
-            :points="display[pulseBeat]")
+            :playable="allPlayable || playable[pulseBeat]",
+            :points="pointsByPulseBeat[pulseBeat]")
       .end
     .bottom(v-if="power.notes", :class="scaleClass")
       note-count(:notes="power.notes")
@@ -29,15 +29,6 @@
   import PowerLayout from '~/components/power/power-layout.component';
   import PowerNotes from '~/components/power/power-notes.component';
 
-  function splitPulseBeat(pulseBeat) {
-    return _.map(_.split(pulseBeat, ''), _.toNumber);
-  }
-
-  function splice(string, startIndex, length, insertString) {
-    return string.substring(0, startIndex) + insertString + string.substring(startIndex + length);
-
-  }
-
   export default {
     components: {
       'layout-button': LayoutButton,
@@ -47,9 +38,6 @@
       'power-notes': PowerNotes,
     },
     props: {
-      backingLevel: Number,
-      layoutIndex: Number,
-      tempo: Number,
       allPlayable: Boolean
     },
     constants: {
@@ -73,7 +61,7 @@
     },
     methods: {
       onNext(power) {
-        this.$store.commit('progress/nextPower', power);
+        this.$store.dispatch('progress/next', power);
         this.clicked = true;
         this.$nextTick(() => this.clicked = false);
       }
@@ -82,37 +70,10 @@
       scaleClass() {
         return this.power.notes === 4 ? 'first' : this.power.notes === 5 ? 'second' : '';
       },
-      layoutNotesMultiple() {
-        return this.layouts[this.layoutIndex] && this.layouts[this.layoutIndex].length;
-      },
-      pulseBeatGroups() {
-        return _.map(_.pickBy(_.groupBy(_.map(this.pulseBeats, splitPulseBeat), _.sum),
-            (group, noteCount) => _.toNumber(noteCount) * this.layoutNotesMultiple <= this.power.notes),
-            _.partial(_.map, _, _.partial(_.join, _, '')));
-      },
-      display() {
-        return _.mapValues(this.displayPoints[this.layoutIndex],
-            _.property([this.tempo, this.backingLevel]));
-      },
-      playableForSetting() {
-        return _.mapValues(this.display, (points, pulseBeat, pointsByPulseBeat) => {
-          if (points.length) {
-            return true;
-          }
-          let check = pulseBeat === '3333' ? ['2222'] : pulseBeat === '4444' ? ['3333'] :
-              _.compact(_.times(pulseBeat.length, i =>
-                  pulseBeat.charAt(i) === '2' && splice(pulseBeat, i, 1, '1')));
-          return !check.length || _.some(check,
-              pulseBeat => pointsByPulseBeat[pulseBeat].length);
-        });
-      },
-      showNextBacking() {
-        return _.every(this.playableForSetting) && this.power.auto > 1 && !!this.next.backing;
-      },
       showNextLayout() {
-        return this.next.layout === this.layoutIndex + 1 &&
-            _.every(this.nextLayoutConditions[this.layoutIndex],
-                (points, pulseBeat) => _.get(this.display, [pulseBeat, 0, 'base']) >= points);
+        return this.next.layout === this.mode.layout + 1 &&
+            _.every(this.nextLayoutConditions[this.mode.layout],
+                (points, pulseBeat) => _.get(this.pointsByPulseBeat, [pulseBeat, 0, 'base']) >= points);
       },
       showNextNotes() {
         return !this.clicked && this.next.notes &&
@@ -120,17 +81,16 @@
       },
       ...mapGetters({
         power: 'progress/power',
+        mode: 'progress/mode',
         next: 'progress/next',
         layouts: 'progress/layouts',
-        pulseBeats: 'progress/pulseBeats',
-        displayPoints: 'progress/displayPoints',
+        pulseBeatGroups: 'progress/pulseBeatGroups',
+        pointsByPulseBeat: 'progress/pointsByPulseBeat',
+        playable: 'progress/playable',
         totalPoints: 'progress/totalPoints'
       })
     },
     watch: {
-      showNextBacking(showNextBacking) {
-        this.$emit('showNextBacking', showNextBacking);
-      },
       showNextLayout(showNextLayout) {
         if (showNextLayout) {
           this.$refs.layout.appear();

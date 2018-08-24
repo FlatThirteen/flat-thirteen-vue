@@ -41,22 +41,7 @@
   import PlayButton from '~/components/stage/play-button.component';
   import Transport from '~/components/stage/transport.component';
 
-  const nextMap = [{}, {
-    count: 'goal',
-    victory: 'count'
-  }, {
-    goal: 'count',
-    playback: 'count',
-  }, {
-    goal: 'goal',
-  }];
-
-  function getNext(autoLevel, scene) {
-    return autoLevel < 1 ? 'standby' :
-        nextMap[autoLevel][scene] || getNext(autoLevel - 1, scene);
-  }
-
-  export default {
+   export default {
     mixins: [AnimatedMixin],
     components: {
       'bouncing-ball': BouncingBall,
@@ -93,11 +78,19 @@
           opacity: 1
         }]]
       },
+      nextMap: [{}, {
+        count: 'goal',
+        victory: 'count'
+      }, {
+        goal: 'count',
+        playback: 'count',
+      }, {
+        goal: 'goal',
+      }],
       penaltyMax: { goal: 45, wrong: 50 }
     },
     data() {
       return {
-        autoLevel: 0,
         scene: 'standby',
         nextScene: 'standby',
         preGoal: false,
@@ -118,9 +111,6 @@
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
       // Wait until children are mounted
       this.$nextTick(() => {
-        if (this.autoGoal) {
-          this.$refs.goal.animate('count');
-        }
         this.$refs.play.toStopLevel(this.noteCount, this.goalNoteCount);
         if (this.preGoal) {
           this.$refs.play.set({ opacity: 0 })
@@ -154,7 +144,7 @@
               this.addPenalty('wrong', 10);
             }
           }
-          this.toScene(scene, getNext(this.autoLevel, scene));
+          this.toScene(scene, this.getNext(scene));
           if (scene === 'standby') {
             this.$store.dispatch('transport/stop');
           } else if (scene === 'count') {
@@ -231,9 +221,8 @@
           nextScene = scene;
           scene = this.scene;
         } else {
-          nextScene = getNext(this.autoLevel, scene);
+          nextScene = this.getNext(scene);
         }
-
         this.toScene(scene, nextScene);
         if (scene === 'standby') {
           this.$store.dispatch('transport/stop');
@@ -248,11 +237,11 @@
         }
       },
       adjustAuto(level) {
-        this.autoLevel = !_.isUndefined(level) ? level :
-            this.autoLevel > 1 ? this.autoLevel - 1 : this.power.auto;
-        if (this.nextScene !== 'playback') {
-          this.nextScene = getNext(this.autoLevel, this.scene);
-        }
+        this.$store.dispatch('progress/mode', {
+          power: 'auto',
+          level: level,
+          min: 1
+        });
       },
       toScene(scene, nextScene = scene === 'standby' ? 'standby' : this.nextScene) {
         if (this.scene === 'goal') {
@@ -264,6 +253,10 @@
         if (this.counts[scene] !== undefined) {
           this.counts[scene]++;
         }
+      },
+      getNext(scene, autoLevel = this.autoLevel) {
+        return autoLevel < 1 ? 'standby' :
+            this.nextMap[autoLevel][scene] || this.getNext(scene, autoLevel - 1);
       },
       addPenalty(type, amount) {
         if (amount && this.penaltyMax[type]) {
@@ -328,7 +321,9 @@
         noteCount: 'player/noteCount',
         numPulses: 'player/numPulses',
         power: 'progress/power',
+        mode: 'progress/mode',
         next: 'progress/next',
+        autoLevel: 'progress/autoLevel',
         showLoop: 'progress/showLoop',
         stage: 'lesson/stage',
         lessonDone: 'lesson/done',
@@ -349,9 +344,11 @@
         handler(goal) {
           if (goal) {
             this.$store.dispatch('phrase/initialize', { goal });
-            if (this.paused && this.autoGoal) {
-              this.onAction('count');
-            }
+            this.$nextTick(() => {
+              if (this.paused && this.autoGoal) {
+                this.onAction('count');
+              }
+            });
           }
         }
       },
@@ -465,15 +462,14 @@
           this.$refs.play.animate('twitch', { unless: 'drop' });
         }
       },
-      'power.auto': {
-        immediate: true,
-        handler(auto) {
-          this.adjustAuto(auto);
-          if (this.paused && this.autoGoal) {
-            this.$nextTick(() => {
-              this.onAction('count');
-            });
-          }
+      'power.auto'() {
+        if (this.paused && this.autoGoal) {
+          this.onAction('count');
+        }
+      },
+      'mode.auto'() {
+        if (this.nextScene !== 'playback') {
+          this.nextScene = this.getNext(this.scene);
         }
       }
     }

@@ -1,14 +1,10 @@
 <template lang="pug">
   .container
     composer(ref="composer")
-    corner-frame(:backingLevel.sync="backingLevel", :tempo.sync="tempo",
-        :showNextBacking="showNextBacking",
-        :totalPoints="points", :totalStars="totalStars")
+    corner-frame(:totalPoints="points", :totalStars="totalStars")
       transition(name="lesson-container")
         curriculum(v-if="!stageGoal", key="choose", :allPlayable="!wasReset",
-            @showNextBacking="showNextBacking = $event",
-            :backingLevel.sync="backingLevel", :layoutIndex.sync="layoutIndex",
-            v-bind:tempo.sync="tempo", v-on:click="onLesson($event)")
+            @click="onLesson($event)")
           .reset.button(@click="reset()") Reset
         .lesson-container(v-else, key="stage")
           backing
@@ -47,8 +43,6 @@
     layout: 'debug',
     data() {
       return {
-        backingLevel: 0,
-        layoutIndex: 0,
         pulseBeat: null,
         lessons: [{
           pulseBeat: '1111',
@@ -75,9 +69,7 @@
           buildParams: (i) => i < 3 ? { requiredBeatTicks: ['03:096'] } : {}
 
         }],
-        tempo: 120,
         wasReset: false,
-        showNextBacking: false
       };
     },
     mounted() {
@@ -90,7 +82,7 @@
       },
       onLesson(pulseBeat) {
         this.setupLesson({pulseBeat,
-          layout: this.layouts[this.layoutIndex],
+          layout: this.layout,
           stages: 4,
           buildParams: () => {}
         });
@@ -98,14 +90,9 @@
       },
       clearLesson(points) {
         console.assert(this.pulseBeat);
-        this.$store.commit('progress/addPoints', {
-          layoutIndex: this.layoutIndex,
+        this.$store.dispatch('progress/addPoints', {
           pulseBeat: this.pulseBeat,
-          tempo: this.tempo,
-          backingLevel: this.backingLevel,
-          amount: {
-            base: points
-          }
+          amount: { base: points }
         });
         this.$store.dispatch('lesson/clear');
       }
@@ -123,14 +110,16 @@
         done: 'lesson/done',
         lessonPoints: 'lesson/totalPoints',
         power: 'progress/power',
+        mode: 'progress/mode',
         next: 'progress/next',
-        layouts: 'progress/layouts',
+        layout: 'progress/layout',
+        tempo: 'progress/tempo',
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })
     },
     watch: {
-      backingLevel(backingLevel) {
+      'mode.backing'(backingLevel) {
         if (backingLevel) {
           this.$refs.composer.reset();
         } else {
@@ -138,7 +127,7 @@
         }
       },
       stage(stage) {
-        if (this.backingLevel) {
+        if (this.mode.backing) {
           if (stage) {
             this.$refs.composer.updateRhythm();
           } else {

@@ -1,10 +1,6 @@
 <template lang="pug">
-  corner-frame(:backingLevel.sync="backingLevel", :tempo.sync="tempo",
-      :showNextBacking="showNextBacking",
-      :totalPoints="totalPoints", :totalStars="totalStars")
-    curriculum(:backingLevel.sync="backingLevel", :layoutIndex.sync="layoutIndex",
-        @showNextBacking="showNextBacking = $event", v-bind:tempo.sync="tempo",
-        @mousedown="onLesson($event)")
+  corner-frame(:totalPoints="totalPoints", :totalStars="totalStars")
+    curriculum(@mousedown="onLesson($event)")
     .points(slot="bottom-left")
       span(@mouseover="showNextAuto()") +
       input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
@@ -36,11 +32,8 @@
     },
     data() {
       return {
-        backingLevel: 0,
-        layoutIndex: 0,
-        tempo: 120,
         addPoints: MAX_POINTS,
-        showNextBacking: false
+
       };
     },
     methods: {
@@ -48,13 +41,8 @@
         if (this.invalidPoints) {
           return;
         }
-        this.$store.commit('progress/addPoints', { pulseBeat,
-          layoutIndex: this.layoutIndex,
-          tempo: this.tempo,
-          backingLevel: this.backingLevel,
-          amount: {
-            base: this.addPoints
-          }
+        this.$store.dispatch('progress/addPoints', { pulseBeat,
+          amount: { base: this.addPoints }
         });
       },
       showNextAuto() {

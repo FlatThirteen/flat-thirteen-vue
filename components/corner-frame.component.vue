@@ -2,11 +2,12 @@
   .frame
     slot
     .top
-      backing-button.left.button(:level="backingLevel", v-if="power.backing",
-          @click.native="$emit('update:backingLevel', backingLevel ? 0 : 1)")
-      power-backing(ref="backing", @click="$store.commit('progress/nextPower', 'backing')")
+      backing-button.left.button(:level="mode.backing", v-if="power.backing",
+          @click="$store.dispatch('progress/mode', {power: 'backing'})")
+      power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
       tempo-control.right(:tempo="tempo", :min="minTempo", :max="maxTempo",
-          v-on="$listeners")
+          @tempo="$store.dispatch('progress/tempo', $event)")
+      power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
       .left: slot(name="bottom-left")
       .right
@@ -22,22 +23,23 @@
 
   import BackingButton from '~/components/backing-button.component';
   import PowerBacking from '~/components/power/power-backing.component';
+  import PowerTempo from '~/components/power/power-tempo.component';
   import Star from '~/components/star.component';
   import TempoControl from '~/components/tempo-control.component';
+
+  import { MAX_POINTS } from '~/store/progress';
 
   export default {
     components: {
       'backing-button': BackingButton,
       'power-backing': PowerBacking,
+      'power-tempo': PowerTempo,
       'star': Star,
       'tempo-control': TempoControl
     },
     props: {
-      backingLevel: Number,
-      tempo: Number,
       totalPoints: Number,
       totalStars: Number,
-      showNextBacking: Boolean
     },
     data() {
       return {
@@ -45,16 +47,33 @@
       }
     },
     computed: {
+      showNextBacking() {
+        return !!this.next.backing && this.mode.auto > 1 && _.every(this.playable)
+      },
+      showNextTempo() {
+        return !!this.next.tempo && this.tempo === this.maxTempo && this.rowsWithStars >= 5;
+      },
       ...mapGetters({
         power: 'progress/power',
+        mode: 'progress/mode',
+        next: 'progress/next',
+        tempo: 'progress/tempo',
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
+        pointsByPulseBeat: 'progress/pointsByPulseBeat',
+        playable: 'progress/playable',
+        rowsWithStars: 'progress/rowsWithStars'
       })
     },
     watch: {
       showNextBacking(showNextBacking) {
         if (showNextBacking) {
           this.$refs.backing.appear();
+        }
+      },
+      showNextTempo(showNextTempo) {
+        if (showNextTempo) {
+          this.$refs.tempo.appear();
         }
       },
       totalPoints(totalPoints) {

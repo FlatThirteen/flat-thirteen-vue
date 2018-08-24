@@ -2,8 +2,8 @@
   .tempo(v-if="min < max")
     metronome.icon(:playing="playing", :duration="duration")
     .control {{ tempo | three}}
-      .up(v-show="tempo < max", @click="$emit('update:tempo', tempo + increment)") ▲
-      .down(v-show="tempo > min", @click="$emit('update:tempo', tempo - increment)") ▼
+      .up(v-show="tempo < max", @click="$emit('tempo', tempo + increment)") ▲
+      .down(v-show="tempo > min", @click="$emit('tempo', tempo - increment)") ▼
 </template>
 
 <script>
@@ -45,6 +45,7 @@
   .tempo
     display: inline-block;
     font-size: 60px;
+    user-select: none;
 
     .icon
       height: 60px;
@@ -66,7 +67,6 @@
       padding: 3% 5%;
       transition: all 150ms ease;
       width: 80%;
-      user-select: none;
 
       &:hover
         background-color: rgba(233, 233, 233, 0.4);
