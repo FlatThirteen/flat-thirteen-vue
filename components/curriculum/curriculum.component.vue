@@ -15,7 +15,7 @@
             :playable="allPlayable || playable[pulseBeat]",
             :points="pointsByPulseBeat[pulseBeat]")
       .end
-    .bottom(v-if="power.notes", :class="scaleClass")
+    .bottom(:class="scaleClass")
       note-count(:notes="power.notes")
         power-notes.power(ref="notes", @click="onNext('notes')")
 </template>
@@ -68,7 +68,8 @@
     },
     computed: {
       scaleClass() {
-        return this.power.notes === 4 ? 'first' : this.power.notes === 5 ? 'second' : '';
+        return this.power.notes === 4 ? 'first' : this.power.notes === 5 ? 'second' :
+            this.power.notes ? '' : 'initial';
       },
       showNextLayout() {
         return this.next.layout === this.mode.layout + 1 &&
@@ -111,7 +112,6 @@
     posit(absolute);
 
   .main-content
-    transition: transform 250ms ease-in-out;
     transform-origin: top;
 
   .settings
@@ -137,13 +137,21 @@
     background-color: white;
     box-shadow: 0 0 25px 15px white;
     text-align: center;
-    transition: transform 250ms ease-in-out;
     transform-origin: bottom;
+
+    &.initial
+      transform: scale(0);
+
+  .main-content, .bottom
+    transition: transform 500ms ease-in-out;
+    transition-delay: 250ms;
+
+  .initial
+    transform: scale(5);
 
   .first
     transform: scale(2);
 
   .second
     transform: scale(1.5);
-
 </style>

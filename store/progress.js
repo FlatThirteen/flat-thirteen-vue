@@ -33,7 +33,7 @@ export const state = () => ({
   mode: {
     auto: 0,
     backing: 0,
-    layout: 0,
+    layout: -10, // Should not be initialized to -1
     tempo: 0
   },
   points: [], // [layout][pulseBeat][tempo][backing] = [{base, heavy, light}]
@@ -149,7 +149,10 @@ export const mutations = {
       _.forEach(_.keys(state.mode), power => {
         state.power[power] = state.mode[power] = params[power] || 0;
       });
-      state.power.notes = params.notes || 4;
+      state.power.notes = 0;
+      if (_.isUndefined(params.layout)) {
+        state.mode.layout = -10;
+      }
     }
   },
   next(state, {power, updateMode}) {
@@ -166,6 +169,9 @@ export const mutations = {
   },
   mode(state, {power, level}) {
     state.mode[power] = level;
+    if (!state.power.notes) {
+      state.power.notes = 4;
+    }
   },
   points(state, {pulseBeat, tempo, amount}) {
     if (!amount.base) {
@@ -194,7 +200,7 @@ export const actions = {
   next({state, commit}, power) {
     commit('next', {
       power,
-      updateMode: state.mode[power] === state.power[power] &&
+      updateMode: state.mode[power] === state.power[power] && power !== 'layout' &&
           (power !== 'tempo' || state.power.tempo > 0)
     });
   },
