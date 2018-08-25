@@ -51,7 +51,6 @@
     margin: 10px;
     font-size: 40px;
     line-height: 60px;
-    transition: all 250ms;
     position: relative;
     opacity: 0.2;
 
@@ -83,7 +82,7 @@
           border-top: solid 1px white;
           transform: scaleY(0);
 
-  .pulse-beat, .points, .stars
+  .pulse-beat, .pulse, .points, .stars
     transition: all 250ms;
 
   .points, .stars
@@ -108,7 +107,6 @@
     background-color: primary-blue;
     border-radius: 50%;
     margin: 1px;
-    transition: all 250ms;
 
   .pulse1
     width: 24px;

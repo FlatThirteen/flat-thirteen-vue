@@ -1,15 +1,35 @@
 <template lang="pug">
   .note-count
     .note
-    .info {{ notes }}
+    .count(ref="count") {{ notes }}
       slot
 </template>
 
 <script>
 
+  import AnimatedMixin from '~/mixins/animated.mixin';
+
   export default {
+    mixins: [AnimatedMixin],
     props: {
       notes: Number
+    },
+    constants: {
+      animationTarget: 'count',
+      animationDefinitions: {
+        boing: [[.2, {
+          transform: 'scale(.8)'
+        }], [.6, {
+          transform: 'scale(1.2)'
+        }], [.2, {
+          transform: 'scale(1)'
+        }]]
+      }
+    },
+    watch: {
+      notes(notes) {
+        this.animate('boing', { duration: .2 });
+      }
     }
   }
 
@@ -29,7 +49,7 @@
     margin-right: 5px;
     vertical-align: top;
 
-  .info
+  .count
     display: inline-block;
     position: relative;
 </style>

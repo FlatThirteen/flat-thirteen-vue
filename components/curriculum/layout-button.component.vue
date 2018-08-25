@@ -51,23 +51,6 @@
     height: 60px;
     width: 100px;
 
-    &.selected
-      background-color: white;
-
-      &:before, &:after
-        content: '';
-        position: absolute;
-        background-color: white;
-        height: 20px;
-        width: 100%;
-
-      &:before
-        bottom: 100%;
-
-      &:after
-        top: 100%;
-
-
   .group
     margin-top: 3px;
 

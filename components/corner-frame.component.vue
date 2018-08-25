@@ -2,19 +2,21 @@
   .frame
     slot
     .top
-      backing-button.left.button(:level="mode.backing", v-if="power.backing",
-          @click="$store.dispatch('progress/mode', {power: 'backing'})")
+      transition(name="boing")
+        backing-button.left.button(:level="mode.backing", v-if="power.backing",
+            @click="$store.dispatch('progress/mode', {power: 'backing'})")
       power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
-      tempo-control.right(:tempo="tempo", :min="minTempo", :max="maxTempo",
-          @tempo="$store.dispatch('progress/tempo', $event)")
+      transition(name="boing")
+        tempo-control.right(:tempo="tempo", :min="minTempo", :max="maxTempo",
+            v-if="minTempo < maxTempo", @tempo="$store.dispatch('progress/tempo', $event)")
       power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
       .left: slot(name="bottom-left")
       .right
-        .stars(v-if="totalStars")
+        transition(name="slide"): .stars(v-if="totalStars")
           star
           span {{ totalStars }}
-        .points {{ showPoints | floor }}
+        transition(name="slide"): .points(v-if="showPoints") {{ showPoints | floor }}
 </template>
 
 <script>
@@ -77,7 +79,7 @@
         }
       },
       totalPoints(totalPoints) {
-        TweenMax.to(this.$data, .5, { showPoints: totalPoints });
+        TweenMax.to(this.$data, this.showPoints ? .5 : 1, { showPoints: totalPoints });
       }
     }
   }
@@ -118,4 +120,15 @@
     font-size: 40px;
     font-weight: 600;
 
+  .boing-enter-active
+    transition: transform 300ms cubic-bezier(0,.37,.29,1.3);
+
+  .boing-enter
+    transform: scale(0);
+
+  .slide-enter-active
+    transition: transform 500ms cubic-bezier(0,.37,.29,1.3);
+
+  .slide-enter
+    transform: translateX(100px);
 </style>

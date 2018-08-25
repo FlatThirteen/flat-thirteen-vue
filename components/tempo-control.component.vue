@@ -1,5 +1,5 @@
 <template lang="pug">
-  .tempo(v-if="min < max")
+  .tempo
     metronome.icon(:playing="playing", :duration="duration")
     .control {{ tempo | three}}
       .up(v-show="tempo < max", @click="$emit('tempo', tempo + increment)") ▲
