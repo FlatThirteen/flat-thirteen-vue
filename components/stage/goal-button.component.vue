@@ -1,6 +1,8 @@
 <template lang="pug">
-  .goal.button(ref="goal", :class="{count: animatedLast === 'count'}")
-    img(src="~/assets/listen-music-128.png", v-show="animatedLast !== 'count'")
+  .anchor
+    slot
+    .goal.button(ref="goal", :class="{penalty, count: animatedLast === 'count'}")
+      img(src="~/assets/listen-music-128.png", v-show="animatedLast !== 'count'")
 </template>
 
 <script>
@@ -8,6 +10,9 @@
 
   export default {
     mixins: [AnimatedMixin],
+    props: {
+      penalty: Boolean
+    },
     constants: {
       animationTarget: 'goal',
       animationDefinitions: {
@@ -54,6 +59,9 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  .anchor
+    position: relative;
+
   .goal
     position: relative;
     background-color: primary-blue;
@@ -66,6 +74,8 @@
       background-color: white;
       transition: background-color 200ms;
 
+    &.penalty.button:hover
+      shadow(primary-red)
   img
     posit(absolute, 0, x, x, 0);
     height: 40px;

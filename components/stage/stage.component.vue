@@ -8,8 +8,10 @@
             :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
         power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
         goal-button(ref="goal", @click.native="onAction('goal')",
-            :class="{weenie: weenie === 'goal'}")
+            :penalty="!preGoal", :class="{weenie: weenie === 'goal'}")
+          penalty-fx(ref="goalPenalty", top="50%", left="10%")
         play-button(ref="play", @click.native="onAction('playback')", :wrong="wrong")
+          penalty-fx(ref="wrongPenalty", top="0", left="80%")
     svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
         :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
     faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
@@ -31,6 +33,7 @@
 
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
+  import PenaltyFx from '~/components/penalty-fx.component';
   import PowerAuto from '~/components/power/power-auto.component';
   import BouncingBall from '~/components/stage/bouncing-ball.component';
   import BouncingPoints from '~/components/stage/bouncing-points.component';
@@ -44,16 +47,17 @@
    export default {
     mixins: [AnimatedMixin],
     components: {
+      'svg-grid': SvgGrid,
+      'key-handler': KeyHandler,
+      'penalty-fx': PenaltyFx,
+      'power-auto': PowerAuto,
       'bouncing-ball': BouncingBall,
       'bouncing-points': BouncingPoints,
       'faces': Faces,
       'goal-button': GoalButton,
-      'svg-grid': SvgGrid,
-      'key-handler': KeyHandler,
       'loop-button': LoopButton,
       'note-counter': NoteCounter,
       'play-button': PlayButton,
-      'power-auto': PowerAuto,
       'transport': Transport
     },
     props: {
@@ -96,8 +100,8 @@
         preGoal: false,
         changed: false,
         counts: { goal: 0, playback: 0 },
+        loopCount: 0,
         penalty: { goal: 0, wrong: 0 },
-        penaltyLast: { goal: 0, wrong: 0 },
         beatWrong: null,
         weenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
@@ -128,6 +132,7 @@
         if (!first && this.active) {
           let scene = this.nextScene;
           if (this.scene === 'victory') {
+            this.loopCount = 0;
             this.$store.commit('player/reset');
             this.$emit('complete', this.basePoints);
             if (this.lessonDone) {
@@ -136,12 +141,18 @@
           } else if (this.scene === 'goal') {
             if (this.noteCount === this.goalNoteCount && this.changed) {
               scene = 'playback';
+            } else if (this.autoLoop) {
+              this.loopCount++;
+              if (this.loopCount % (this.autoRepeat ? 4 : 2) === 0) {
+                this.addPenalty('goal', this.autoRepeat ? 2 : 5, { silent: this.autoRepeat });
+              }
             }
           } else if (this.scene === 'playback') {
+            this.loopCount = 0;
             if (this.correct) {
               scene = 'victory';
             } else {
-              this.addPenalty('wrong', 10);
+              this.addPenalty('wrong', 10, { noisy: true });
             }
           }
           this.toScene(scene, this.getNext(scene));
@@ -210,7 +221,6 @@
         this.preGoal = !this.autoLoop;
         _.forEach(this.counts, (count, scene) => this.counts[scene] = 0);
         _.forEach(this.penalty, (count, type) => this.penalty[type] = 0);
-        _.forEach(this.penaltyLast, (count, type) => this.penaltyLast[type] = 0);
       },
       onAction(scene = this.scene !== 'standby' ? 'standby' : 'goal') {
         if (this.scene === scene || this.nextScene === scene) {
@@ -227,9 +237,13 @@
         if (scene === 'standby') {
           this.$store.dispatch('transport/stop');
         } else {
-          if (scene === 'goal' && this.counts.goal > 1) {
-            this.addPenalty('goal', 10);
+          if (scene === 'goal') {
+            this.loopCount = 0;
+            if (this.counts.goal > 1) {
+              this.addPenalty('goal', 10);
+            }
           }
+
           this.$store.commit('phrase/clear', { name: 'playback' });
           this.$nextTick(() => {
             this.$store.dispatch('transport/start');
@@ -258,12 +272,15 @@
         return autoLevel < 1 ? 'standby' :
             this.nextMap[autoLevel][scene] || this.getNext(scene, autoLevel - 1);
       },
-      addPenalty(type, amount) {
+      addPenalty(type, amount, options = {}) {
         if (amount && this.penaltyMax[type]) {
           let previous = this.penalty[type] || 0;
           let current = Math.min(this.penaltyMax[type], previous + amount);
-          this.penaltyLast[type] = current - previous;
           this.penalty[type] = current;
+          ({
+            goal: this.$refs.goalPenalty,
+            wrong: this.$refs.wrongPenalty
+          }[type]).appear(current - previous, options);
         }
       },
       onPowerUp() {

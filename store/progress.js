@@ -58,7 +58,7 @@ export const getters = {
   minPower: state => _.map(_.keys(state.mode),
       power => power === 'tempo' ? -state.power.tempo : 0),
   next: state => _.mapValues(state.power, (value, power) =>
-      !state.power.notes ? 0 : value === MAX_POWER[power] ? 0 : value + 1),
+      !state.power.notes && power !== 'auto' ? 0 : value === MAX_POWER[power] ? 0 : value + 1),
   autoLevel: state => state.mode.auto,
   showLoop: state => state.power.auto > 1,
   points: state => state.points,

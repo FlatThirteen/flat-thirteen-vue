@@ -1,14 +1,16 @@
 <template lang="pug">
-  .play.button(ref="play", :class="{wrong}")
-    svg(height="60", width="60", viewBox="0 0 60 60")
-      defs(v-if="wrong !== undefined")
-        linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
-          stop(:offset="stopLevel + '%'", stop-color="white")
-          stop(:offset="(stopLevel ? stopLevel + 15 : 0) + '%'", :stop-color="color")
-      path.play-icon(:d="playPath",
-          :fill="wrong === undefined ? color : 'url(#playGradient)'",
-          :stroke="color" stroke-width="6px")
-    .counter(v-if="counter") {{ counter }}
+  .anchor
+    slot
+    .play.button(ref="play", :class="{wrong}")
+      svg(height="60", width="60", viewBox="0 0 60 60")
+        defs(v-if="wrong !== undefined")
+          linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
+            stop(:offset="stopLevel + '%'", stop-color="white")
+            stop(:offset="(stopLevel ? stopLevel + 15 : 0) + '%'", :stop-color="color")
+        path.play-icon(:d="playPath",
+            :fill="wrong === undefined ? color : 'url(#playGradient)'",
+            :stroke="color" stroke-width="6px")
+      .counter(v-if="counter") {{ counter }}
 </template>
 
 <script>
@@ -19,10 +21,7 @@
   export default {
     mixins: [AnimatedMixin],
     props: {
-      wrong: {
-        type: Boolean,
-        default: undefined
-      }
+      wrong: Boolean
     },
     constants: {
       color: '#50ffa0',
@@ -123,12 +122,15 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  .anchor
+    position: relative;
+
   .play
     position: relative;
     height: 60px;
     width: 60px;
 
-    &.wrong.button:hover:not(.disabled)
+    &.wrong.button:hover
       shadow(primary-red)
 
   .counter
