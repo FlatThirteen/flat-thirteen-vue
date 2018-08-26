@@ -13,7 +13,11 @@
       .auto.left
         .icon(@click="setAuto(false)") o
         span(@click="setAuto(next.auto)") :{{ power.auto }}
-      .points.right {{ basePoints }}
+      .right
+        .victory
+          span(@click="onVictory()") V
+          span(@click="setVictory()") {{ victoryLevel }}
+        .points(@click="onVictory(true)") {{ basePoints }}
 </template>
 
 <script>
@@ -44,7 +48,8 @@
           { soundByKey: { q: 'snare', a: 'kick' } },
         ],
         tempo: 120,
-        basePoints: 0
+        basePoints: 0,
+        victoryLevel: 10
       }
     },
     created() {
@@ -60,6 +65,12 @@
         } else {
           this.$store.dispatch('progress/reset');
         }
+      },
+      setVictory(level = this.victoryLevel > 1 ? this.victoryLevel - 1 : 10) {
+        this.victoryLevel = level;
+      },
+      onVictory(clear) {
+        this.$refs.stage.setVictory(clear ? 0 : this.victoryLevel);
       },
       toggleBackingLevel() {
         if (this.hasBacking) {
@@ -131,7 +142,7 @@
     posit(absolute, x, 0, x, x);
     text-align: right;
 
-  .auto, .backing
+  .auto, .backing, .victory
     font-size: 40px;
     font-weight: bold;
 

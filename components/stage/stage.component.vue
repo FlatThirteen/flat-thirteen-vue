@@ -12,11 +12,12 @@
           penalty-fx(ref="goalPenalty", top="50%", left="10%")
         play-button(ref="play", @click.native="onAction('playback')", :wrong="wrong")
           penalty-fx(ref="wrongPenalty", top="0", left="80%")
-    svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
-        :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
+    .grids
+      svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
+          :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
+      bouncing-points(:show="scene === 'victory'", :points="basePoints")
     faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
         :beatWrong="beatWrong", :goalCount="counts.goal", :playCount="counts.play")
-    bouncing-points(:show="scene === 'victory'", :points="basePoints")
     transition(name="footer")
       .footer(v-show="weenie !== 'goal' && scene !== 'victory'")
         note-counter(:scene="scene")
@@ -66,7 +67,7 @@
       tempo: {
         type: Number,
         default: 120
-      },
+      }
     },
     constants: {
       animationTarget: 'stage',
@@ -105,7 +106,8 @@
         beatWrong: null,
         weenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
-        powerTrigger: -1
+        powerTrigger: -1,
+        pointsOverride: 0
       }
     },
     mounted() {
@@ -250,6 +252,20 @@
           });
         }
       },
+      setVictory(level) {
+        if (this.pointsOverride === level || !level) {
+          this.pointsOverride = 0;
+          this.onAction('standby');
+        } else {
+          this.pointsOverride = 10 * level;
+          this.$store.dispatch('phrase/setVictory', level);
+          this.toScene('victory');
+          this.$refs.goal.animate('disappear');
+          this.$nextTick(() => {
+            this.$store.dispatch('transport/start');
+          });
+        }
+      },
       adjustAuto(level) {
         this.$store.dispatch('progress/mode', {
           power: 'auto',
@@ -313,7 +329,7 @@
         return this.autoLevel > 2;
       },
       basePoints() {
-        return 100 - _.sum(_.values(this.penalty));
+        return this.pointsOverride || 100 - _.sum(_.values(this.penalty));
       },
       wrong() {
         return this.noteCount !== this.goalNoteCount;
@@ -517,6 +533,9 @@
     justify-content: space-between;
     align-items: flex-end;
     padding-bottom: 10px;
+
+  .grids
+    position: relative;
 
   .footer
     margin: 5vh 11vw;
