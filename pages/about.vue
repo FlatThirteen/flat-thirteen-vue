@@ -7,7 +7,8 @@
   export default {
     head: {
       title: 'Flat Thirteen | About'
-    }
+    },
+    layout: 'public'
   }
 </script>
 

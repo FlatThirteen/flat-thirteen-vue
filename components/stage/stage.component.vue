@@ -117,9 +117,11 @@
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
       // Wait until children are mounted
       this.$nextTick(() => {
-        this.$refs.play.toStopLevel(this.noteCount, this.goalNoteCount);
-        if (this.preGoal) {
-          this.$refs.play.set({ opacity: 0 })
+        if (this.$refs.play) {
+          this.$refs.play.toStopLevel(this.noteCount, this.goalNoteCount);
+          if (this.preGoal) {
+            this.$refs.play.set({ opacity: 0 })
+          }
         }
       });
     },

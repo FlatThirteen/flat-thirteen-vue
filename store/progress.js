@@ -38,9 +38,12 @@ export const state = () => ({
   },
   weenie: {
     backing: 0,
-    layout: 0,
+    layout: -1,
     tempo: 0,
     notes: 0
+  },
+  hack: {
+    playable: false
   },
   points: [], // [layout][pulseBeat][tempo][backing] = [{base, heavy, light}]
 });
@@ -62,6 +65,7 @@ export const getters = {
   power: state => state.power,
   mode: state => state.mode,
   weenie: state => state.weenie,
+  hack: state => state.hack,
   minPower: state => _.map(_.keys(state.mode),
       power => power === 'tempo' ? -state.power.tempo : 0),
   next: state => _.mapValues(state.power, (value, power) =>
@@ -113,13 +117,13 @@ export const getters = {
     }, {});
   }),
   pointsByPulseBeat: (state, getters) => _.mapValues(getters.displayPoints[state.mode.layout],
-    _.property([getters.tempo, state.mode.backing])),
+      _.property([getters.tempo, state.mode.backing])),
   playable: (state, getters) => _.mapValues(getters.pointsByPulseBeat, (points, pulseBeat, pointsByPulseBeat) => {
     if (points.length) {
       return true;
     }
     let check = _.compact(_.times(pulseBeat.length, i =>
-    pulseBeat.charAt(i) === '2' && splice(pulseBeat, i, 1, '1')));
+        pulseBeat.charAt(i) === '2' && splice(pulseBeat, i, 1, '1')));
     return !check.length || _.some(check,
         pulseBeat => pointsByPulseBeat[pulseBeat].length);
   }),
@@ -151,6 +155,9 @@ export const mutations = {
       });
       _.forEach(_.keys(state.mode), power => {
         state.mode[power] = power === 'auto' ? MAX_POWER[power] : 0;
+      });
+      _.forEach(_.keys(state.hack), hack => {
+        state.hack[hack] = true;
       });
     } else {
       _.forEach(_.keys(state.mode), power => {

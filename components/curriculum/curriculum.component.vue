@@ -15,7 +15,7 @@
           lesson-button(v-for="pulseBeat in lessonGroup", :key="pulseBeat",
               :pulseBeat="pulseBeat", :layoutChange="layoutChange",
               @click="onLesson(pulseBeat)", @mousedown="$emit('mousedown', pulseBeat)",
-              :playable="allPlayable || playable[pulseBeat]",
+              :playable="hack.playable || playable[pulseBeat]",
               :points="pointsByPulseBeat[pulseBeat]")
       .end
     .bottom(:class="scaleClass")
@@ -42,9 +42,6 @@
       'note-count': NoteCount,
       'power-layout': PowerLayout,
       'power-notes': PowerNotes,
-    },
-    props: {
-      allPlayable: Boolean
     },
     constants: {
       animationTarget: 'lessons',
@@ -150,6 +147,7 @@
         mode: 'progress/mode',
         next: 'progress/next',
         weenie: 'progress/weenie',
+        hack: 'progress/hack',
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',
         pointsByPulseBeat: 'progress/pointsByPulseBeat',
@@ -170,7 +168,6 @@
       }
     }
   }
-
 </script>
 
 <style scoped lang="stylus" type="text/stylus">

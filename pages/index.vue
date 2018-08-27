@@ -5,6 +5,12 @@
       | Under development.
 </template>
 
+<script>
+  export default {
+    layout: 'public'
+  }
+</script>
+
 <style scoped lang="Stylus" type="text/stylus">
   .content
     margin: 3vw content-side-margin;
@@ -26,5 +32,4 @@
 
       &:hover
         color: white;
-
 </style>

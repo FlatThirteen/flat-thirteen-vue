@@ -1,13 +1,26 @@
 <template lang="pug">
-  .content A1
+  .page
+    main-frame
 </template>
 
 <script>
+  import MainFrame from '~/components/main/main-frame.component';
+
   export default {
-    layout: 'game'
+    components: {
+      'main-frame': MainFrame
+    },
+    head: {
+      title: 'Flat Thirteen | A1'
+    },
+    mounted() {
+      this.$store.dispatch('progress/reset');
+    }
   }
 </script>
-<style scoped lang="Stylus" type="text/stylus">
-  .content
-    font-size: 500px;
+
+<style scoped lang="stylus" type="text/stylus">
+  .page
+    posit(absolute);
+    user-select: none;
 </style>

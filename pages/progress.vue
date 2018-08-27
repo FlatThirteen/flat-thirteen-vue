@@ -24,7 +24,7 @@
       'power-auto': PowerAuto
     },
     head: {
-      title: 'Flat Thirteen | Lesson'
+      title: 'Flat Thirteen | Progress'
     },
     layout: 'debug',
     mounted() {
@@ -32,8 +32,7 @@
     },
     data() {
       return {
-        addPoints: MAX_POINTS,
-
+        addPoints: MAX_POINTS
       };
     },
     methods: {
