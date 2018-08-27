@@ -15,7 +15,7 @@
   import Tone from '~/common/tone';
 
   const inactiveLeft = '50%';
-  const inactiveBottom = '25vh';
+  const inactiveBottom = '50vh';
 
   export default {
     mixins: [AnimatedMixin],
@@ -68,6 +68,7 @@
       };
     },
     mounted() {
+      TweenMax.set(this.$refs.ball, { bottom: inactiveBottom });
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
     destroyed() {

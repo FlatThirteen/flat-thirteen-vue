@@ -18,8 +18,8 @@
       bouncing-points(:show="scene === 'victory'", :points="basePoints")
     faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
         :beatWrong="beatWrong", :goalCount="counts.goal", :playCount="counts.play")
-    transition(name="footer")
-      .footer(v-show="weenie !== 'goal' && scene !== 'victory'")
+    .footer: transition(name="footer")
+      .contents(v-show="weenie !== 'goal' && scene !== 'victory'")
         note-counter(:scene="scene")
     transport(v-bind="transportProps")
 </template>
@@ -517,7 +517,6 @@
 
   .stage
     position: relative;
-    padding-top: 40px;
     text-align: center;
 
   .top-container
@@ -525,7 +524,6 @@
     width: 100%;
     max-width: 80vh;
     margin: auto;
-    padding-top: 40px;
     position: relative;
 
   .whole
@@ -542,12 +540,16 @@
     position: relative;
 
   .footer
-    margin: 5vh 11vw;
-    display: flex;
-    justify-content: space-evenly;
-    align-items: flex-start;
-    user-select: none;
-    transform-origin: top;
+    height: 15vh;
+    position: relative;
+
+    .contents
+      posit(absolute);
+      margin: 5vh 11vw 0;
+      display: flex;
+      justify-content: space-evenly;
+      align-items: flex-start;
+      transform-origin: top;
 
   .footer-enter-active, .footer-leave-active
     transition: transform 250ms;

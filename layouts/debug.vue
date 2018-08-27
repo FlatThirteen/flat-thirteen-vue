@@ -27,6 +27,7 @@
 
 <style scoped lang="stylus" type="text/stylus">
   .page
+    posit(absolute)
     margin-top: 50px;
 
   .menu

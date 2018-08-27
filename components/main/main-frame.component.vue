@@ -132,6 +132,10 @@
 <style scoped lang="stylus" type="text/stylus">
   .lesson-container
     posit(absolute);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
 
   .lesson-container-enter-active, .lesson-container-leave-active
     transition: transform 250ms;
@@ -145,9 +149,10 @@
     border: solid 1px #DDD;
     border-radius: 5px;
     color: #DDD;
-    font-size: 30px;
+    font-size: 23px;
     padding: 5px;
     margin: 5px;
+    z-index: 1;
 
     &:hover
       color: #888;

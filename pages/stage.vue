@@ -116,6 +116,9 @@
   .container
     position: relative;
     user-select: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 
   .top
     posit(absolute, 0, 0, x, 0)
