@@ -3,12 +3,14 @@
     slot
     .top
       transition(name="boing")
-        backing-button.left.button(:level="mode.backing", v-if="power.backing",
-            @click="$store.dispatch('progress/mode', {power: 'backing'})")
+        backing-button.left.button(v-if="power.backing", :level="mode.backing",
+            :class="{weenie: weenie.backing}",
+            @click="$store.dispatch('progress/mode', { power: 'backing' })")
       power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
       transition(name="boing")
-        tempo-control.right(:tempo="tempo", :min="minTempo", :max="maxTempo",
-            v-if="minTempo < maxTempo", @tempo="$store.dispatch('progress/tempo', $event)")
+        tempo-control.right(v-if="minTempo < maxTempo", :tempo="tempo",
+            :min="minTempo", :max="maxTempo", :weenie="weenie.tempo",
+            @tempo="$store.dispatch('progress/tempo', $event)")
       power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
       .left: slot(name="bottom-left")
@@ -59,6 +61,7 @@
         power: 'progress/power',
         mode: 'progress/mode',
         next: 'progress/next',
+        weenie: 'progress/weenie',
         tempo: 'progress/tempo',
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
@@ -87,6 +90,8 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/weenie.styl"
+
   .frame
     posit(absolute);
 

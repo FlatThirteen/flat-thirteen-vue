@@ -6,16 +6,15 @@
           power-layout.power(ref="layout", @click="onNext('layout')")
           .layout-selected(ref="selected", :class="{off: mode.layout < 0}")
           transition-group(name="layout", tag="div", ref="layouts", class="layouts")
-            layout-button(v-for="(layout, i) in layouts", :key="i",
+            layout-button(v-for="(layout, i) in layouts", :key="i", :weenie="weenie.layout === i",
                 :layout="layout", :selected="mode.layout === i", @click="onLayout(i)")
       slot
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
-        .lesson-group(v-for="(lessonGroup, key) in pulseBeatGroups", :key="key",
-            v-if="pointsByPulseBeat", :class="{transition}")
+        .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="notes",
+            v-if="pointsByPulseBeat", :class="{transition, weenie: String(weenie.notes) === notes}")
           lesson-button(v-for="pulseBeat in lessonGroup", :key="pulseBeat",
               :pulseBeat="pulseBeat", :layoutChange="layoutChange",
-              @click="$emit('click', pulseBeat)",
-              @mousedown="$emit('mousedown', pulseBeat)",
+              @click="onLesson(pulseBeat)", @mousedown="$emit('mousedown', pulseBeat)",
               :playable="allPlayable || playable[pulseBeat]",
               :points="pointsByPulseBeat[pulseBeat]")
       .end
@@ -116,6 +115,10 @@
           }
         });
       },
+      onLesson(pulseBeat) {
+        this.$store.dispatch('progress/weenie', { power: 'notes' });
+        this.$emit('click', pulseBeat);
+      },
       onNext(power) {
         this.$store.dispatch('progress/next', power);
         this.clicked = true;
@@ -134,7 +137,7 @@
             this.power.notes ? '' : 'initial';
       },
       showNextLayout() {
-        return this.next.layout === this.mode.layout + 1 &&
+        return this.next.layout && this.next.layout === this.mode.layout + 1 &&
             _.every(this.nextLayoutConditions[this.mode.layout],
                 (points, pulseBeat) => _.get(this.pointsByPulseBeat, [pulseBeat, 0, 'base']) >= points);
       },
@@ -146,6 +149,7 @@
         power: 'progress/power',
         mode: 'progress/mode',
         next: 'progress/next',
+        weenie: 'progress/weenie',
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',
         pointsByPulseBeat: 'progress/pointsByPulseBeat',
@@ -170,6 +174,8 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/weenie.styl"
+
   .curriculum-container
     posit(absolute);
 
@@ -212,7 +218,11 @@
     width: 100px;
 
   .lesson-group
+    margin: 20px;
     text-align: center;
+
+    &.weenie:not(:hover) .button
+      animation: weenie 1s infinite 500ms;
 
   .lesson-group-enter-active.transition
     transform-origin: top;

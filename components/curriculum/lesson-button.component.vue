@@ -48,7 +48,7 @@
     display: inline-block;
     background-color: white;
     border: dashed 5px primary-blue;
-    margin: 10px;
+    margin: 0 10px;
     font-size: 40px;
     line-height: 60px;
     position: relative;

@@ -2,8 +2,9 @@
   .tempo
     metronome.icon(:playing="playing", :duration="duration")
     .control {{ tempo | three}}
-      .up(v-show="tempo < max", @click="$emit('tempo', tempo + increment)") ▲
-      .down(v-show="tempo > min", @click="$emit('tempo', tempo - increment)") ▼
+      .up.button(v-show="tempo < max", :class="{weenie}", @click="$emit('tempo', tempo + increment)")
+        .arrow ▲
+      .down.button(v-show="tempo > min", @click="$emit('tempo', tempo - increment)") ▼
 </template>
 
 <script>
@@ -25,7 +26,8 @@
         default: 10
       },
       min: Number,
-      max: Number
+      max: Number,
+      weenie: Number
     },
     filters: {
       three(value) {
@@ -56,7 +58,7 @@
     position: relative;
     text-align: center;
 
-    &:hover .up, &:hover .down
+    &:hover .up, &:hover .down, .weenie.up
       opacity: 1;
 
     .up, .down
@@ -69,11 +71,28 @@
       width: 80%;
 
       &:hover
-        background-color: rgba(233, 233, 233, 0.4);
+        background-color: faint-grey;
 
     .up
-      posit(absolute, -7px, x, x)
+      posit(absolute, x, x, 57px, 0)
+
+      &.weenie .arrow
+        font-size: 20px;
+        line-height: 16px;
+        padding-top: 4px;
 
     .down
-      posit(absolute, x, x, 0)
+      posit(absolute, x, x, 0, 0)
+
+  .weenie:not(:hover)
+    animation: weenie-move 1s infinite 500ms;
+
+  @keyframes weenie-move
+    0%, 100%
+      transform: translateY(0);
+      shadow(#888, 0);
+    50%
+      transform: translateY(-5px);
+      shadow(#888, 5px);
+
 </style>

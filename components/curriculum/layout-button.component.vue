@@ -1,6 +1,6 @@
 <template lang="pug">
   .layout(:class="{selected}")
-    .button(@click="$emit('click')", :class="{disabled: selected}")
+    .button(@click="$emit('click')", :class="{weenie, disabled: selected}")
       .group(v-for="(surface, index) in layout")
         .block(v-for="(soundName, key) in surface.soundByKey", :class="{selected}",
             @click="onBlock(index, key, soundName)")
@@ -14,7 +14,8 @@
   export default {
     props: {
       layout: Array,
-      selected: Boolean
+      selected: Boolean,
+      weenie: Boolean
     },
     data() {
       return {
@@ -41,6 +42,8 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/weenie.styl"
+
   .layout
     display: flex;
     flex-direction: column;

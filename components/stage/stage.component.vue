@@ -511,6 +511,8 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/weenie.styl"
+
   .stage
     position: relative;
     padding-top: 40px;
@@ -550,16 +552,4 @@
 
   .footer-enter, .footer-leave-to
     transform: scale(0)
-
-  .weenie:not(:hover)
-    animation: weenie 1s infinite 500ms;
-
-  @keyframes weenie
-    0%, 100%
-      opacity: 1;
-      shadow(#888, 0);
-    50%
-      opacity: 0.9;
-      shadow(#888, 5px);
-
 </style>

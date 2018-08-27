@@ -33,8 +33,14 @@ export const state = () => ({
   mode: {
     auto: 0,
     backing: 0,
-    layout: -10, // Should not be initialized to -1
+    layout: -1,
     tempo: 0
+  },
+  weenie: {
+    backing: 0,
+    layout: 0,
+    tempo: 0,
+    notes: 0
   },
   points: [], // [layout][pulseBeat][tempo][backing] = [{base, heavy, light}]
 });
@@ -50,11 +56,12 @@ export const getters = {
   backings: state => _.take(BACKINGS, state.power.backing + 1),
   pulseBeats: state => _.concat(_.map(Combinatorics.baseN([1, 2], 4).toArray(),
     _.partial(_.join, _, ''))),
-  pulseBeatGroups: (state, getters) => _.map(_.pickBy(_.groupBy(_.map(getters.pulseBeats, splitPulseBeat), _.sum),
+  pulseBeatGroups: (state, getters) => _.mapValues(_.pickBy(_.groupBy(_.map(getters.pulseBeats, splitPulseBeat), _.sum),
       (group, noteCount) => _.toNumber(noteCount) * getters.layoutNotesMultiple <= state.power.notes),
       _.partial(_.map, _, _.partial(_.join, _, ''))),
   power: state => state.power,
   mode: state => state.mode,
+  weenie: state => state.weenie,
   minPower: state => _.map(_.keys(state.mode),
       power => power === 'tempo' ? -state.power.tempo : 0),
   next: state => _.mapValues(state.power, (value, power) =>
@@ -151,7 +158,7 @@ export const mutations = {
       });
       state.power.notes = 0;
       if (_.isUndefined(params.layout)) {
-        state.mode.layout = -10;
+        state.mode.layout = -1;
       }
     }
   },
@@ -159,19 +166,28 @@ export const mutations = {
     if (!MAX_POWER[power]) {
       console.error('Invalid power', power);
     } else if (state.power[power] < MAX_POWER[power]) {
+      state.power[power]++;
       if (updateMode) {
         state.mode[power]++;
+      } else {
+        state.weenie[power] = state.power[power];
       }
-      state.power[power]++;
     } else {
       console.error('Exceeding max', MAX_POWER[power], 'for', power);
     }
   },
   mode(state, {power, level}) {
     state.mode[power] = level;
-    if (!state.power.notes) {
+    if (power === 'layout' && state.power.notes < 5) {
       state.power.notes = 4;
+      state.weenie.notes = 4;
     }
+    if (state.power[power] === level) {
+      state.weenie[power] = power === 'layout' ? -1 : 0;
+    }
+  },
+  weenie(state, {power, level = 0}) {
+    state.weenie[power] = level;
   },
   points(state, {pulseBeat, tempo, amount}) {
     if (!amount.base) {
@@ -200,8 +216,7 @@ export const actions = {
   next({state, commit}, power) {
     commit('next', {
       power,
-      updateMode: state.mode[power] === state.power[power] && power !== 'layout' &&
-          (power !== 'tempo' || state.power.tempo > 0)
+      updateMode: state.mode[power] === state.power[power] && power === 'auto'
     });
   },
   mode({state, getters, commit}, {power, min = 0,
@@ -213,6 +228,12 @@ export const actions = {
         level: _.clamp(level, getters.minPower[power], state.power[power])
       });
     }
+  },
+  weenie({state, commit}, {power, level}) {
+    if (_.isUndefined(state.weenie[power])) {
+      console.error('Invalid weenie');
+    }
+    commit('weenie', {power, level});
   },
   tempo({dispatch}, tempo) {
     dispatch('mode', { power: 'tempo', level: (tempo - 120) / 10 });
