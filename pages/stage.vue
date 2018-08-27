@@ -114,7 +114,7 @@
 
 <style scoped lang="stylus" type="text/stylus">
   .container
-    position: relative;
+    posit(absolute);
     user-select: none;
     display: flex;
     flex-direction: column;
