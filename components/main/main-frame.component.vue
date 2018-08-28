@@ -7,7 +7,7 @@
       .lesson-container(v-else, key="stage")
         backing
         stage(:goal="stageGoal", :tempo="tempo", :showNextAuto="showNextAuto",
-            @complete="$store.dispatch('lesson/next', {points: $event})")
+            @complete="nextStage($event)")
         .quit.button(@click="clearLesson()") X
     slot(name="help", slot="bottom-left")
       .help
@@ -37,10 +37,11 @@
     data() {
       return {
         pulseBeat: null,
+        lessonPoints: 0
       };
     },
     destroyed() {
-      this.$store.dispatch('lesson/clear');
+      this.$store.dispatch('progress/setStages');
     },
     methods: {
       onLesson(pulseBeat) {
@@ -50,7 +51,7 @@
         });
 
         let finished = this.pointsByPulseBeat[pulseBeat].length;
-        let stages = !this.mode.layout && pulseBeat === '1111' && !finished ? [
+        let stages = !this.level.layout && pulseBeat === '1111' && !finished ? [
           [{ type: 'drums', notes: 'K|K|K|K' }],
           [{ type: 'drums', notes: 'K|K|K' }],
           [{ type: 'drums', notes: 'K||K|K' }],
@@ -68,8 +69,18 @@
             _.random(3, this.beatTicks.length) - requiredBeatTicks.length)
         });
 
-        this.$store.dispatch('lesson/initialize', { stages });
+        this.$store.dispatch('progress/setStages', stages);
+        if (this.level.backing) {
+          this.$refs.composer.reset();
+        }
         this.pulseBeat = pulseBeat;
+      },
+      nextStage(points) {
+        this.lessonPoints += points;
+        this.$store.dispatch('progress/nextStage');
+        if (this.level.backing) {
+          this.$refs.composer.updateRhythm();
+        }
       },
       clearLesson(points) {
         console.assert(this.pulseBeat);
@@ -77,7 +88,9 @@
           pulseBeat: this.pulseBeat,
           amount: { base: points }
         });
-        this.$store.dispatch('lesson/clear');
+        this.lessonPoints = 0;
+        this.$refs.composer.clear();
+        this.$store.dispatch('progress/setStages');
       }
     },
     computed: {
@@ -88,13 +101,11 @@
         return this.points >= Math.pow(2, this.next.auto) * 100;
       },
       ...mapGetters({
-        stage: 'lesson/stage',
-        stageGoal: 'lesson/stageGoal',
-        done: 'lesson/done',
-        lessonPoints: 'lesson/totalPoints',
+        stageGoal: 'progress/stageGoal',
+        lessonDone: 'progress/lessonDone',
         beatTicks: 'player/beatTicks',
         soundNames: 'player/soundNames',
-        mode: 'progress/mode',
+        level: 'progress/level',
         next: 'progress/next',
         layout: 'progress/layout',
         tempo: 'progress/tempo',
@@ -104,24 +115,8 @@
       })
     },
     watch: {
-      'mode.backing'(backingLevel) {
-        if (backingLevel) {
-          this.$refs.composer.reset();
-        } else {
-          this.$refs.composer.clear();
-        }
-      },
-      stage(stage) {
-        if (this.mode.backing) {
-          if (stage) {
-            this.$refs.composer.updateRhythm();
-          } else {
-            this.$refs.composer.reset();
-          }
-        }
-      },
-      done(done) {
-        if (done) {
+      lessonDone(lessonDone) {
+        if (lessonDone) {
           this.clearLesson(this.lessonPoints);
         }
       }
@@ -132,10 +127,6 @@
 <style scoped lang="stylus" type="text/stylus">
   .lesson-container
     posit(absolute);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-
 
   .lesson-container-enter-active, .lesson-container-leave-active
     transition: transform 250ms;

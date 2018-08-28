@@ -4,10 +4,10 @@
       .settings
         .layouts
           power-layout.power(ref="layout", @click="onNext('layout')")
-          .layout-selected(ref="selected", :class="{off: mode.layout < 0}")
+          .layout-selected(ref="selected", :class="{off: level.layout < 0}")
           transition-group(name="layout", tag="div", ref="layouts", class="layouts")
             layout-button(v-for="(layout, i) in layouts", :key="i", :weenie="weenie.layout === i",
-                :layout="layout", :selected="mode.layout === i", @click="onLayout(i)")
+                :layout="layout", :selected="level.layout === i", @click="onLayout(i)")
       slot
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
         .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="notes",
@@ -79,7 +79,7 @@
       }
       this.$nextTick(() => {
         // Wait for reset to update layout
-        if (this.$refs.layout && this.mode.layout > 0) {
+        if (this.$refs.layout && this.level.layout > 0) {
           TweenMax.set(this.$refs.selected, {
             left: this.getLayoutLeft()
           });
@@ -89,19 +89,19 @@
     },
     methods: {
       onLayout(layout) {
-        if (layout === this.mode.layout) {
+        if (layout === this.level.layout) {
           return;
         }
-        TweenMax.to(this.$refs.selected, this.mode.layout < 0 ? .75 : .25, {
+        TweenMax.to(this.$refs.selected, this.level.layout < 0 ? .75 : .25, {
           left: this.getLayoutLeft(layout),
           top: 0
         });
         this.layoutChange = true;
-        let next = layout > this.mode.layout;
+        let next = layout > this.level.layout;
         this.animate(next ? 'left' : 'right', {
           duration: .1,
           onComplete: () => {
-            this.$store.dispatch('progress/mode', { power: 'layout', level: layout });
+            this.$store.dispatch('progress/layout', layout);
             this.animate(next ? 'right' : 'left', {
               duration: .05,
               onComplete: () => {
@@ -121,7 +121,7 @@
         this.clicked = true;
         this.$nextTick(() => this.clicked = false);
       },
-      getLayoutLeft(layout = this.mode.layout) {
+      getLayoutLeft(layout = this.level.layout) {
         return this.$refs.layouts.children[layout].elm.offsetLeft
       }
     },
@@ -134,8 +134,8 @@
             this.power.notes ? '' : 'initial';
       },
       showNextLayout() {
-        return this.next.layout && this.next.layout === this.mode.layout + 1 &&
-            _.every(this.nextLayoutConditions[this.mode.layout],
+        return this.next.layout && this.next.layout === this.level.layout + 1 &&
+            _.every(this.nextLayoutConditions[this.level.layout],
                 (points, pulseBeat) => _.get(this.pointsByPulseBeat, [pulseBeat, 0, 'base']) >= points);
       },
       showNextNotes() {
@@ -144,7 +144,7 @@
       },
       ...mapGetters({
         power: 'progress/power',
-        mode: 'progress/mode',
+        level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
         hack: 'progress/hack',

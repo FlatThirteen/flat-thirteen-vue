@@ -1,27 +1,30 @@
 <template lang="pug">
-  .stage(ref="stage", v-if="layout.length")
-    key-handler(:player="true")
-    .top-container
-      bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
-      .controls.whole
-        loop-button(ref="loop", @click.native="showLoop && adjustAuto()",
-            :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
-        power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
-        goal-button(ref="goal", @click.native="onAction('goal')",
-            :penalty="!preGoal", :class="{weenie: weenie === 'goal'}")
-          penalty-fx(ref="goalPenalty", top="50%", left="10%")
-        play-button(ref="play", @click.native="onAction('playback')", :wrong="wrong")
-          penalty-fx(ref="wrongPenalty", top="0", left="80%")
-    .grids
-      svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
-          :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
-      bouncing-points(:show="scene === 'victory'", :points="basePoints")
-    faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
-        :beatWrong="beatWrong", :goalCount="counts.goal", :playCount="counts.play")
-    .footer: transition(name="footer")
-      .contents(v-show="weenie !== 'goal' && scene !== 'victory'")
-        note-counter(:scene="scene")
-    transport(v-bind="transportProps")
+  .anchor
+    .stage(ref="stage")
+      key-handler(:player="true")
+      .top-container
+        bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
+        .controls.whole
+          loop-button(ref="loop", @click="$store.dispatch('progress/auto')",
+              :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
+          power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
+          goal-button(ref="goal", @click.native="onAction('goal')",
+              :penalty="!preGoal", :class="{weenie: weenie === 'goal'}")
+            penalty-fx(ref="goalPenalty", top="50%", left="10%")
+          play-button(ref="play", @click.native="onAction('playback')", :wrong="wrong")
+            penalty-fx(ref="wrongPenalty", top="0", left="80%")
+      .grids
+        svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
+            :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
+        bouncing-points(:show="scene === 'victory'", :points="basePoints")
+      faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
+          :beatWrong="beatWrong", :goalCount="counts.goal", :playCount="counts.play")
+      .footer: transition(name="footer")
+        .contents(v-show="weenie !== 'goal' && scene !== 'victory'")
+          note-counter(:scene="scene")
+      transport(v-bind="transportProps")
+    penalty-fx(ref="backingPenalty", top="70px", left="20px")
+    penalty-fx(ref="tempoPenalty", top="85px", right="130px")
 </template>
 
 <script>
@@ -91,8 +94,7 @@
         playback: 'count',
       }, {
         goal: 'goal',
-      }],
-      penaltyMax: { goal: 45, wrong: 50 }
+      }]
     },
     data() {
       return {
@@ -102,7 +104,8 @@
         changed: false,
         counts: { goal: 0, playback: 0 },
         loopCount: 0,
-        penalty: { goal: 0, wrong: 0 },
+        points: 100,
+        penaltyLevel: { backing: 0, tempo: 0 },
         beatWrong: null,
         weenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
@@ -123,6 +126,9 @@
             this.$refs.play.set({ opacity: 0 })
           }
         }
+        _.forEach(this.penaltyLevel, (level, penalty) => {
+          this.penaltyLevel[penalty] = this.level[penalty]
+        });
       });
     },
     destroyed() {
@@ -223,8 +229,11 @@
       },
       reset() {
         this.preGoal = !this.autoLoop;
+        this.points = 100;
         _.forEach(this.counts, (count, scene) => this.counts[scene] = 0);
-        _.forEach(this.penalty, (count, type) => this.penalty[type] = 0);
+        _.forEach(this.penaltyLevel, (level, penalty) => {
+          this.penaltyLevel[penalty] = this.level[penalty]
+        });
       },
       onAction(scene = this.scene !== 'standby' ? 'standby' : 'goal') {
         if (this.scene === scene || this.nextScene === scene) {
@@ -268,13 +277,6 @@
           });
         }
       },
-      adjustAuto(level) {
-        this.$store.dispatch('progress/mode', {
-          power: 'auto',
-          level: level,
-          min: 1
-        });
-      },
       toScene(scene, nextScene = scene === 'standby' ? 'standby' : this.nextScene) {
         if (this.scene === 'goal') {
           this.preGoal = false;
@@ -291,14 +293,18 @@
             this.nextMap[autoLevel][scene] || this.getNext(scene, autoLevel - 1);
       },
       addPenalty(type, amount, options = {}) {
-        if (amount && this.penaltyMax[type]) {
-          let previous = this.penalty[type] || 0;
-          let current = Math.min(this.penaltyMax[type], previous + amount);
-          this.penalty[type] = current;
-          ({
+        if (amount) {
+          let previous = this.points;
+          this.points = Math.max(5, previous - amount);
+          let penalty = ({
             goal: this.$refs.goalPenalty,
-            wrong: this.$refs.wrongPenalty
-          }[type]).appear(current - previous, options);
+            wrong: this.$refs.wrongPenalty,
+            backing: this.$refs.backingPenalty,
+            tempo: this.$refs.tempoPenalty
+          }[type]);
+          if (penalty) {
+            penalty.appear(this.points - previous, options);
+          }
         }
       },
       onPowerUp() {
@@ -331,7 +337,7 @@
         return this.autoLevel > 2;
       },
       basePoints() {
-        return this.pointsOverride || 100 - _.sum(_.values(this.penalty));
+        return this.pointsOverride || this.points;
       },
       wrong() {
         return this.noteCount !== this.goalNoteCount;
@@ -356,12 +362,12 @@
         noteCount: 'player/noteCount',
         numPulses: 'player/numPulses',
         power: 'progress/power',
-        mode: 'progress/mode',
+        level: 'progress/level',
         next: 'progress/next',
         autoLevel: 'progress/autoLevel',
         showLoop: 'progress/showLoop',
-        stage: 'lesson/stage',
-        lessonDone: 'lesson/done',
+        stageIndex: 'progress/stageIndex',
+        lessonDone: 'progress/lessonDone',
         active: 'transport/active',
         playing: 'transport/playing',
         paused: 'transport/paused'
@@ -387,7 +393,7 @@
           }
         }
       },
-      stage() {
+      stageIndex() {
         this.reset();
         this.animate('next');
       },
@@ -502,9 +508,21 @@
           this.onAction('count');
         }
       },
-      'mode.auto'() {
+      'level.auto'() {
         if (this.nextScene !== 'playback') {
           this.nextScene = this.getNext(this.scene);
+        }
+      },
+      'level.backing'(level) {
+        if (level < this.penaltyLevel.backing) {
+          this.penaltyLevel.backing = level;
+          this.addPenalty('backing', 30);
+        }
+      },
+      'level.tempo'(level) {
+        if (level < this.penaltyLevel.tempo) {
+          this.penaltyLevel.tempo = level;
+          this.addPenalty('tempo', 10);
         }
       }
     }
@@ -515,9 +533,11 @@
 <style scoped lang="stylus" type="text/stylus">
   @import "~assets/stylus/weenie.styl"
 
-  .stage
-    position: relative;
-    text-align: center;
+  .anchor
+    posit(absolute);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 
   .top-container
     height: 10vh;

@@ -1,5 +1,5 @@
 <template lang="pug">
-  .penalty(ref="penalty", :style="{top, right, bottom, left}") -{{ penalty }}
+  .penalty(ref="penalty", :style="{top, right, bottom, left}") {{ penalty }}
 </template>
 
 <script>
@@ -28,7 +28,7 @@
         }], [.6, {
           transform: 'translateY(0)'
         }], [.2, {
-          transform: 'translateY(50px) rotate(90deg)',
+          transform: 'translateY(50px) rotate(135deg)',
           opacity: 0
         }]]
       }
@@ -40,7 +40,7 @@
       }
     },
     methods: {
-      appear(amount, {noisy, silent}) {
+      appear(amount, {noisy, silent} = {}) {
         if (this.penalty) {
           this.buffer.push(amount);
         } else if (amount) {
@@ -66,11 +66,11 @@
 </script>
 
 <style scoped lang="stylus", type="text/stylus">
-  .penalty {
+  .penalty
     position: absolute;
     opacity: 0;
     color: primary-red;
     font-size: 30px;
     font-weight: bold;
-  }
+    transition-origin: center center;
 </style>

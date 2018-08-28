@@ -1,8 +1,9 @@
 <template lang="pug">
   .tempo
     metronome.icon(:playing="playing", :duration="duration")
-    .control {{ tempo | three}}
-      .up.button(v-show="tempo < max", :class="{weenie}", @click="$emit('tempo', tempo + increment)")
+    .control(:class="{stage: stageGoal}") {{ tempo | three}}
+      .up.button(v-show="tempo < max", :class="{weenie: weenie && !stageGoal}",
+          @click="$emit('tempo', tempo + increment)")
         .arrow ▲
       .down.button(v-show="tempo > min", @click="$emit('tempo', tempo - increment)") ▼
 </template>
@@ -36,6 +37,7 @@
     },
     computed: {
       ...mapGetters({
+        stageGoal: 'progress/stageGoal',
         playing: 'transport/playing',
         duration: 'transport/duration'
       })
@@ -58,10 +60,10 @@
     position: relative;
     text-align: center;
 
-    &:hover .up, &:hover .down, .weenie.up
+    &.stage .button, &:hover .button, .weenie.up
       opacity: 1;
 
-    .up, .down
+    .button
       opacity: 0;
       cursor: pointer;
       font-size: 10px;

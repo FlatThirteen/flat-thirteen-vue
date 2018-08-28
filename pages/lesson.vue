@@ -2,7 +2,7 @@
   .page
     main-frame
       .reset.button(slot="curriculum",
-          @click="$store.dispatch('progress/reset')") Reset
+          @click="$store.dispatch('progress/initialize')") Reset
       .auto(slot="help")
         .icon o
         | :{{ power.auto }}
@@ -22,7 +22,7 @@
     },
     layout: 'debug',
     mounted() {
-      this.$store.dispatch('progress/reset', { max: true });
+      this.$store.dispatch('progress/initialize', { max: true });
     },
     computed: {
       ...mapGetters({

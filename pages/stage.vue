@@ -63,7 +63,7 @@
         if (next) {
           this.$store.dispatch('progress/next', 'auto');
         } else {
-          this.$store.dispatch('progress/reset');
+          this.$store.dispatch('progress/initialize');
         }
       },
       setVictory(level = this.victoryLevel > 1 ? this.victoryLevel - 1 : 10) {

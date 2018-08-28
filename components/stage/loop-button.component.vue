@@ -1,5 +1,5 @@
 <template lang="pug">
-  .loop(ref="loop", :class="{button: show, off, repeat}")
+  .loop(ref="loop", @click="show && $emit('click')", :class="{button: show, off, repeat}")
 </template>
 
 <script>

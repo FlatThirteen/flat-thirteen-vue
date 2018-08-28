@@ -28,7 +28,7 @@
     },
     layout: 'debug',
     mounted() {
-      this.$store.dispatch('progress/reset');
+      this.$store.dispatch('progress/initialize');
     },
     data() {
       return {

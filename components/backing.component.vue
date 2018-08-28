@@ -31,14 +31,8 @@
         type: Boolean,
         default: true
       },
-      skip: {
-        type: Boolean,
-        default: false
-      },
-      showCounts: {
-        type: Boolean,
-        default: false
-      }
+      skip: Boolean,
+      showCounts: Boolean
     },
     data() {
       return {
@@ -68,6 +62,9 @@
         this.activeNotes = 0;
       },
       beatTickHandler({beatTick, time}) {
+        if (!this.backingVolume) {
+          return;
+        }
         let notes = this.getNotes('backing', beatTick);
         _.forEach(notes, (note) => {
           note.play(time);
@@ -121,9 +118,10 @@
     },
     computed: {
       ...mapGetters({
+        getNotes: 'phrase/getNotes',
+        backingVolume: 'progress/backingVolume',
         starting: 'transport/starting',
         paused: 'transport/paused',
-        getNotes: 'phrase/getNotes'
       })
     },
     watch: {

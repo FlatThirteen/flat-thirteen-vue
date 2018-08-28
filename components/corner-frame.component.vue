@@ -3,9 +3,9 @@
     slot
     .top
       transition(name="boing")
-        backing-button.left.button(v-if="power.backing", :level="mode.backing",
+        backing-button.left.button(v-if="showBacking", :level="level.backing",
             :class="{weenie: weenie.backing}",
-            @click="$store.dispatch('progress/mode', { power: 'backing' })")
+            @click="$store.dispatch('progress/backing')")
       power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
       transition(name="boing")
         tempo-control.right(v-if="minTempo < maxTempo", :tempo="tempo",
@@ -52,16 +52,16 @@
     },
     computed: {
       showNextBacking() {
-        return !!this.next.backing && this.mode.auto > 1 && _.every(this.playable)
+        return !!this.next.backing && this.level.auto > 1 && _.every(this.playable)
       },
       showNextTempo() {
         return !!this.next.tempo && this.tempo === this.maxTempo && this.rowsWithStars >= 5;
       },
       ...mapGetters({
-        power: 'progress/power',
-        mode: 'progress/mode',
+        level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
+        showBacking: 'progress/showBacking',
         tempo: 'progress/tempo',
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
@@ -126,14 +126,17 @@
     font-weight: 600;
 
   .boing-enter-active
-    transition: transform 300ms cubic-bezier(0,.37,.29,1.3);
+    transition: transform 300ms cubic-bezier(0,.5,.5,1.5);
 
-  .boing-enter
+  .boing-leave-active
+    transition: transform 300ms cubic-bezier(.5,-.5,1,.5);
+
+  .boing-enter, .boing-leave-to
     transform: scale(0);
 
   .slide-enter-active
-    transition: transform 500ms cubic-bezier(0,.37,.29,1.3);
+    transition: transform 500ms cubic-bezier(0,1,.5,2);
 
   .slide-enter
-    transform: translateX(100px);
+    transform: translateX(100px) scale(0);
 </style>

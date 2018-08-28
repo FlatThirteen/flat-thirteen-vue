@@ -23,6 +23,12 @@ const MAX_POWER = {
 };
 
 export const state = () => ({
+  lesson: {
+    stages: [],
+    index: -1,
+    tempo: 0,
+    backing: 0
+  },
   power: {
     auto: 0,
     backing: 0,
@@ -49,25 +55,30 @@ export const state = () => ({
 });
 
 export const getters = {
+  stageIndex: state => state.lesson.index,
+  stageGoal: state => state.lesson.stages[state.lesson.index],
+  lessonDone: state => state.lesson.index === state.lesson.stages.length,
   layouts: state => _.take(LAYOUTS, state.power.layout + 1),
   layout: state => LAYOUTS[state.mode.layout],
   layoutNotesMultiple: (state, getters) => getters.layout && getters.layout.length,
   tempos: (state, getters) => _.range(getters.minTempo, getters.maxTempo + INCREMENT, INCREMENT),
-  tempo: state => TEMPO + INCREMENT * state.mode.tempo,
+  tempo: (state, getters) => TEMPO + INCREMENT * getters.level.tempo,
   minTempo: state => Math.max(60, TEMPO - INCREMENT * state.power.tempo),
-  maxTempo: state => TEMPO + INCREMENT * state.power.tempo,
+  maxTempo: (state, getters) => TEMPO + INCREMENT * (getters.stageGoal ? state.mode.tempo : state.power.tempo),
   backings: state => _.take(BACKINGS, state.power.backing + 1),
+  showBacking: (state, getters) => getters.stageGoal ? state.mode.backing : state.power.backing,
+  backingVolume: (state, getters) => !getters.stageGoal || state.lesson.backing ? 10 : 0,
   pulseBeats: state => _.concat(_.map(Combinatorics.baseN([1, 2], 4).toArray(),
     _.partial(_.join, _, ''))),
   pulseBeatGroups: (state, getters) => _.mapValues(_.pickBy(_.groupBy(_.map(getters.pulseBeats, splitPulseBeat), _.sum),
       (group, noteCount) => _.toNumber(noteCount) * getters.layoutNotesMultiple <= state.power.notes),
       _.partial(_.map, _, _.partial(_.join, _, ''))),
   power: state => state.power,
-  mode: state => state.mode,
+  level: (state, getters) => !getters.stageGoal ? state.mode :
+      _.mapValues(state.mode, (value, power) =>
+          _.isUndefined(state.lesson[power]) ? state.mode[power] : state.lesson[power]),
   weenie: state => state.weenie,
   hack: state => state.hack,
-  minPower: state => _.map(_.keys(state.mode),
-      power => power === 'tempo' ? -state.power.tempo : 0),
   next: state => _.mapValues(state.power, (value, power) =>
       !state.power.notes && power !== 'auto' ? 0 : value === MAX_POWER[power] ? 0 : value + 1),
   autoLevel: state => state.mode.auto,
@@ -147,7 +158,7 @@ export const getters = {
 };
 
 export const mutations = {
-  reset(state, params) {
+  resetPower(state, params) {
     state.points = [];
     if (params.max) {
       _.forEach(MAX_POWER, (max, power) => {
@@ -167,9 +178,27 @@ export const mutations = {
       if (_.isUndefined(params.layout)) {
         state.mode.layout = -1;
       }
+      _.forEach(_.keys(state.hack), hack => {
+        state.hack[hack] = false;
+      });
     }
   },
-  next(state, {power, updateMode}) {
+  resetLesson(state, stages) {
+    state.lesson.stages = stages;
+    state.lesson.index = stages.length ? 0 : -1;
+    state.lesson.tempo = state.mode.tempo;
+    state.lesson.backing = state.mode.backing;
+  },
+  nextStage(state) {
+    if (state.lesson.index + 1 <= state.lesson.stages.length) {
+      state.lesson.index = state.lesson.index + 1;
+      state.lesson.tempo = state.mode.tempo;
+      state.lesson.backing = state.mode.backing;
+    } else {
+      console.error('Cannot advance stage any more');
+    }
+  },
+  nextPower(state, {power, updateMode}) {
     if (!MAX_POWER[power]) {
       console.error('Invalid power', power);
     } else if (state.power[power] < MAX_POWER[power]) {
@@ -183,14 +212,31 @@ export const mutations = {
       console.error('Exceeding max', MAX_POWER[power], 'for', power);
     }
   },
-  mode(state, {power, level}) {
-    state.mode[power] = level;
-    if (power === 'layout' && state.power.notes < 5) {
-      state.power.notes = 4;
-      state.weenie.notes = 4;
+  mode(state, {power, min = 0,
+      level = state.mode[power] > min ? state.mode[power] - 1 : state.power[power]}) {
+    if (_.isUndefined(state.mode[power])) {
+      console.error('Invalid power', power);
+    } else if (_.inRange(level, min, state.power[power] + 1)) {
+      state.mode[power] = level;
+      if (power === 'layout' && state.power.notes < 5) {
+        state.power.notes = 4;
+        state.weenie.notes = 4;
+      }
+      if (state.power[power] === level) {
+        state.weenie[power] = power === 'layout' ? -1 : 0;
+      }
+    } else {
+      console.error('Invalid power level', power, level, 'should be in', min, state.power[power]);
     }
-    if (state.power[power] === level) {
-      state.weenie[power] = power === 'layout' ? -1 : 0;
+  },
+  lesson(state, {power, min = 0,
+      level = state.lesson[power] > min ? state.lesson[power] - 1 : state.mode[power]}) {
+    if (!MAX_POWER[power] || _.isUndefined(state.lesson[power])) {
+      console.error('Invalid lesson power:', power);
+    } else if (_.inRange(level, min, state.mode[power] + 1)) {
+      state.lesson[power] = level;
+    } else {
+      console.error('Invalid lesson power level:', power, level, state.mode[power]);
     }
   },
   weenie(state, {power, level = 0}) {
@@ -217,24 +263,22 @@ export const mutations = {
 };
 
 export const actions = {
-  reset({commit}, params = {}) {
-    commit('reset', params);
+  initialize({commit}, params = {}) {
+    commit('resetPower', params);
+  },
+  setStages({commit}, stages = []) {
+    commit('resetLesson', stages);
+  },
+  nextStage({state, commit}) {
+    if (state.lesson.index > -1) {
+      commit('nextStage');
+    }
   },
   next({state, commit}, power) {
-    commit('next', {
+    commit('nextPower', {
       power,
       updateMode: state.mode[power] === state.power[power] && power === 'auto'
     });
-  },
-  mode({state, getters, commit}, {power, min = 0,
-      level = state.mode[power] > min ? state.mode[power] - 1 : state.power[power]}) {
-    if (_.isUndefined(state.mode[power])) {
-      console.error('Invalid power', power);
-    } else {
-      commit('mode', { power,
-        level: _.clamp(level, getters.minPower[power], state.power[power])
-      });
-    }
   },
   weenie({state, commit}, {power, level}) {
     if (_.isUndefined(state.weenie[power])) {
@@ -242,8 +286,21 @@ export const actions = {
     }
     commit('weenie', {power, level});
   },
-  tempo({dispatch}, tempo) {
-    dispatch('mode', { power: 'tempo', level: (tempo - 120) / 10 });
+  auto({commit}, level) {
+    commit('mode', { power: 'auto', level, min: 1});
+  },
+  backing({getters, commit}, level) {
+    commit(getters.stageGoal ? 'lesson' : 'mode', { power: 'backing', level });
+  },
+  layout({commit}, level) {
+    commit('mode', { power: 'layout', level });
+  },
+  tempo({getters, commit}, tempo) {
+    commit(getters.stageGoal ? 'lesson' : 'mode', {
+      power: 'tempo',
+      level: (tempo - 120) / 10,
+      min: -getters.power.tempo
+    });
   },
   addPoints({getters, commit}, {pulseBeat, amount}) {
     commit('points', {pulseBeat, amount, tempo: getters.tempo});
