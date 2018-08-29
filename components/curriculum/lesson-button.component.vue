@@ -65,6 +65,7 @@
 
         .pulse
           background-color: black;
+          opacity: 0.3;
 
     &.done
       background-color: primary-blue;

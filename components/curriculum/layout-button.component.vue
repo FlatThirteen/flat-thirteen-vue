@@ -42,6 +42,7 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/note.styl"
   @import "~assets/stylus/weenie.styl"
 
   .layout
@@ -75,9 +76,15 @@
     border-radius: 50%;
     margin: 2px;
 
-  .block:hover .note
+  .note.on
+    animation: actual 250ms;
+
+  .block:hover .note:not(.on)
     opacity: 0.2;
 
+  .block .note:hover
+    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.5);
+
     &.on
-      opacity: 0.4;
+      opacity: 0.8;
 </style>

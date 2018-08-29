@@ -6,8 +6,9 @@
           power-layout.power(ref="layout", @click="onNext('layout')")
           .layout-selected(ref="selected", :class="{off: level.layout < 0}")
           transition-group(name="layout", tag="div", ref="layouts", class="layouts")
-            layout-button(v-for="(layout, i) in layouts", :key="i", :weenie="weenie.layout === i",
-                :layout="layout", :selected="level.layout === i", @click="onLayout(i)")
+            layout-button(v-for="(layout, i) in layouts", :key="i", :layout="layout",
+                :selected="initialSelected || level.layout === i",
+                :weenie="weenie.layout === i && !layoutChange", @click="onLayout(i)")
       slot
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
         .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="notes",
@@ -66,6 +67,7 @@
     },
     data() {
       return {
+        initialSelected: false,
         clicked: false,
         layoutChange: false
       };
@@ -89,28 +91,43 @@
     },
     methods: {
       onLayout(layout) {
-        if (layout === this.level.layout) {
-          return;
-        }
-        TweenMax.to(this.$refs.selected, this.level.layout < 0 ? .75 : .25, {
-          left: this.getLayoutLeft(layout),
-          top: 0
-        });
-        this.layoutChange = true;
-        let next = layout > this.level.layout;
-        this.animate(next ? 'left' : 'right', {
-          duration: .1,
-          onComplete: () => {
-            this.$store.dispatch('progress/layout', layout);
-            this.animate(next ? 'right' : 'left', {
-              duration: .05,
+        if (this.level.layout < 0) {
+          if (!this.layoutChange) {
+            this.layoutChange = true;
+            this.initialSelected = !this.initialSelected;
+            TweenMax.to(this.$refs.selected, 1, {
+              left: this.getLayoutLeft(layout),
+              top: 0,
+              delay: 2,
               onComplete: () => {
-                this.animate('back', { duration: .1 });
+                this.$store.dispatch('progress/layout', layout);
+                this.animate('back', { duration: 0 });
                 this.layoutChange = false;
+                this.initialSelected = false;
               }
             });
           }
-        });
+        } else if (layout !== this.level.layout) {
+          TweenMax.to(this.$refs.selected, .25, {
+            left: this.getLayoutLeft(layout),
+            top: 0
+          });
+          this.layoutChange = true;
+          let next = layout > this.level.layout;
+          this.animate(next ? 'left' : 'right', {
+            duration: .1,
+            onComplete: () => {
+              this.$store.dispatch('progress/layout', layout);
+              this.animate(next ? 'right' : 'left', {
+                duration: .05,
+                onComplete: () => {
+                  this.animate('back', { duration: .1 });
+                  this.layoutChange = false;
+                }
+              });
+            }
+          });
+        }
       },
       onLesson(pulseBeat) {
         this.$store.dispatch('progress/weenie', { power: 'notes' });
@@ -250,6 +267,7 @@
 
   .first
     transform: scale(2.5);
+    transition-delay: 0;
 
   .second
     transform: scale(1.5);

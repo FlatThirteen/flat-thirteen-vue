@@ -44,7 +44,7 @@ export const state = () => ({
   },
   weenie: {
     backing: 0,
-    layout: -1,
+    layout: 0,
     tempo: 0,
     notes: 0
   },
@@ -170,6 +170,9 @@ export const mutations = {
       _.forEach(_.keys(state.hack), hack => {
         state.hack[hack] = true;
       });
+      _.forEach(_.keys(state.weenie), power => {
+        state.weenie[power] = power === 'layout' ? -1 : 0;
+      });
     } else {
       _.forEach(_.keys(state.mode), power => {
         state.power[power] = state.mode[power] = params[power] || 0;
@@ -178,6 +181,9 @@ export const mutations = {
       if (_.isUndefined(params.layout)) {
         state.mode.layout = -1;
       }
+      _.forEach(_.keys(state.weenie), power => {
+        state.weenie[power] = 0;
+      });
       _.forEach(_.keys(state.hack), hack => {
         state.hack[hack] = false;
       });
