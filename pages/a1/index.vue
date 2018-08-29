@@ -12,9 +12,6 @@
     },
     head: {
       title: 'Flat Thirteen | A1'
-    },
-    mounted() {
-      this.$store.dispatch('progress/initialize');
     }
   }
 </script>

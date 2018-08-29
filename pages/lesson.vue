@@ -19,9 +19,6 @@
       title: 'Flat Thirteen | Lesson'
     },
     layout: 'debug',
-    mounted() {
-      this.initialize(true);
-    },
     methods: {
       initialize(max) {
         this.$store.dispatch('progress/initialize', { max });

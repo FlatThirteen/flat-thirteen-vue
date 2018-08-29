@@ -27,9 +27,6 @@
       title: 'Flat Thirteen | Progress'
     },
     layout: 'debug',
-    mounted() {
-      this.$store.dispatch('progress/initialize');
-    },
     data() {
       return {
         addPoints: MAX_POINTS
@@ -37,7 +34,7 @@
     },
     methods: {
       max() {
-        this.$store.dispatch('progress/initialize', { max: true });
+        this.$store.dispatch('progress/initialize', { max: !this.power.notes});
         this.$refs.auto.fade();
       },
       onLesson(pulseBeat) {
