@@ -2,7 +2,7 @@
   corner-frame(:totalPoints="totalPoints", :totalStars="totalStars")
     curriculum(@mousedown="onLesson($event)")
     .points(slot="bottom-left")
-      span(@mouseover="showNextAuto()") +
+      span(@mouseover="showNextAuto()", @click="max()") +
       input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
       .power
         power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
@@ -36,6 +36,10 @@
       };
     },
     methods: {
+      max() {
+        this.$store.dispatch('progress/initialize', { max: true });
+        this.$refs.auto.fade();
+      },
       onLesson(pulseBeat) {
         if (this.invalidPoints) {
           return;

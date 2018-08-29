@@ -1,10 +1,8 @@
 <template lang="pug">
   .page
     main-frame
-      .reset.button(slot="curriculum",
-          @click="$store.dispatch('progress/initialize')") Reset
       .auto(slot="help")
-        .icon o
+        .icon(@click="initialize(power.auto === 0)") o
         | :{{ power.auto }}
 </template>
 
@@ -22,7 +20,12 @@
     },
     layout: 'debug',
     mounted() {
-      this.$store.dispatch('progress/initialize', { max: true });
+      this.initialize(true);
+    },
+    methods: {
+      initialize(max) {
+        this.$store.dispatch('progress/initialize', { max });
+      }
     },
     computed: {
       ...mapGetters({
@@ -36,12 +39,6 @@
   .page
     posit(absolute);
     user-select: none;
-
-  .reset
-    posit(absolute, x, x, x, 20px);
-    background-color: white;
-    border: solid 1px #EEE;
-    padding: 5px;
 
   .auto
     font-size: 40px;
