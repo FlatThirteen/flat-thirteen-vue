@@ -100,28 +100,36 @@ export const getters = {
     return _.reduce(getters.pulseBeats, (pointsByPulseBeat, pulseBeat) => {
       let fasterPoints = _.times(getters.backings.length, () => []);
       pointsByPulseBeat[pulseBeat] = _.reduceRight(getters.tempos, (pointsByTempo, tempo) => {
-        _.forEachRight(getters.backings, (backing, backingLevel) => {
-          let points = _.get(state.points, [layout, pulseBeat, tempo, backingLevel], []);
-          let bestPoints = fasterPoints[backingLevel];
-          _.forEach(points, (nextPoints, i) => {
-            let amount = _.assign({ backing }, nextPoints);
-            if (!bestPoints.length) {
-              bestPoints.push(amount);
-            } else if (nextPoints.base === MAX_POINTS) {
-              if (bestPoints[0].base === MAX_POINTS || backingLevel === state.mode.backing) {
-                let insertion = _.sortedLastIndexBy(bestPoints, amount, sortAmount);
-                if (insertion < 3) {
-                  bestPoints.splice(insertion, bestPoints[0].base < MAX_POINTS ? 1 : 0, amount);
-                  bestPoints.splice(3);
+        pointsByTempo[tempo] = _.cloneDeep(fasterPoints);
+        _.forEachRight(getters.backings, (readBacking, readBackingLevel) => {
+          let points = _.get(state.points, [layout, pulseBeat, tempo, readBackingLevel], []);
+          _.forEach(getters.backings, (writeBacking, writeBackingLevel) => {
+            let bestPoints = pointsByTempo[tempo][writeBackingLevel];
+            _.forEach(points, (nextPoints, pointIndex) => {
+              let amount = _.assign({ backing: readBacking }, nextPoints);
+              if (!bestPoints.length) {
+                bestPoints.push(amount);
+              } else if (nextPoints.base === MAX_POINTS) {
+                if (!pointIndex && bestPoints[0].base !== MAX_POINTS) {
+                  // Replacing previous best points with stars, look at all backing
+                  let betterPoints = _.find(fasterPoints,
+                      bestPoints => bestPoints[0] && bestPoints[0].base === MAX_POINTS);
+                  if (betterPoints) {
+                    bestPoints = pointsByTempo[tempo][writeBackingLevel] = _.cloneDeep(betterPoints);
+                  }
                 }
+                if (bestPoints[0].base === MAX_POINTS || readBackingLevel === writeBackingLevel) {
+                  let insertion = _.sortedLastIndexBy(bestPoints, amount, sortAmount);
+                  bestPoints.splice(insertion, bestPoints[0].base < MAX_POINTS ? 1 : 0, amount);
+                }
+              } else if (!pointIndex && readBackingLevel === writeBackingLevel &&
+                  _.every(bestPoints, amount => amount.backing !== writeBacking || amount.base < MAX_POINTS)) {
+                bestPoints.splice(0, 1, amount);
               }
-            } else if (!i && backingLevel === state.mode.backing &&
-              !(bestPoints[0].base === MAX_POINTS && bestPoints[0].backing === backing)) {
-              bestPoints.splice(0, 1, amount);
-            }
+            });
           });
         });
-        pointsByTempo[tempo] = _.cloneDeep(fasterPoints);
+        fasterPoints = pointsByTempo[tempo];
         return pointsByTempo;
       }, {});
       return pointsByPulseBeat;
@@ -142,7 +150,7 @@ export const getters = {
     _.forEach(pointsByPulseBeat, pointsByTempo => {
       _.forEach(_.filter(pointsByTempo, (value, tempo) => tempo >= TEMPO), pointsByBacking => {
         _.forEach(pointsByBacking, (points, backingIndex) => {
-          _.forEach(points, amount => {
+          _.forEach(_.take(points, 3), amount => {
             if (amount.base === MAX_POINTS && BACKINGS[backingIndex] === amount.backing) {
               result += 1;
             }

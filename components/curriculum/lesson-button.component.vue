@@ -1,13 +1,11 @@
 <template lang="pug">
-  .lesson(:class="{done, button: playable}",
-      @mousedown="playable && $emit('mousedown')",
-      @click="playable && $emit('click')",)
+  .lesson(:class="{done, button: playable}", @mousedown="emit($event)", @click="emit($event)")
     .pulse-beat
       .beat(v-for="pulses in pulsesByBeat")
         .pulse(v-for="pulse in pulses", :class="'pulse' + pulse", v-if="playable")
     .points(v-show="basePoints && !maxPoints", :class="backing[0]") {{ basePoints }}
     .stars(v-show="maxPoints")
-      star(v-for="(star, i) in points", :backing="backing[i]", :key="i")
+      star(v-for="(star, i) in stars", :backing="backing[i]", :key="i")
 </template>
 
 <script>
@@ -23,6 +21,13 @@
       playable: Boolean,
       points: Array, // [{ base, heavy, light, backing }]
     },
+    methods: {
+      emit(event) {
+        if (!event.button && this.playable) {
+          this.$emit(event.type);
+        }
+      }
+    },
     computed: {
       pulsesByBeat() {
         return _.map(_.split(this.pulseBeat, ''), pulses => _.times(pulses, () => pulses));
@@ -35,6 +40,9 @@
       },
       maxPoints() {
         return this.basePoints === 400;
+      },
+      stars() {
+        return _.take(this.points, 3);
       },
       backing() {
         return _.map(this.points, 'backing');
