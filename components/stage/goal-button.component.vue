@@ -1,7 +1,7 @@
 <template lang="pug">
   .anchor
     slot
-    .goal.button(ref="goal", :class="{penalty, count: animatedLast === 'count'}")
+    .goal.button(ref="goal", :class="{weenie, penalty, count: animatedLast === 'count'}")
       img(src="~/assets/listen-music-128.png", v-show="animatedLast !== 'count'")
 </template>
 
@@ -11,6 +11,7 @@
   export default {
     mixins: [AnimatedMixin],
     props: {
+      weenie: Boolean,
       penalty: Boolean
     },
     constants: {
@@ -59,6 +60,8 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/weenie.styl"
+
   .anchor
     position: relative;
 

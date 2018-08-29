@@ -9,7 +9,7 @@
               :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
           power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
           goal-button(ref="goal", @click.native="onAction('goal')",
-              :penalty="!preGoal", :class="{weenie: weenie === 'goal'}")
+              :penalty="!preGoal", :weenie="weenie === 'goal'")
             penalty-fx(ref="goalPenalty", top="50%", left="10%")
           play-button(ref="play", @click.native="onAction('playback')", :wrong="wrong")
             penalty-fx(ref="wrongPenalty", top="0", left="80%")
@@ -531,8 +531,6 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  @import "~assets/stylus/weenie.styl"
-
   .anchor
     posit(absolute);
     display: flex;
