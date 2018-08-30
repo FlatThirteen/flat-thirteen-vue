@@ -72,5 +72,4 @@
     color: primary-red;
     font-size: 30px;
     font-weight: bold;
-    transition-origin: center center;
 </style>

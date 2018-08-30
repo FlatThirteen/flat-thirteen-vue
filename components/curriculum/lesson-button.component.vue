@@ -1,14 +1,17 @@
 <template lang="pug">
-  .lesson(:class="{done, button: playable}", @mousedown="emit($event)", @click="emit($event)")
-    .pulse-beat
+  .lesson(:class="{transition, done, button: playable, flip: tempoFlip}",
+      @transitionend="unflip($event)", @mousedown="emit($event)", @click="emit($event)")
+    .score(ref="score", v-show="done")
+      .score-contents(:class="{flip: backingFlip}")
+        star(v-for="(star, i) in stars", :backing="star", :key="i")
+        div(v-if="amount", :class="amount.backing") {{ amount.base }}
+    .pulse-beat(ref="pulse", :class="{blank: !playable}")
       .beat(v-for="pulses in pulsesByBeat")
         .pulse(v-for="pulse in pulses", :class="'pulse' + pulse", v-if="playable")
-    .points(v-show="basePoints && !maxPoints", :class="backing[0]") {{ basePoints }}
-    .stars(v-show="maxPoints")
-      star(v-for="(star, i) in stars", :backing="backing[i]", :key="i")
 </template>
 
 <script>
+  import { MAX_POINTS } from '~/store/progress';
 
   import Star from '~/components/star.component';
 
@@ -18,14 +21,38 @@
     },
     props: {
       pulseBeat: String,
-      playable: Boolean,
+      transition: Boolean,
+      backingChange: Boolean,
+      tempoChange: Boolean,
       points: Array, // [{ base, heavy, light, backing }]
     },
+    data() {
+      return {
+        move: '',
+        backingFlip: false,
+        tempoFlip: false,
+        playable: false,
+        amount: null,
+        stars: []
+      }
+    },
     methods: {
+      unflip(event) {
+        if (event.propertyName === 'transform' && _.includes(event.target.className, 'flip')) {
+          this.updateScore();
+          this.backingFlip = false;
+          this.tempoFlip = false;
+        }
+      },
       emit(event) {
         if (!event.button && this.playable) {
           this.$emit(event.type);
         }
+      },
+      updateScore() {
+        this.playable = !!this.points;
+        this.stars = _.map(_.filter(_.take(this.points, 3), amount => amount.base === MAX_POINTS), 'backing');
+        this.amount = !this.stars.length && this.points && this.points[0];
       }
     },
     computed: {
@@ -33,39 +60,43 @@
         return _.map(_.split(this.pulseBeat, ''), pulses => _.times(pulses, () => pulses));
       },
       done() {
-        return this.points && this.points.length;
+        return this.stars.length || this.amount;
+      }
+    },
+    watch: {
+      points: {
+        immediate: true,
+        handler(points, oldPoints) {
+          if (this.backingChange) {
+            if (points[0] && oldPoints[0] && points[0].backing !== oldPoints[0].backing) {
+              this.backingFlip = true;
+            }
+          } else if (!this.tempoChange) {
+            this.updateScore();
+          }
+        }
       },
-      basePoints() {
-        return this.points && this.points[0] && this.points[0].base;
-      },
-      maxPoints() {
-        return this.basePoints === 400;
-      },
-      stars() {
-        return _.take(this.points, 3);
-      },
-      backing() {
-        return _.map(this.points, 'backing');
+      tempoChange(tempoChange) {
+        if (tempoChange) {
+          this.tempoFlip = true;
+        }
       }
     }
   }
 </script>
 
+
 <style scoped lang="stylus" type="text/stylus">
   .lesson
-    display: inline-block;
     background-color: white;
-    border: dashed 5px primary-blue;
+    display: inline-block;
     margin: 0 10px;
     font-size: 40px;
     line-height: 60px;
     position: relative;
-    opacity: 0.2;
 
     &.button
-      border: solid 5px primary-blue;
       color: primary-blue;
-      opacity: 1;
 
       &:hover
         .pulse-beat
@@ -76,29 +107,46 @@
           opacity: 0.3;
 
     &.done
-      background-color: primary-blue;
-      color: white;
-
       .pulse-beat
+        background-color: primary-blue;
         transform: scaleY(0);
-        transform-origin: top;
+        transform-origin: bottom;
 
       &:hover:not(:active)
         .pulse-beat
           transform: scaleY(1);
 
-        .points, .stars
-          border-top: solid 1px white;
+        .score
           transform: scaleY(0);
+          transform-origin: top;
 
-  .pulse-beat, .pulse, .points, .stars
-    transition: all 250ms;
+    &.flip
+      transform: scaleY(0.04);
 
-  .points, .stars
-    posit(absolute);
+  .pulse-beat
+    background-color: white;
+    border: solid 5px primary-blue;
+
+  .blank
+    background-color: white;
+    border: dashed 5px primary-blue;
+    height: 60px;
+    opacity: 0.2;
     transform-origin: bottom;
 
-  .pulse-beat, .beat, .stars
+  .transition
+    .pulse, .pulse-beat, .score, .score-contents, /.lesson
+      transition: all 250ms ease-in-out;
+
+  .score
+    posit(absolute);
+    background-color: primary-blue;
+    border: solid 5px primary-blue;
+
+  .score-contents.flip
+    transform: scaleX(0.04);
+
+  .pulse-beat, .beat, .score-contents
     display: flex;
     justify-content: space-evenly;
     align-items: center;
@@ -124,6 +172,9 @@
   .pulse2, .pulse3, .pulse4
     width: 12px;
     height: @width;
+
+  .none
+    color: white;
 
   .bass
     color: primary-green;

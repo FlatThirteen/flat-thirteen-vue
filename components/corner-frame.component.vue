@@ -65,7 +65,6 @@
         tempo: 'progress/tempo',
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
-        pointsByPulseBeat: 'progress/pointsByPulseBeat',
         playable: 'progress/playable',
         rowsWithStars: 'progress/rowsWithStars'
       })

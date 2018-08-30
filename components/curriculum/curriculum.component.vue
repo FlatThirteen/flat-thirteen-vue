@@ -8,16 +8,15 @@
           transition-group(name="layout", tag="div", ref="layouts", class="layouts")
             layout-button(v-for="(layout, i) in layouts", :key="i", :layout="layout",
                 :selected="initialSelected || level.layout === i",
-                :weenie="weenie.layout === i && !layoutChange", @click="onLayout(i)")
+                :weenie="weenie.layout === i && transition", @click="onLayout(i)")
       slot
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
         .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="notes",
-            v-if="pointsByPulseBeat", :class="{transition, weenie: String(weenie.notes) === notes}")
+            v-if="points", :class="{transition, weenie: String(weenie.notes) === notes}")
           lesson-button(v-for="pulseBeat in lessonGroup", :key="pulseBeat",
-              :pulseBeat="pulseBeat", :layoutChange="layoutChange",
-              @click="onLesson(pulseBeat)", @mousedown="$emit('mousedown', pulseBeat)",
-              :playable="hack.playable || playable[pulseBeat]",
-              :points="pointsByPulseBeat[pulseBeat]")
+              :pulseBeat="pulseBeat", :points="points[pulseBeat]", :transition="transition",
+              :backingChange="backingChange", :tempoChange="tempoChange",
+              @click="onLesson(pulseBeat)", @mousedown="$emit('mousedown', pulseBeat)")
       .end
     .bottom(:class="scaleClass")
       note-count(:notes="power.notes")
@@ -69,7 +68,9 @@
       return {
         initialSelected: false,
         clicked: false,
-        layoutChange: false
+        layoutChange: false,
+        backingChange: false,
+        tempoChange: false
       };
     },
     mounted() {
@@ -153,11 +154,16 @@
       showNextLayout() {
         return this.next.layout && this.next.layout === this.level.layout + 1 &&
             _.every(this.nextLayoutConditions[this.level.layout],
-                (points, pulseBeat) => _.get(this.pointsByPulseBeat, [pulseBeat, 0, 'base']) >= points);
+                (points, pulseBeat) => _.get(this.points, [pulseBeat, 0, 'base']) >= points);
       },
       showNextNotes() {
         return !this.clicked && this.next.notes &&
             (this.next.notes - 4) * 600 <= this.totalPoints;
+      },
+      points() {
+        return _.mapValues(this.pointsByPulseBeat, (points, pulseBeat) => {
+          return this.hack.playable || this.playable[pulseBeat] ? points : undefined;
+        });
       },
       ...mapGetters({
         power: 'progress/power',
@@ -182,6 +188,18 @@
         if (showNextNotes) {
           this.$nextTick(() => this.$refs.notes.appear());
         }
+      },
+      'level.backing'() {
+        this.backingChange = true;
+        this.$nextTick(() => {
+          this.backingChange = false;
+        });
+      },
+      'level.tempo'() {
+        this.tempoChange = true;
+        this.$nextTick(() => {
+          this.tempoChange = false;
+        });
       }
     }
   }
