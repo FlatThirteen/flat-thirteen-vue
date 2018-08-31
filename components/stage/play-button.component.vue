@@ -9,7 +9,7 @@
             stop(:offset="(stopLevel ? stopLevel + 15 : 0) + '%'", :stop-color="color")
         path.play-icon(:d="playPath",
             :fill="wrong === undefined ? color : 'url(#playGradient)'",
-            :stroke="color" stroke-width="6px")
+            :stroke="color", stroke-width="6px")
       .counter(v-if="counter") {{ counter }}
 </template>
 
@@ -18,13 +18,15 @@
 
   import AnimatedMixin from '~/mixins/animated.mixin';
 
+  import { primaryGreen, hexString } from '~/common/colors'
+
   export default {
     mixins: [AnimatedMixin],
     props: {
       wrong: Boolean
     },
     constants: {
-      color: '#50ffa0',
+      color: hexString(primaryGreen),
       playPath: 'M5,5L50,30L5,55Z',
       animationTarget: 'play',
       animationDefinitions: {

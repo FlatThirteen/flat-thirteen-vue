@@ -10,7 +10,6 @@
   import { mapGetters } from 'vuex'
 
   import Shaper from '~/common/composer/shaper';
-  import Sound from '~/common/sound/sound';
   import Tone from '~/common/tone';
 
   export default {
@@ -47,26 +46,12 @@
       this.clear();
     },
     methods: {
-      toggle() {
-        if (this.hasBacking) {
-          this.playIfPaused(['E7', 'A6']);
-          this.clear();
-        } else {
-          this.playIfPaused(['E7', 'A7']);
-          this.reset();
-        }
-      },
       clear() {
         this.$store.commit('phrase/clear', { name: this.name });
       },
       reset(shape) {
         this.shape = shape || Shaper.shape([-7, -5, -2], 2, [-2, -1, 1, 2, 3], 1);
         this.rhythm = this.defaultRhythm;
-      },
-      playIfPaused(notes) {
-        if (this.paused) {
-          Sound.playSequence('cowbell', notes, '16n');
-        }
       },
       updateRhythm(beat = _.random(0, this.numBeats - 1)) {
         let rhythm = _.split(this.rhythm, '|');

@@ -18,16 +18,16 @@ export class SynthSound {
     }).toMaster();
   }
 
-  play(time, params = {pitch: 'A4', duration: '4n'}) {
-    this.synth.triggerAttackRelease(params.pitch, params.duration, time);
+  play(time, {pitch = 'A4', duration = '4n', velocity = 1} = {}) {
+    this.synth.triggerAttackRelease(pitch, duration, time, velocity);
   }
 
-  attack(params = {pitch: 'A4'}) {
-    this.synth.triggerAttack(params.pitch, params.time);
+  attack({pitch = 'A4', time} = {}) {
+    this.synth.triggerAttack(pitch, time);
   }
 
-  release(params = {pitch: 'A4'}) {
-    this.synth.triggerRelease(params.pitch, params.time);
+  release({pitch = 'A4', time} = {}) {
+    this.synth.triggerRelease(pitch, time);
   }
 }
 

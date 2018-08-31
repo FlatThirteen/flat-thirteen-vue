@@ -142,8 +142,8 @@
         posit(absolute, 0, -40px);
         content: '';
         animation: bass 750ms linear infinite;
-        background-color: primary-green;
-        background: linear-gradient(-25deg, alpha(primary-green, 0.7) 13px, transparent 18px) repeat-x;
+        background-color: bass-color;
+        background: linear-gradient(-25deg, alpha(bass-color, 0.7) 13px, transparent 18px) repeat-x;
         background-size: 30px 20px;
 
   .blank
@@ -196,7 +196,7 @@
     color: white;
 
   .bass
-    color: primary-green;
+    color: bass-color;
 
   @keyframes bass
     0%
@@ -204,5 +204,4 @@
 
     100%
       transform: translateX(-30px);
-
 </style>

@@ -3,7 +3,7 @@
     slot
     .top
       transition(name="boing")
-        backing-button.left.button(v-if="showBacking", :level="level.backing",
+        backing-button.left.button(v-if="showBacking", :backing="backing",
             :class="{weenie: weenie.backing}",
             @click="$store.dispatch('progress/backing')")
       power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
@@ -24,6 +24,8 @@
 <script>
   import { TweenMax } from 'gsap';
   import { mapGetters } from 'vuex';
+
+  import Sound from '~/common/sound/sound';
 
   import BackingButton from '~/components/backing-button.component';
   import PowerBacking from '~/components/power/power-backing.component';
@@ -61,6 +63,7 @@
         level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
+        backing: 'progress/backing',
         showBacking: 'progress/showBacking',
         tempo: 'progress/tempo',
         minTempo: 'progress/minTempo',
@@ -70,6 +73,13 @@
       })
     },
     watch: {
+      backing(backing) {
+        Sound.playSequence('synth', backing === 'bass' ? ['A1', 'A2'] : ['A1'], '32n', undefined, 0.5);
+      },
+      tempo(tempo, oldTempo) {
+        Sound.click.play('+0', { variation: tempo > oldTempo ? 'normal' : 'heavy' });
+        Sound.click.play('+16n', { variation: tempo > oldTempo ? 'heavy' : 'normal' });
+      },
       showNextBacking(showNextBacking) {
         if (showNextBacking) {
           this.$refs.backing.appear();

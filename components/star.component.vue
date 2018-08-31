@@ -29,6 +29,5 @@
     fill: white;
 
   .bass
-    fill: primary-green;
-
+    fill: bass-color;
 </style>

@@ -1,5 +1,5 @@
 <template lang="pug">
-  .anchor
+  .stage-anchor
     .stage(ref="stage")
       key-handler(:player="true")
       .top-container
@@ -531,7 +531,7 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  .anchor
+  .stage-anchor
     posit(absolute);
     display: flex;
     flex-direction: column;

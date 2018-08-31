@@ -17,11 +17,11 @@ let Sound = {
       return Promise.resolve();
     }
   },
-  playSequence(soundName, pitches, duration, variation) {
+  playSequence(soundName, pitches, duration, variation, velocity) {
     let sound = Sound[soundName];
     _.forEach(pitches, (pitch, index) => {
       let time = new Tone.Time(duration) * index;
-      sound.play('+' + time, {pitch: pitch, variation: variation});
+      sound.play('+' + time, {pitch, duration, variation, velocity});
     });
   }
 

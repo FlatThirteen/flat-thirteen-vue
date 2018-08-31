@@ -244,13 +244,13 @@
         animation-duration: 250ms;
         animation-timing-function: linear;
         animation-iteration-count: infinite;
-        background-color: primary-green;
-        background: linear-gradient(-15deg, transparent 65px, alpha(primary-green, 0.5) 75px) repeat-x;
+        background-color: bass-color;
+        background: linear-gradient(-15deg, transparent 65px, alpha(bass-color, 0.5) 75px) repeat-x;
         background-size: 25vh 10vh;
         width: 100%;
 
       .shadow
-        background: linear-gradient(transparent, alpha(primary-green, 0.5));
+        background: linear-gradient(transparent, alpha(bass-color, 0.5));
         bottom: 100%;
 
     &.cowbell .note

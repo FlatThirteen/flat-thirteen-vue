@@ -5,7 +5,7 @@
         @basePoints="basePoints = $event", @complete="$refs.stage.reset()")
     .top
       .backing.left
-        backing-button.button(:level="hasBacking ? 1 : 0",
+        backing-button.button(:backing="hasBacking ? 'bass' : 'none'",
             @click.native="toggleBackingLevel()")
         composer(ref="composer", :show="true")
       tempo-control.right(:tempo="tempo", @tempo="tempo = $event", :min="60", :max="240")
@@ -22,6 +22,8 @@
 
 <script>
   import { mapGetters } from 'vuex';
+
+  import Sound from '~/common/sound/sound';
 
   import Backing from '~/components/backing.component';
   import BackingButton from '~/components/backing-button.component';
@@ -74,9 +76,16 @@
       },
       toggleBackingLevel() {
         if (this.hasBacking) {
+          this.playIfPaused(['A1']);
           this.$refs.composer.clear();
         } else {
+          this.playIfPaused(['A1', 'A2']);
           this.$refs.composer.reset();
+        }
+      },
+      playIfPaused(notes) {
+        if (this.paused) {
+          Sound.playSequence('synth', notes, '32n');
         }
       }
     },
@@ -92,7 +101,8 @@
         hasBacking: 'phrase/hasBacking',
         power: 'progress/power',
         next: 'progress/next',
-        numBeats: 'transport/numBeats'
+        numBeats: 'transport/numBeats',
+        paused: 'transport/paused'
       })
     },
     watch: {
