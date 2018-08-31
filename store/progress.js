@@ -96,7 +96,7 @@ export const getters = {
     });
     return result;
   }, 0),
-  displayPoints: (state, getters) => _.times(getters.layouts.length, layout => {
+  highPoints: (state, getters) => _.times(getters.layouts.length, layout => {
     return _.reduce(getters.pulseBeats, (pointsByPulseBeat, pulseBeat) => {
       let fasterPoints = _.times(getters.backings.length, () => []);
       pointsByPulseBeat[pulseBeat] = _.reduceRight(getters.tempos, (pointsByTempo, tempo) => {
@@ -135,18 +135,23 @@ export const getters = {
       return pointsByPulseBeat;
     }, {});
   }),
-  pointsByPulseBeat: (state, getters) => _.mapValues(getters.displayPoints[state.mode.layout],
+  pointsByPulseBeat: (state, getters) => _.mapValues(getters.highPoints[state.mode.layout],
       _.property([getters.tempo, state.mode.backing])),
-  playable: (state, getters) => _.mapValues(getters.pointsByPulseBeat, (points, pulseBeat, pointsByPulseBeat) => {
-    if (points.length) {
-      return true;
+  prerequisite: (state, getters) => _.reduce(getters.pulseBeats, (result, pulseBeat) => {
+    let replace = _.find(['4', '3', '2'], value => _.includes(pulseBeat, value));
+    if (replace) {
+      let replacement = String(_.floor(_.toNumber(replace) / 2));
+      result[pulseBeat] = _.compact(_.times(pulseBeat.length, i =>
+          pulseBeat.charAt(i) === replace && splice(pulseBeat, i, 1, replacement)));
     }
-    let check = _.compact(_.times(pulseBeat.length, i =>
-        pulseBeat.charAt(i) === '2' && splice(pulseBeat, i, 1, '1')));
-    return !check.length || _.some(check,
-        pulseBeat => pointsByPulseBeat[pulseBeat].length);
-  }),
-  totalStars: (state, getters) => _.reduce(getters.displayPoints, (result, pointsByPulseBeat) => {
+    return result;
+  }, {}),
+  playable: (state, getters) => _.mapValues(getters.pointsByPulseBeat, (points, pulseBeat, pointsByPulseBeat) =>
+      points.length || !getters.prerequisite[pulseBeat] || !getters.prerequisite[pulseBeat].length ||
+          _.some(getters.prerequisite[pulseBeat], pulseBeat => pointsByPulseBeat[pulseBeat].length)),
+  displayPoints: (state, getters) => _.mapValues(getters.pointsByPulseBeat, (points, pulseBeat) =>
+      state.hack.playable || getters.playable[pulseBeat] ? points : undefined),
+  totalStars: (state, getters) => _.reduce(getters.highPoints, (result, pointsByPulseBeat) => {
     _.forEach(pointsByPulseBeat, pointsByTempo => {
       _.forEach(_.filter(pointsByTempo, (value, tempo) => tempo >= TEMPO), pointsByBacking => {
         _.forEach(pointsByBacking, (points, backingIndex) => {

@@ -12,11 +12,13 @@
       slot
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
         .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="notes",
-            v-if="points", :class="{transition, weenie: String(weenie.notes) === notes}")
+            v-if="displayPoints", :class="{transition, weenie: String(weenie.notes) === notes}")
           lesson-button(v-for="pulseBeat in lessonGroup", :key="pulseBeat",
-              :pulseBeat="pulseBeat", :points="points[pulseBeat]", :transition="transition",
+              :class="{highlight: highlight[pulseBeat]}",
+              :pulseBeat="pulseBeat", :points="displayPoints[pulseBeat]", :transition="transition",
               :backingChange="backingChange", :tempoChange="tempoChange",
-              @click="onLesson(pulseBeat)", @mousedown="$emit('mousedown', pulseBeat)")
+              @click="onLesson(pulseBeat)", @mousedown="$emit('mousedown', pulseBeat)",
+              @mouseenter.native="onMouseEnter(pulseBeat)", @mouseleave.native="highlight = {}")
       .end
     .bottom(:class="scaleClass")
       note-count(:notes="power.notes")
@@ -61,7 +63,7 @@
       },
       nextLayoutConditions: [
         { '1111': 300 },
-        { '1111': 400, '2222': 400 }
+        { '1111': 400, '2221': 400, '2212': 400, '2122': 400, '1222': 400, '2222': 400 }
       ],
     },
     data() {
@@ -70,7 +72,8 @@
         clicked: false,
         layoutChange: false,
         backingChange: false,
-        tempoChange: false
+        tempoChange: false,
+        highlight: {}
       };
     },
     mounted() {
@@ -130,6 +133,10 @@
           });
         }
       },
+      onMouseEnter(pulseBeat) {
+        this.highlight = this.displayPoints[pulseBeat] ? {} : _.reduce(this.prerequisite[pulseBeat],
+            (result, required) => _.set(result, required, true), {});
+      },
       onLesson(pulseBeat) {
         this.$store.dispatch('progress/weenie', { power: 'notes' });
         this.$emit('click', pulseBeat);
@@ -154,27 +161,21 @@
       showNextLayout() {
         return this.next.layout && this.next.layout === this.level.layout + 1 &&
             _.every(this.nextLayoutConditions[this.level.layout],
-                (points, pulseBeat) => _.get(this.points, [pulseBeat, 0, 'base']) >= points);
+                (points, pulseBeat) => _.get(this.displayPoints, [pulseBeat, 0, 'base']) >= points);
       },
       showNextNotes() {
         return !this.clicked && this.next.notes &&
             (this.next.notes - 4) * 600 <= this.totalPoints;
-      },
-      points() {
-        return _.mapValues(this.pointsByPulseBeat, (points, pulseBeat) => {
-          return this.hack.playable || this.playable[pulseBeat] ? points : undefined;
-        });
       },
       ...mapGetters({
         power: 'progress/power',
         level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
-        hack: 'progress/hack',
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',
-        pointsByPulseBeat: 'progress/pointsByPulseBeat',
-        playable: 'progress/playable',
+        displayPoints: 'progress/displayPoints',
+        prerequisite: 'progress/prerequisite',
         totalPoints: 'progress/totalPoints'
       })
     },
@@ -255,6 +256,12 @@
 
     &.weenie:not(:hover) .button
       animation: weenie 1s infinite 500ms;
+
+    .highlight:not(:hover)
+      shadow(#888, 3px);
+
+      &.button
+        shadow(#888, 8px);
 
   .lesson-group-enter-active.transition
     transform-origin: top;
