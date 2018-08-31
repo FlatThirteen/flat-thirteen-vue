@@ -1,11 +1,13 @@
 <template lang="pug">
   .tempo
     metronome.icon(:playing="playing", :duration="duration")
-    .control(:class="{stage: stageGoal}") {{ tempo | three}}
-      .up.button(v-show="tempo < max", :class="{weenie: weenie && !stageGoal}",
-          @click="$emit('tempo', tempo + increment)")
+    .control(:class="{stage: stageGoal, flip: throttled}",
+        :style="{animationDuration: throttle + 'ms'}") {{ displayTempo | three}}
+      .up(v-show="tempo < max", :class="{button: !throttled, weenie: weenie && !stageGoal}",
+          @click="onChange(tempo + increment)")
         .arrow ▲
-      .down.button(v-show="tempo > min", @click="$emit('tempo', tempo - increment)") ▼
+      .down(v-show="tempo > min", :class="{button: !throttled}",
+          @click="onChange(tempo - increment)") ▼
 </template>
 
 <script>
@@ -28,7 +30,32 @@
       },
       min: Number,
       max: Number,
-      weenie: Number
+      weenie: Number,
+      throttle: Number
+    },
+    data() {
+      return {
+        displayTempo: this.tempo,
+        throttled: false
+      };
+    },
+    methods: {
+      onChange(tempo) {
+        if (!this.throttled) {
+          if (this.throttle) {
+            this.throttled = true;
+          }
+          this.$emit('tempo', tempo);
+          if (this.throttle) {
+            setTimeout(() => {
+              this.displayTempo = tempo;
+            }, this.throttle / 2);
+            setTimeout(() => {
+              this.throttled = false;
+            }, this.throttle);
+          }
+        }
+      }
     },
     filters: {
       three(value) {
@@ -41,6 +68,16 @@
         playing: 'transport/playing',
         duration: 'transport/duration'
       })
+    },
+    watch: {
+      tempo: {
+        immediate: true,
+        handler(tempo) {
+          if (!this.throttled) {
+            this.displayTempo = tempo;
+          }
+        }
+      }
     }
   }
 </script>
@@ -55,6 +92,9 @@
       height: 60px;
       vertical-align: sub;
 
+  .flip
+    animation-name: flip;
+
   .control
     display: inline-block;
     position: relative;
@@ -63,7 +103,7 @@
     &.stage .button, &:hover .button, .weenie.up
       opacity: 1;
 
-    .button
+    .up, .down
       opacity: 0;
       cursor: pointer;
       font-size: 10px;
@@ -97,4 +137,9 @@
       transform: translateY(-5px);
       shadow(#888, 5px);
 
+  @keyframes flip
+    0%, 100%
+      transform: scaleY(1);
+    50%
+      transform: scaleY(0);
 </style>

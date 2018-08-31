@@ -3,13 +3,12 @@
     slot
     .top
       transition(name="boing")
-        backing-button.left.button(v-if="showBacking", :backing="backing",
-            :class="{weenie: weenie.backing}",
-            @click="$store.dispatch('progress/backing')")
+        backing-button.left(v-if="showBacking", :backing="backing", :throttle="500",
+            :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')")
       power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
       transition(name="boing")
         tempo-control.right(v-if="minTempo < maxTempo", :tempo="tempo",
-            :min="minTempo", :max="maxTempo", :weenie="weenie.tempo",
+            :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
             @tempo="$store.dispatch('progress/tempo', $event)")
       power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
