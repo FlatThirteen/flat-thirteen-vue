@@ -64,9 +64,11 @@
             '1121': ['02:096'],
             '1112': ['03:096']
           }[pulseBeat] || [];
+          let maxNotes = this.beatTicks.length - (this.level.layout || i ? 1 : 0);
+          let notes = finished || this.level.layout || i ? _.random(3, maxNotes) : maxNotes;
           return Monotonic.build(_.map(this.soundNames, (soundName) => [new Note(soundName)]),
             _.difference(this.beatTicks, requiredBeatTicks), requiredBeatTicks,
-            _.random(3, this.beatTicks.length) - requiredBeatTicks.length)
+            notes - requiredBeatTicks.length)
         });
 
         this.$store.dispatch('progress/setStages', stages);
