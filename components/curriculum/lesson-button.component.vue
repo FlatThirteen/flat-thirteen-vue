@@ -6,6 +6,7 @@
         star(v-for="(star, i) in stars", :backing="star", :key="i")
         div(v-if="amount", :class="amount.backing") {{ amount.base }}
     .pulse-beat(ref="pulse", :class="{blank: !playable}")
+      .backing(:class="backing")
       .beat(v-for="pulses in pulsesByBeat")
         .pulse(v-for="pulse in pulses", :class="'pulse' + pulse", v-if="playable")
 </template>
@@ -21,6 +22,7 @@
     },
     props: {
       pulseBeat: String,
+      backing: String,
       transition: Boolean,
       backingChange: Boolean,
       tempoChange: Boolean,
@@ -93,6 +95,7 @@
     margin: 0 10px;
     font-size: 40px;
     line-height: 60px;
+    overflow: hidden;
     position: relative;
 
     &.button
@@ -102,9 +105,12 @@
         .pulse-beat
           background-color: primary-blue;
 
+          .backing
+            transform: rotate(-20deg) translate(-5px, -10px);
+
         .pulse
           background-color: black;
-          opacity: 0.3;
+          opacity: 0.5;
 
     &.done
       .pulse-beat
@@ -126,6 +132,19 @@
   .pulse-beat
     background-color: white;
     border: solid 5px primary-blue;
+
+    .backing
+      posit(absolute)
+      transform: rotate(-20deg) translate(-180px, -15px);
+      transition: transform 400ms ease-out;
+
+      &.bass:after
+        posit(absolute, 0, -40px);
+        content: '';
+        animation: bass 750ms linear infinite;
+        background-color: primary-green;
+        background: linear-gradient(-25deg, alpha(primary-green, 0.7) 13px, transparent 18px) repeat-x;
+        background-size: 30px 20px;
 
   .blank
     background-color: white;
@@ -178,4 +197,12 @@
 
   .bass
     color: primary-green;
+
+  @keyframes bass
+    0%
+      transform: translateX(0);
+
+    100%
+      transform: translateX(-30px);
+
 </style>

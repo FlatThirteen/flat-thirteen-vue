@@ -66,6 +66,7 @@ export const getters = {
   minTempo: state => Math.max(60, TEMPO - INCREMENT * state.power.tempo),
   maxTempo: (state, getters) => TEMPO + INCREMENT * (getters.stageGoal ? state.mode.tempo : state.power.tempo),
   backings: state => _.take(BACKINGS, state.power.backing + 1),
+  backing: (state, getters) => BACKINGS[getters.level.backing],
   showBacking: (state, getters) => getters.stageGoal ? state.mode.backing : state.power.backing,
   backingVolume: (state, getters) => !getters.stageGoal || state.lesson.backing ? 10 : 0,
   pulseBeats: state => _.concat(_.map(Combinatorics.baseN([1, 2], 4).toArray(),
