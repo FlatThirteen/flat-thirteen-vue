@@ -160,7 +160,7 @@
   .ball
     position: absolute;
     border-radius: 50%;
-    height: 3vw;
+    height: 5vh;
     font-size: @height;
     font-weight: 800;
     line-height: @height;
@@ -174,7 +174,7 @@
 
   .counter
     border: solid 6px primary-blue;
-    bottom: -4vw;
+    bottom: -6vh;
     color: primary-blue;
     opacity: 0;
     text-align: center;
