@@ -6,7 +6,7 @@
     .top
       .backing.left
         backing-button.button(:backing="hasBacking ? 'bass' : 'none'",
-            @click.native="toggleBackingLevel()")
+            @click="toggleBackingLevel()")
         composer(ref="composer", :show="true")
       tempo-control.right(:tempo="tempo", @tempo="tempo = $event", :min="60", :max="240")
     .bottom

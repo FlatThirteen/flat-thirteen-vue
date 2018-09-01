@@ -1,7 +1,8 @@
 <template lang="pug">
   .anchor
     slot
-    .goal.button(ref="goal", :class="{weenie, penalty, count: animatedLast === 'count'}")
+    .goal.button(ref="goal", :class="{weenie, penalty, count: animatedLast === 'count'}",
+        @click="$emit('click')")
       img(src="~/assets/listen-music-128.png", v-show="animatedLast !== 'count'")
 </template>
 

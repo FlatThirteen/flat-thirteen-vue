@@ -1,7 +1,7 @@
 <template lang="pug">
   .anchor
     slot
-    .play.button(ref="play", :class="{wrong}")
+    .play.button(ref="play", :class="{wrong}", @click="$emit('click')")
       svg(height="60", width="60", viewBox="0 0 60 60")
         defs(v-if="wrong !== undefined")
           linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")

@@ -1,7 +1,7 @@
 <template lang="pug">
   .controls
     transport(ref="transport", v-bind="transportProps")
-    play-button(ref="play", @click.native="onPlay()")
+    play-button(ref="play", @click="onPlay()")
     slot
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
       input(type="number", v-model.number="tempo", placeholder="tempo", @keydown.stop="")

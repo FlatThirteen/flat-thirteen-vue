@@ -8,10 +8,10 @@
           loop-button(ref="loop", @click="$store.dispatch('progress/auto')",
               :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
           power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
-          goal-button(ref="goal", @click.native="onAction('goal')",
+          goal-button(ref="goal", @click="onAction('goal')",
               :penalty="!preGoal", :weenie="weenie === 'goal'")
             penalty-fx(ref="goalPenalty", top="50%", left="10%")
-          play-button(ref="play", @click.native="onAction('playback')", :wrong="wrong")
+          play-button(ref="play", @click="onAction('playback')", :wrong="wrong")
             penalty-fx(ref="wrongPenalty", top="0", left="80%")
       .grids
         svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
