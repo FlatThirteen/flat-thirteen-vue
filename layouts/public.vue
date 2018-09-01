@@ -14,8 +14,6 @@
     data() {
       return {
         views: {
-          Home: "/",
-          About: '/about'
         }
       };
     }
