@@ -346,7 +346,7 @@
         return {
           beatsPerMeasure: this.beatsPerMeasure,
           tempo: this.tempo,
-          metronome: true
+          metronome: this.lastBeat ? this.nextScene === 'count' : this.scene === 'count'
         }
       },
       ...mapGetters({
