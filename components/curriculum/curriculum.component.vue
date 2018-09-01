@@ -289,10 +289,10 @@
     transition-delay: 250ms;
 
   .initial
-    transform: scale(6);
+    transform: scale(5);
 
   .first
-    transform: scale(2.5);
+    transform: scale(2);
     transition-delay: 0;
 
   .second
