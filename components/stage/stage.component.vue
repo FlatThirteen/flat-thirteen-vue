@@ -270,11 +270,15 @@
         } else {
           this.pointsOverride = 10 * level;
           this.$store.dispatch('phrase/setVictory', level);
-          this.toScene('victory');
-          this.$refs.goal.animate('disappear');
-          this.$nextTick(() => {
-            this.$store.dispatch('transport/start');
-          });
+          if (this.paused) {
+            this.toScene('victory');
+            this.$refs.goal.animate('disappear');
+            this.$nextTick(() => {
+              this.$store.dispatch('transport/start');
+            });
+          } else {
+            this.nextScene = 'victory';
+          }
         }
       },
       toScene(scene, nextScene = scene === 'standby' ? 'standby' : this.nextScene) {
