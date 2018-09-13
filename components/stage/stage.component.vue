@@ -7,7 +7,7 @@
         .controls.whole
           loop-button(ref="loop", @click="$store.dispatch('progress/auto')",
               :show="showLoop", :off="!autoLoop", :repeat="autoRepeat",
-              :weenie="weenie.auto && (loopCount > 2 * weenie.auto)")
+              :weenie="!!weenie.auto && (loopCount > 2 * weenie.auto)")
           power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
           goal-button(ref="goal", @click="onAction('goal')",
               :penalty="!preGoal", :weenie="stageWeenie === 'goal'")
