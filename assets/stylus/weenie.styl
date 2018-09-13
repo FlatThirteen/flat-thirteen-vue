@@ -1,5 +1,7 @@
 .weenie.button:not(:hover)
-  animation: weenie 1s infinite 500ms;
+  outline: solid 0;
+  animation: weenie 1s infinite 500ms, outline 5s linear infinite, grow 30s 10s;
+  animation-fill-mode: forwards;
 
 @keyframes weenie
   0%, 100%
@@ -8,3 +10,22 @@
   50%
     opacity: 0.9;
     shadow(#888, 5px);
+
+@keyframes outline
+  0%
+    outline-color: transparent;
+    outline-offset: 16px;
+  5%, 15%, 25%
+    outline-color: alpha(primary-green, 0.3);
+    outline-offset: 8px;
+  10%, 20%
+    outline-offset: 16px;
+  30%, 100%
+    outline-color: transparent;
+    outline-offset: 0;
+
+@keyframes grow
+  0%
+    outline-width: 0;
+  100%
+    outline-width: 6px;

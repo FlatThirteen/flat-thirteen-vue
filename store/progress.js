@@ -43,6 +43,7 @@ export const state = () => ({
     tempo: 0
   },
   weenie: {
+    auto: 0,
     backing: 0,
     layout: 0,
     tempo: 0,
@@ -225,9 +226,8 @@ export const mutations = {
       state.power[power]++;
       if (updateMode) {
         state.mode[power]++;
-      } else {
-        state.weenie[power] = state.power[power];
       }
+      state.weenie[power] = state.power[power];
     } else {
       console.error('Exceeding max', MAX_POWER[power], 'for', power);
     }
@@ -242,7 +242,7 @@ export const mutations = {
         state.power.notes = 4;
         state.weenie.notes = 4;
       }
-      if (state.power[power] === level) {
+      if (power === 'auto' || state.power[power] === level) {
         state.weenie[power] = power === 'layout' ? -1 : 0;
       }
     } else {

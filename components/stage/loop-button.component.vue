@@ -1,5 +1,5 @@
 <template lang="pug">
-  .loop(ref="loop", @click="show && $emit('click')", :class="{button: show, off, repeat}")
+  .loop(ref="loop", @click="show && $emit('click')", :class="{button: show, off, repeat, weenie}")
 </template>
 
 <script>
@@ -8,9 +8,10 @@
   export default {
     mixins: [AnimatedMixin],
     props: {
-      show: false,
-      off: false,
-      repeat: false
+      show: Boolean,
+      off: Boolean,
+      repeat: Boolean,
+      weenie: Boolean
     },
     constants: {
       animationTarget: 'loop',
@@ -52,13 +53,16 @@
     },
     methods: {
       pulse() {
-        this.animate('pulse', { unless: 'drop', skip: true });
+        if (!this.weenie) {
+          this.animate('pulse', { unless: 'drop', skip: true });
+        }
       }
     }
   }
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/weenie.styl"
 
   .loop
     display: flex;

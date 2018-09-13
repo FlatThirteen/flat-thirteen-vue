@@ -6,21 +6,22 @@
         bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
         .controls.whole
           loop-button(ref="loop", @click="$store.dispatch('progress/auto')",
-              :show="showLoop", :off="!autoLoop", :repeat="autoRepeat")
+              :show="showLoop", :off="!autoLoop", :repeat="autoRepeat",
+              :weenie="weenie.auto && (loopCount > 2 * weenie.auto)")
           power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
           goal-button(ref="goal", @click="onAction('goal')",
-              :penalty="!preGoal", :weenie="weenie === 'goal'")
+              :penalty="!preGoal", :weenie="stageWeenie === 'goal'")
             penalty-fx(ref="goalPenalty", top="50%", left="10%")
           play-button(ref="play", @click="onAction('playback')", :wrong="wrong")
             penalty-fx(ref="wrongPenalty", top="0", left="80%")
       .grids
         svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
-            :scene="scene", :showPosition="showPosition", :weenie="weenie === 'grid'")
+            :scene="scene", :showPosition="showPosition", :weenie="stageWeenie === 'grid'")
         bouncing-points(:show="scene === 'victory'", :points="basePoints")
       faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
           :beatWrong="beatWrong", :goalCount="counts.goal", :playCount="counts.play")
       .footer: transition(name="footer")
-        .contents(v-show="weenie !== 'goal' && scene !== 'victory'")
+        .contents(v-show="stageWeenie !== 'goal' && scene !== 'victory'")
           note-counter(:scene="scene")
       transport(v-bind="transportProps")
     penalty-fx(ref="backingPenalty", top="70px", left="20px")
@@ -107,7 +108,7 @@
         points: 100,
         penaltyLevel: { backing: 0, tempo: 0 },
         beatWrong: null,
-        weenie: this.autoGoal ? undefined : 'goal',
+        stageWeenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
         powerTrigger: -1,
         pointsOverride: 0
@@ -247,16 +248,13 @@
           nextScene = this.getNext(scene);
         }
         this.toScene(scene, nextScene);
+        this.loopCount = 0;
         if (scene === 'standby') {
           this.$store.dispatch('transport/stop');
         } else {
-          if (scene === 'goal') {
-            this.loopCount = 0;
-            if (this.counts.goal > 1) {
-              this.addPenalty('goal', 10);
-            }
+          if (scene === 'goal' && this.counts.goal > 1) {
+            this.addPenalty('goal', 10);
           }
-
           this.$store.commit('phrase/clear', { name: 'playback' });
           this.$nextTick(() => {
             this.$store.dispatch('transport/start');
@@ -315,7 +313,7 @@
         this.$store.dispatch('progress/next', 'auto');
       },
       setWeenie(weenie) {
-        this.weenie = this.autoGoal ? undefined : weenie;
+        this.stageWeenie = this.autoGoal ? undefined : weenie;
       },
       randomTrigger() {
         return _.random(this.numPulses - 1);
@@ -368,6 +366,7 @@
         power: 'progress/power',
         level: 'progress/level',
         next: 'progress/next',
+        weenie: 'progress/weenie',
         autoLevel: 'progress/autoLevel',
         showLoop: 'progress/showLoop',
         stageIndex: 'progress/stageIndex',
@@ -447,7 +446,7 @@
             this.$refs.play.animate('enter', { when: 'leave'});
           }
         } else if (scene === 'goal') {
-          if (this.weenie === 'goal') {
+          if (this.stageWeenie === 'goal') {
             this.setWeenie('grid');
           }
           if (!this.showLoop) {
@@ -479,10 +478,10 @@
         }
       },
       notes() {
-        if (this.weenie === 'grid') {
+        if (this.stageWeenie === 'grid') {
           this.setWeenie();
         }
-        if (this.weenie !== 'goal') {
+        if (this.stageWeenie !== 'goal') {
           this.changed = true;
           if (this.noteCount === this.goalNoteCount) {
             if (this.scene === 'standby') {
