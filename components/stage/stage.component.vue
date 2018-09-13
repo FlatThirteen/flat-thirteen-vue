@@ -19,7 +19,7 @@
             :scene="scene", :showPosition="showPosition", :weenie="stageWeenie === 'grid'")
         bouncing-points(:show="scene === 'victory'", :points="basePoints")
       faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
-          :beatWrong="beatWrong", :goalCount="counts.goal", :playCount="counts.play")
+          :beatWrong="beatWrong")
       .footer: transition(name="footer")
         .contents(v-show="stageWeenie !== 'goal' && scene !== 'victory'")
           note-counter(:scene="scene")

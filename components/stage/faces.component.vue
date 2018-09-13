@@ -20,9 +20,7 @@
       scene: String,
       nextScene: String,
       basePoints: Number,
-      beatWrong: Number,
-      goalCount: Number,
-      playCount: Number
+      beatWrong: Number
     },
     data() {
       return {
@@ -52,18 +50,23 @@
         return _.times(this.numBeats, beat => ({
           active: this.activeBeat === beat,
           cursor: this.cursorBeat === beat,
-          wrong: this.beatWrong === beat && this.goalCount > 2,
-          very: this.playCount > 3
+          wrong: this.beatWrong === beat && this.basePoints < 90,
+          very: this.basePoints < 70
         }));
       },
       eyesClass() {
-        return _.times(this.numBeats, beat => ({
-          closed: this.scene === 'goal' || this.nextScene === 'goal',
-          ready: this.scene === 'playback' || this.nextScene === 'playback',
-          up: this.cursorBeat === beat,
-          left: this.cursorBeat + 1 === beat,
-          right: this.cursorBeat - 1 === beat,
-        }));
+        return _.times(this.numBeats, beat => {
+          let mad = this.noteCount > this.goalNoteCount && (!this.selected || this.cursorBeat !== beat);
+          return {
+            mad,
+            closed: this.scene === 'goal' || this.nextScene === 'goal',
+            ready: this.scene === 'playback' || this.nextScene === 'playback',
+            up: this.cursorBeat === beat,
+            left: mad ? beat >= this.numBeats / 2 : this.cursorBeat + 1 === beat,
+            right: mad ? beat < this.numBeats / 2 : this.cursorBeat - 1 === beat,
+            very: mad && (!beat || beat === this.numBeats - 1)
+          };
+        });
       },
       cursorBeat() {
         return this.scene === 'victory' ? -1 : this.beatPulse[0];
@@ -78,6 +81,8 @@
         keyMode: 'keyMode',
         paused: 'transport/paused',
         numBeats: 'transport/numBeats',
+        goalNoteCount: 'phrase/goalNoteCount',
+        noteCount: 'player/noteCount',
         pulsesByBeat: 'player/pulsesByBeat',
         selected: 'player/selected',
         beatPulse: 'player/beatPulse'
@@ -173,7 +178,7 @@
       &.up
         top: 0;
 
-      &.left, &.right
+      &.left:not(.mad), &.right:not(.mad)
         margin-top: -2px;
 
       &.left
@@ -181,6 +186,28 @@
 
       &.right
         left: .5vw;
+
+    &.mad
+      clip-path(eyes-path(0, 100%, 15%, 100%, 60%, 100%, 50%));
+
+      .faces:hover &
+        clip-path(eyes-path(0, 100%, 15%, 90%, 60%, 100%, 50%, 50%));
+
+    .faces &.mad
+      animation-duration: 350ms;
+      top: 50%;
+
+      &.left
+        left: -.5vw;
+
+        &.very
+          left: -1.5vw;
+
+      &.right
+        left: .5vw;
+
+        &.very
+          left: 1.5vw;
 
     &:before, &:after
       background-color: eye-color = #000;
@@ -203,7 +230,7 @@
     &:after
       right: 0;
 
-    &:hover
+    &:not(.mad):hover
       margin-top: 8px;
 
       &:before, &:after
