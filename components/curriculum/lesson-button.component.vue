@@ -92,7 +92,7 @@
   .lesson
     background-color: white;
     display: inline-block;
-    margin: 0 10px;
+    margin: 1px 10px;
     font-size: 40px;
     line-height: 60px;
     overflow: hidden;
