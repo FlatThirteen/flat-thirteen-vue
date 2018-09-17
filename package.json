@@ -20,7 +20,7 @@
     "js-combinatorics": "^0.5.3",
     "nuxt": "^1.0.0",
     "pixi.js": "^4.8.0",
-    "tone": "13.3.8",
+    "tone": "0.11.11",
     "vue-constants": "^1.0.3"
   },
   "devDependencies": {
