@@ -212,6 +212,7 @@
 
   .curriculum-container
     posit(absolute);
+    overflow-x: hidden;
 
   .main-content
     transform-origin: top;
