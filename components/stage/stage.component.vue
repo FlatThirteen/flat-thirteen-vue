@@ -3,7 +3,7 @@
     .stage(ref="stage")
       key-handler(:player="true")
       .top-container
-        bouncing-ball.whole(:showBall="showBall", :showCounter="showCounter")
+        bouncing-ball.whole(v-bind="bouncingBallProps")
         .controls.whole
           loop-button(ref="loop", @click="$store.dispatch('progress/auto')",
               :show="showLoop", :off="!autoLoop", :repeat="autoRepeat",
@@ -12,14 +12,12 @@
           goal-button(ref="goal", @click="onAction('goal')",
               :penalty="!preGoal", :weenie="stageWeenie === 'goal'")
             penalty-fx(ref="goalPenalty", top="50%", left="10%")
-          play-button(ref="play", @click="onAction('playback')", :wrong="wrong")
+          play-button(ref="play", @click="onAction('playback')", :wrong="noteCount !== goalNoteCount")
             penalty-fx(ref="wrongPenalty", top="0", left="80%")
       .grids
-        svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
-            :scene="scene", :showPosition="showPosition", :weenie="stageWeenie === 'grid'")
+        svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface", v-bind="gridProps")
         bouncing-points(:show="scene === 'victory'", :points="basePoints")
-      faces(:scene="scene", :nextScene="nextScene", :basePoints="basePoints",
-          :beatWrong="beatWrong")
+      faces(v-bind="facesProps")
       .footer: transition(name="footer")
         .contents(v-show="stageWeenie !== 'goal' && scene !== 'victory'")
           note-counter(:scene="scene")
@@ -103,7 +101,7 @@
         nextScene: 'standby',
         preGoal: false,
         changed: false,
-        counts: { goal: 0, playback: 0 },
+        goalCount: 0,
         loopCount: 0,
         points: 100,
         penaltyLevel: { backing: 0, tempo: 0 },
@@ -231,7 +229,7 @@
       reset() {
         this.preGoal = !this.autoLoop;
         this.points = 100;
-        _.forEach(this.counts, (count, scene) => this.counts[scene] = 0);
+        this.goalCount = 0;
         _.forEach(this.penaltyLevel, (level, penalty) => {
           this.penaltyLevel[penalty] = this.level[penalty]
         });
@@ -252,7 +250,7 @@
         if (scene === 'standby') {
           this.$store.dispatch('transport/stop');
         } else {
-          if (scene === 'goal' && this.counts.goal > 1) {
+          if (scene === 'goal' && this.goalCount > 1) {
             this.addPenalty('goal', 10);
           }
           this.$store.commit('phrase/clear', { name: 'playback' });
@@ -286,8 +284,8 @@
         this.scene = scene;
         this.nextScene = nextScene;
         this.changed = false;
-        if (this.counts[scene] !== undefined) {
-          this.counts[scene]++;
+        if (scene === 'goal') {
+          this.goalCount++;
         }
       },
       getNext(scene, autoLevel = this.autoLevel) {
@@ -320,15 +318,6 @@
       }
     },
     computed: {
-      showBall() {
-        return this.lastBeat ? this.nextScene === 'goal' : this.scene === 'goal';
-      },
-      showCounter() {
-        return this.scene !== 'goal' && this.nextScene === 'goal';
-      },
-      showPosition() {
-        return this.scene === 'playback';
-      },
       autoGoal() {
         return this.autoLevel > 0;
       },
@@ -341,15 +330,35 @@
       basePoints() {
         return this.pointsOverride || this.points;
       },
-      wrong() {
-        return this.noteCount !== this.goalNoteCount;
+      bouncingBallProps() {
+        return {
+          showBall: this.lastBeat ? this.nextScene === 'goal' : this.scene === 'goal',
+          showCounter: this.scene !== 'goal' && this.nextScene === 'goal'
+        };
+      },
+      gridProps() {
+        return {
+          scene: this.scene,
+          showPosition: this.scene === 'playback',
+          weenie: this.stageWeenie === 'grid',
+          disable: !this.autoGoal && !this.goalCount
+        };
+      },
+      facesProps() {
+        return {
+          scene: this.scene,
+          nextScene: this.nextScene,
+          basePoints: this.basePoints,
+          beatWrong: this.beatWrong,
+          disable: !this.autoGoal && !this.goalCount
+        };
       },
       transportProps() {
         return {
           beatsPerMeasure: this.beatsPerMeasure,
           tempo: this.tempo,
           metronome: this.lastBeat ? this.nextScene === 'count' : this.scene === 'count'
-        }
+        };
       },
       ...mapGetters({
         keyDown: 'keyDown',
@@ -409,7 +418,7 @@
         }
       },
       cursor(cursor) {
-        if (this.showNextAuto && this.next.auto && cursor === this.powerTrigger) {
+        if (this.goalCount && this.showNextAuto && this.next.auto && cursor === this.powerTrigger) {
           this.powerTrigger = this.randomTrigger();
           this.$refs.auto.appear(this.next.auto);
         }
@@ -417,6 +426,7 @@
       active(active) {
         if (!active) {
           this.lastBeat = false;
+          this.beatWrong = null;
         }
       },
       basePoints: {

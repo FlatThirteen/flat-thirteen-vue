@@ -1,6 +1,6 @@
 <template lang="pug">
   .grid(:class="gridClass")
-    svg(:viewBox="viewBox", :style="svgStyle", @mouseleave="unselect()")
+    svg(:viewBox="viewBox", :style="svgStyle")
       defs
         filter(id="shadow", x="-10%", y="-10%", width="120%", height="120%")
           feOffset(result="offOut", in="SourceGraphic", dx="1", dy="5")
@@ -20,7 +20,7 @@
               :transform="'translate(' + i * beatSize / pulses + ',0)'")
             rect.pulse(:class="pulseClass[cursor]", :x="pulseBorder", :y="pulseBorder",
                 :width="beatSize / pulses - beatBorder", :height="beatSize - beatBorder",
-                @mouseenter="select(cursor)")
+                @mouseenter="select(cursor)", @mouseleave="unselect()")
             line.pulse-line(v-if="i !== 0", y1="2", :y2="beatUnit - pulseBorder",
                 :stroke-width="pulseBorder", :stroke-dasharray="pulseBorder + 1")
         line.measure-top(v-for="beats in measureTops", :stroke-width="pulseBorder",
@@ -55,18 +55,10 @@
         type: Object,
         default: () => ({ soundByKey: { q: 'kick' } })
       },
-      scene: {
-        type: String,
-        default: null
-      },
-      showPosition: {
-        type: Boolean,
-        default: false
-      },
-      weenie: {
-        type: Boolean,
-        default: false
-      }
+      scene: String,
+      showPosition: Boolean,
+      weenie: Boolean,
+      disable: Boolean
     },
     data() {
       return {
@@ -109,12 +101,17 @@
         }
       },
       select(cursor) {
-        this.$store.dispatch('player/select', { cursor, soundId: this.soundId });
+        if (!this.disable) {
+          this.$store.dispatch('player/select', { cursor, soundId: this.soundId });
+        }
       },
       unselect() {
         this.$store.dispatch('player/unselect');
       },
       onNote(key, cursor) {
+        if (this.disable) {
+          return;
+        }
         Sound.resume();
         let soundName = (cursor === undefined || !this.isOn[cursor][key]) &&
           this.soundName[key];
@@ -190,6 +187,7 @@
       },
       gridClass() {
         return [this.scene, {
+          disable: this.disable,
           standby: this.scene ? this.starting : !this.active,
           playback: !this.scene && this.active,
           selected: this.isSelected
@@ -212,7 +210,7 @@
       },
       noteClass() {
         return _.times(this.numPulses, cursor =>
-          _.mapValues(this.soundName, (soundName, key) => ({
+          _.mapValues(this.soundName, (soundName, key) => (!this.disable && {
             active: this.activeCursor === cursor,
             live: this.liveKeyCursor === key + cursor,
             cursor: this.scene !== 'victory' && this.cursor === cursor,
@@ -220,7 +218,6 @@
             on: this.isOn[cursor][key],
             weenie: this.weenie && !this.active && !this.isSelected && !this.isOn[cursor][key]
           })));
-
       },
       ...mapGetters({
         keyDown: 'keyDown',
@@ -244,7 +241,7 @@
     },
     watch: {
       keyDown(key) {
-        if (this.scene === 'victory' ||
+        if (this.disable || this.scene === 'victory' ||
             this.scene === 'playback' && this.activeCursor >= this.cursor) {
           // Don't allow modifications to notes
           return;
@@ -256,7 +253,7 @@
         }
       },
       keyUp(key) {
-        if (this.noKeysHeld && this.soundName[key]) {
+        if (!this.disable && this.noKeysHeld && this.soundName[key]) {
           this.$store.dispatch('player/move', 1);
         }
       },
@@ -303,9 +300,12 @@
   button-shadow-size = 4px;
 
   .grid
-    margin: 5px auto;
+    margin: 0 auto;
     position: relative;
     padding-left: 4px;
+
+    &.disable
+      opacity: 0.6;
 
     svg
       overflow: visible;
@@ -349,9 +349,11 @@
       stroke: back-green;
 
   .note
-    cursor: pointer;
     opacity: 0;
     transition: opacity 200ms ease;
+
+    .grid:not(.disable) &
+      cursor: pointer;
 
     .goal &.on
       opacity: 0.3;

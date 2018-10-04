@@ -32,17 +32,18 @@
     constants: {
       animationTarget: 'ball',
       animationDefinitions: {
-        bounce: [[.2, {
-          transform: 'translateY(-7vh) scale(0.9, 1.1)'
+        bounce: [[.1, {
+          bottom: 0,
+          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
         }], [.2, {
-          transform: 'translateY(-10vh) scale(1.1, 0.9)'
+          transform: 'translateY(0.2vh) scale(0.9, 1.2)'
+        }], [.2, {
+          transform: 'translateY(-7vh) scale(0.8, 1.1)'
+        }], [.2, {
+          transform: 'translateY(-10vh) scale(1, 0.9)'
         }], [.3, {
           transform: 'translateY(0.1vh) scale(0.8, 1.2)',
           ease: Circ.easeIn
-        }], [.1, {
-          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
-        }], [.2, {
-          transform: 'translateY(0.2vh) scale(0.8, 1.2)'
         }]],
         enter: [[.2, {
           opacity: 1,
@@ -82,9 +83,9 @@
         if (this.showBall) {
           Tone.Draw.schedule(() => {
             if (this.ballIn && this.$refs.ball) {
-              TweenMax.to(this.$refs.ball, .8 * this.duration, {
+              TweenMax.to(this.$refs.ball, .7 * this.duration, {
                 left: this.lefts[nextBeat],
-                delay: nextBeat ? .1 * this.duration : 0
+                delay: .3 * this.duration
               });
               this.animate('bounce', { duration: this.duration });
             }
@@ -106,17 +107,19 @@
       ballExit() {
         if (this.ballIn) {
           this.ballIn = false;
-          TweenMax.killTweensOf(this.$refs.ball);
-          TweenMax.fromTo(this.$refs.ball, .5 * this.duration, {
-            transform: 'scale(.6, 1.2)'
-          }, {
-            opacity: 0,
-            bottom: inactiveBottom
-          });
-          TweenMax.to(this.$refs.ball, .5 * this.duration, {
-            left: inactiveLeft,
-            ease: Circ.easeInOut
-          });
+          // Delay exit so that ball has a chance to bounce
+          setTimeout(() => {
+            TweenMax.killTweensOf(this.$refs.ball);
+            TweenMax.fromTo(this.$refs.ball, .7 * this.duration, {
+              transform: 'scale(.6, 1.2)'
+            }, {
+              bottom: inactiveBottom
+            });
+            TweenMax.to(this.$refs.ball, .5 * this.duration, {
+             left: inactiveLeft,
+             ease: Circ.easeInOut
+           });
+          }, 200 * this.duration);
         }
       }
     },
@@ -182,7 +185,7 @@
     transform: scale(0.1, 1.2);
 
     &.active
-      bottom: 0;
+      bottom: 1vh;
       opacity: 1;
       transform: scale(1, 1);
 </style>

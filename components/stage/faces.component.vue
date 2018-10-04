@@ -20,7 +20,8 @@
       scene: String,
       nextScene: String,
       basePoints: Number,
-      beatWrong: Number
+      beatWrong: Number,
+      disable: Boolean
     },
     data() {
       return {
@@ -42,7 +43,7 @@
     },
     computed: {
       facesClass() {
-        return [this.scene, {
+        return [this.scene, this.disable ? 'disable' : {
           selected: this.selected || this.keyMode
         }];
       },
@@ -116,7 +117,10 @@
     width: 100%;
     transition: background-color 150ms ease-in-out;
 
-    &.victory
+    &.disable
+      opacity: 0.6;
+
+  &.victory
       background-color: back-green;
 
   .face
@@ -127,7 +131,7 @@
     background-color: main-blue;
     transition: background-color 150ms ease-in-out;
 
-    &.cursor
+    .faces:not(.disable) &.cursor
       background-color: active-blue;
 
     .victory &
