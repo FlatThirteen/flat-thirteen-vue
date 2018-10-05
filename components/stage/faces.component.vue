@@ -57,7 +57,8 @@
       },
       eyesClass() {
         return _.times(this.numBeats, beat => {
-          let mad = this.noteCount > this.goalNoteCount && (!this.selected || this.cursorBeat !== beat);
+          let mad = this.goalNoteCount && this.noteCount > this.goalNoteCount &&
+              (!this.selected || this.cursorBeat !== beat);
           return {
             mad,
             closed: this.scene === 'goal' || this.nextScene === 'goal',

@@ -75,6 +75,7 @@
     },
     mounted() {
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+      this.$store.commit('phrase/clear', { name: 'goal' });
     },
     destroyed() {
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
