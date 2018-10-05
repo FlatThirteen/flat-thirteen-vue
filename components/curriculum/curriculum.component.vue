@@ -17,7 +17,7 @@
               :class="{highlight: highlight[pulseBeat]}", :backing="backing",
               :pulseBeat="pulseBeat", :points="displayPoints[pulseBeat]", :transition="transition",
               :backingChange="backingChange", :tempoChange="tempoChange",
-              @click="onLesson(pulseBeat)", @mousedown="$emit('mousedown', pulseBeat)",
+              @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
               @mouseenter.native="onMouseEnter(pulseBeat)", @mouseleave.native="highlight = {}")
       .end
     .bottom(:class="scaleClass")
@@ -125,8 +125,11 @@
               this.animate(next ? 'right' : 'left', {
                 duration: .05,
                 onComplete: () => {
-                  this.animate('back', { duration: .1 });
-                  this.layoutChange = false;
+                  this.animate('back', { duration: .1,
+                  onComplete: () => {
+                    this.$refs.lessons.removeAttribute('style');
+                    this.layoutChange = false;
+                  }});
                 }
               });
             }
@@ -137,9 +140,14 @@
         this.highlight = this.displayPoints[pulseBeat] ? {} : _.reduce(this.prerequisite[pulseBeat],
             (result, required) => _.set(result, required, true), {});
       },
-      onLesson(pulseBeat) {
+      onLesson(pulseBeat, {x, y}) {
         this.$store.dispatch('progress/weenie', { power: 'notes' });
-        this.$emit('click', pulseBeat);
+        let scaleRatio = this.scaleClass === 'first' ? 2 : this.scaleClass === 'second' ? 1.5 : 1;
+        let halfWidth = this.$refs.lessons.offsetWidth / 2;
+        this.$emit('click', { pulseBeat,
+          x: (x - halfWidth) * scaleRatio + halfWidth,
+          y: y * scaleRatio
+        });
       },
       onNext(power) {
         this.$store.dispatch('progress/next', power);

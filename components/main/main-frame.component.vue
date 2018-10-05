@@ -4,7 +4,7 @@
     transition(name="lesson-container")
       curriculum(v-if="!stageGoal", key="choose", @click="onLesson($event)")
         slot(name="curriculum")
-      .lesson-container(v-else, key="stage")
+      .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
         stage(:goal="stageGoal", :tempo="tempo", :showNextAuto="showNextAuto",
             @complete="nextStage($event)")
@@ -37,14 +37,18 @@
     data() {
       return {
         pulseBeat: null,
-        lessonPoints: 0
+        lessonPoints: 0,
+        transformOrigin: {}
       };
     },
     destroyed() {
       this.$store.dispatch('progress/setStages');
     },
     methods: {
-      onLesson(pulseBeat) {
+      onLesson({pulseBeat, x, y}) {
+        this.transformOrigin = {
+          transformOrigin: x + 'px ' + y + 'px'
+        };
         this.$store.dispatch('player/update', { pulseBeat,
           layout: this.layout,
           clear: true
@@ -131,10 +135,14 @@
     posit(absolute);
 
   .lesson-container-enter-active, .lesson-container-leave-active
-    transition: transform 250ms;
+    transition: all 500ms;
 
   .lesson-container-enter, .lesson-container-leave-to
-    transform: scale(0)
+    opacity: 0;
+
+    &.lesson-container
+      transform: scale(.1);
+      opacity: 0.5;
 
   .quit
     posit(fixed, 0, x, x, 0)

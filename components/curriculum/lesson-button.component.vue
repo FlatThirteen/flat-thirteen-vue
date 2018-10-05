@@ -1,5 +1,5 @@
 <template lang="pug">
-  .lesson(:class="{transition, done, button: playable, flip: tempoFlip}",
+  .lesson(ref="lesson", :class="{transition, done, button: playable, flip: tempoFlip}",
       @transitionend="unflip($event)", @mousedown="emit($event)", @click="emit($event)")
     .score(ref="score", v-show="done")
       .score-contents(:class="{flip: backingFlip}")
@@ -48,7 +48,11 @@
       },
       emit(event) {
         if (!event.button && this.playable) {
-          this.$emit(event.type);
+          let el = this.$refs.lesson;
+          this.$emit(event.type, {
+            x: el.offsetLeft + el.offsetWidth / 2,
+            y: el.offsetTop + el.offsetHeight / 2
+          });
         }
       },
       updateScore() {
