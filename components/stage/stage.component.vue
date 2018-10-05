@@ -113,6 +113,7 @@
       }
     },
     mounted() {
+      window.addEventListener('visibilitychange', this.onVisiblityChange);
       this.preGoal = !this.autoLoop;
       this.$bus.$on(BeatTick.TOP, this.topHandler);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
@@ -131,12 +132,18 @@
       });
     },
     destroyed() {
+      window.removeEventListener('visibilitychange', this.onVisiblityChange);
       this.$store.dispatch('transport/stop');
       this.$bus.$off(BeatTick.TOP, this.topHandler);
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
       this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
     methods: {
+      onVisiblityChange() {
+        if (document.hidden) {
+          this.onAction('standby');
+        }
+      },
       topHandler({first}) {
         if (!first && this.active) {
           let scene = this.nextScene;
