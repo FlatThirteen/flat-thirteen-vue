@@ -10,6 +10,8 @@
 <script>
   import { mapGetters } from 'vuex';
 
+  import Sound from '~/common/sound/sound';
+
   export default {
     props: {
       scene: String
@@ -35,6 +37,13 @@
         goalNoteCount: 'phrase/goalNoteCount',
         noteCount: 'player/noteCount'
       })
+    },
+    watch: {
+      noteCount(noteCount, oldNoteCount) {
+        if (oldNoteCount === this.goalNoteCount && noteCount > this.goalNoteCount) {
+          Sound.playSequence('cowbell', ['F0', 'E5', 'F4'], '32n');
+        }
+      },
     }
   }
 
