@@ -82,8 +82,8 @@
       ...mapGetters({
         keyMode: 'keyMode',
         paused: 'transport/paused',
-        numBeats: 'transport/numBeats',
         goalNoteCount: 'phrase/goalNoteCount',
+        numBeats: 'player/numBeats',
         noteCount: 'player/noteCount',
         pulsesByBeat: 'player/pulsesByBeat',
         selected: 'player/selected',

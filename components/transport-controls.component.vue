@@ -1,7 +1,7 @@
 <template lang="pug">
   .controls
     transport(ref="transport", v-bind="transportProps")
-    play-button(ref="play", @click="onPlay()")
+    play-control(:playTime="playTime")
     slot
     .beats-input(:class="{dim: tempo !== transport.bpm(), invalid: !transport.isValidBpm(tempo)}")
       input(type="number", v-model.number="tempo", placeholder="tempo", @keydown.stop="")
@@ -18,17 +18,12 @@
 </template>
 
 <script>
-  import { mapGetters } from 'vuex'
-
-  import Sound from '~/common/sound/sound';
-  import PlayButton from '~/components/stage/play-button.component';
+  import PlayControl from '~/components/play-control.component';
   import Transport from '~/components/stage/transport.component';
-
-  import BeatTick from '~/common/core/beat-tick.model';
 
   export default {
     components: {
-      'play-button': PlayButton,
+      'play-control': PlayControl,
       'transport': Transport
     },
     props: {
@@ -55,29 +50,8 @@
     },
     mounted() {
       this.transport = this.$refs.transport;
-      window.addEventListener('keydown', this.onKeyDown);
-      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
-    destroyed: function() {
-      window.removeEventListener('keydown', this.onKeyDown);
-      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
-    },
-
     methods: {
-      onKeyDown(event) {
-        if (event.key === 'Enter') {
-          this.$store.commit('player/unselect');
-          this.onPlay();
-        }
-      },
-      beatHandler({count}) {
-        this.$refs.play.count(count);
-      },
-      onPlay() {
-        Sound.resume().then(() => {
-          this.$store.dispatch('transport/toggle', this.playTime);
-        });
-      },
       hideSuggestions() {
         // Need to do this after timeout so that suggestion click handler has a chance
         setTimeout(() => {
@@ -100,16 +74,6 @@
           latencyHint: this.latencyHint,
           metronome: this.metronome,
           show: true
-        }
-      },
-      ...mapGetters({
-        playing: 'transport/playing'
-      })
-    },
-    watch: {
-      playing(playing) {
-        if (!playing) {
-          this.$refs.play.count(0);
         }
       }
     }

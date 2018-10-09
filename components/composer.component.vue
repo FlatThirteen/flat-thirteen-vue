@@ -82,7 +82,7 @@
       ...mapGetters({
         paused: 'transport/paused',
         hasBacking: 'phrase/hasBacking',
-        numBeats: 'transport/numBeats'
+        numBeats: 'player/numBeats'
       })
     },
     watch: {

@@ -98,11 +98,11 @@
       },
       ...mapGetters({
         keyDown: 'keyDown',
+        paused: 'transport/paused',
         hasBacking: 'phrase/hasBacking',
         power: 'progress/power',
         next: 'progress/next',
-        numBeats: 'transport/numBeats',
-        paused: 'transport/paused'
+        numBeats: 'player/numBeats'
       })
     },
     watch: {

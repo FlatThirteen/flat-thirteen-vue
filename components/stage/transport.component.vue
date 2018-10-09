@@ -98,7 +98,7 @@
         if (Tone.Transport && bpm !== this.bpm() && this.isValidBpm(bpm)) {
           Tone.Transport.bpm.rampTo(bpm, 1);
           Tone.Transport.setLoopPoints(0, this.loopTime());
-          this.$store.commit('transport/setup', {tempo: bpm});
+          this.$store.commit('transport/setup', { tempo: bpm });
         }
       },
       isValidBpm(bpm) {
@@ -211,7 +211,7 @@
             this.$store.dispatch('transport/stop');
           }
           if (!this.beats) {
-            this.$store.commit('transport/setup', {numBeats: 0});
+            this.$store.commit('transport/setup', { counts: []});
             return;
           }
 
@@ -266,8 +266,6 @@
           }
           this.$store.commit('transport/setup', {
             tempo: this.bpm(),
-            numBeats: this.beats,
-            beatsPerMeasure: this.beatsPerMeasure,
             counts: this.counts
           });
           if (restart) {

@@ -20,6 +20,7 @@ export const getters = {
   ),
   beatsPerMeasure: (state, getters) => _.map(getters.pulseBeatPerMeasure, 'length'),
   pulsesByBeat: (state, getters) => _.flatten(getters.pulseBeatPerMeasure),
+  numBeats: (state, getters) => getters.pulsesByBeat.length,
   numPulses: (state, getters) => _.sum(getters.pulsesByBeat),
   cursorsByBeat: (state, getters) => _.reduce(getters.pulsesByBeat, ({result, offset}, pulses) => ({
     result: _.concat(result, [_.times(pulses, (i) => offset + i)]),

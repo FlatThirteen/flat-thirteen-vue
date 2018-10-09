@@ -1,6 +1,14 @@
 <template lang="pug">
   .container
     key-handler(:player="true")
+    transport(v-bind="{beatsPerMeasure, tempo, metronome}")
+    .top
+      play-control
+      .layouts
+        layout-button(v-for="(thisLayout, i) in layouts", :key="i", :layout="thisLayout",
+            :selected="layout === thisLayout", @click="layout = thisLayout")
+      tempo-control(:tempo="tempo", :min="60", :max="240", @tempo="tempo = $event",
+          :toggle.sync="metronome")
     .content
       bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
       .svg-grids(v-if="showSvgGrid")
@@ -10,19 +18,16 @@
         html-grid(v-for="(surface, i) in layout", :key="'h' + i", :grid="surface")
           transport-position.transport-container(:show="showPosition")
       faces(:scene="playing ? 'playback' : 'standby'")
-    .left
-      transport-controls(:metronome="true", :beatsPerMeasure="beatsPerMeasure.join(',')")
-        .pulses-input
-          input(type="text", v-model="pulseBeat", placeholder="# pulses",
-              @keydown.stop="")
-
+    .bottom
       .toggle.ball(:class="{active: showBall}",
           @click="showBall = !showBall") Bounce
       .toggle.counter(:class="{active: showCounter}",
           @click="showCounter = !showCounter") Counter
       .toggle.position(:class="{active: showPosition}",
           @click="showPosition = !showPosition") Position
-      .spacer
+      .pulses-input
+        input(type="text", v-model="pulseBeat", placeholder="# pulses",
+            @keydown.stop="")
       .toggle.svg-grid(:class="{active: showSvgGrid}",
           @click="showSvgGrid = !showSvgGrid") SVG Grid
       .toggle.html-grid(:class="{active: showHtmlGrid}",
@@ -35,22 +40,28 @@
 
   import BeatTick from '~/common/core/beat-tick.model';
 
+  import LayoutButton from '~/components/curriculum/layout-button.component';
   import HtmlGrid from '~/components/grid/html-grid.component';
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
+  import PlayControl from '~/components/play-control.component';
   import BouncingBall from '~/components/stage/bouncing-ball.component';
   import Faces from '~/components/stage/faces.component';
-  import TransportControls from '~/components/transport-controls.component';
+  import Transport from '~/components/stage/transport.component';
+  import TempoControl from '~/components/tempo-control.component';
   import TransportPosition from '~/components/transport-position.component';
 
   export default {
     components: {
-      'bouncing-ball': BouncingBall,
-      'faces': Faces,
+      'layout-button': LayoutButton,
       'html-grid': HtmlGrid,
       'svg-grid': SvgGrid,
       'key-handler': KeyHandler,
-      'transport-controls': TransportControls,
+      'play-control': PlayControl,
+      'bouncing-ball': BouncingBall,
+      'faces': Faces,
+      'transport': Transport,
+      'tempo-control': TempoControl,
       'transport-position': TransportPosition
     },
     head: {
@@ -58,19 +69,24 @@
     },
     layout: 'debug',
     constants: {
-      layout: [
-        { soundByKey: { q: 'snare', a: 'kick' } },
-        { soundByKey: { z: 'cowbell' } }
+      layouts: [
+        [{ soundByKey: { a: 'kick' } }],
+        [{ soundByKey: { q: 'snare', a: 'kick' } }],
+        [{ soundByKey: { q: 'snare' } }, { soundByKey: { a: 'kick' } }],
+        [{ soundByKey: { q: 'snare', a: 'kick' } }, { soundByKey: { z: 'cowbell' } }]
       ]
     },
     data() {
       return {
+        tempo: 120,
+        metronome: true,
         showBall: true,
         showCounter: true,
         showPosition: true,
         showSvgGrid: true,
         showHtmlGrid: false,
-        pulseBeat: 1111
+        pulseBeat: 1111,
+        layout: this.layouts[this.layouts.length - 1]
       }
     },
     mounted() {
@@ -100,6 +116,9 @@
         handler(pulseBeat) {
           this.$store.dispatch('player/update', { pulseBeat, layout: this.layout });
         }
+      },
+      layout(layout) {
+        this.$store.dispatch('player/update', { pulseBeat: this.pulseBeat, layout });
       }
     }
   }
@@ -110,10 +129,21 @@
   .container
     position: relative;
 
-  .left
-    posit(absolute, 0, x, x, 0);
-    width: content-side-margin;
-    text-align: center;
+  .top
+    display: flex;
+    justify-content: space-between;
+    background-color: faint-grey;
+    padding: 12px;
+
+    .layouts
+      display: inline-flex;
+
+  .bottom
+    posit(fixed, x, 0, 0);
+    background-color: white;
+    box-shadow: 0 0 25px 15px white;
+    display: flex;
+    justify-content: center;
 
     .pulses-input
       margin: 10px 0;
@@ -123,22 +153,14 @@
         border: none;
         margin: 0;
         text-align: center;
-        width: 100%;
 
         &::placeholder {
           color: primary-red;
           font-size: 14px;
         }
 
-        &[type="text"]
-          margin-right: 14%;
-          width: 86%;
-
         &:focus
           outline: none;
-
-    .spacer
-      height: 40px;
 
     toggle-color('.ball', primary-blue);
     toggle-color('.counter', black);
@@ -146,12 +168,12 @@
     toggle-color('.svg-grid', primary-red);
     toggle-color('.html-grid', primary-red);
 
-  .content, .footer
-    margin: 10vh 0 0 content-side-margin;
+  .content
     position: relative;
+    margin-bottom: 60px;
 
   .ball-container
-    height: 10vh;
+    height: 15vh;
     width: 100%;
     max-width: 80vh;
     margin: auto;

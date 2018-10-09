@@ -1,6 +1,7 @@
 <template lang="pug">
   .tempo
-    metronome.icon(:playing="playing", :duration="duration")
+    metronome.icon(:playing="playing", :duration="duration", :disabled="toggle === false",
+        :class="{button}", @click.native="button && $emit('update:toggle', !toggle)")
     .control(:class="{stage: stageGoal, flip: throttled}",
         :style="{animationDuration: throttle + 'ms'}") {{ displayTempo | three}}
       .up(v-show="tempo < max", :class="{button: !throttled, weenie: weenie && !stageGoal}",
@@ -31,6 +32,10 @@
       min: Number,
       max: Number,
       weenie: Number,
+      toggle: {
+        type: Boolean,
+        default: undefined
+      },
       throttle: Number
     },
     data() {
@@ -63,6 +68,9 @@
       }
     },
     computed: {
+      button() {
+        return this.toggle !== undefined;
+      },
       ...mapGetters({
         stageGoal: 'progress/stageGoal',
         playing: 'transport/playing',

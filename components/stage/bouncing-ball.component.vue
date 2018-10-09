@@ -128,7 +128,7 @@
         playing: 'transport/playing',
         active: 'transport/active',
         counts: 'transport/counts',
-        numBeats: 'transport/numBeats'
+        numBeats: 'player/numBeats'
       })
     },
     watch: {
