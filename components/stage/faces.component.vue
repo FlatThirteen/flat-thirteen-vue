@@ -101,8 +101,6 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  @import "~assets/stylus/note.styl"
-
   faces-height = 5vh;
 
   particle-fx

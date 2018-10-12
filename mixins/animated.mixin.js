@@ -21,7 +21,7 @@ export default {
   },
   methods: {
     animate(name, options = {}) {
-      let element = this.$refs[this.animationTarget];
+      let element = options.element || this.$refs[this.animationTarget];
       if (!element) {
         this.animateDebug(name, 'failed without element', this.$refs);
       } else if (options.when && !matches(this.animatedLast, options.when)) { // animatedLast?
@@ -45,7 +45,9 @@ export default {
           this.animateDebug(name, ' --}');
           this.animated = null;
         };
-        this.animatePause();
+        if (!options.element) {
+          this.animatePause();
+        }
         this.animatedLast = name;
         this.animatedSkip = true;
         this.$nextTick(() => {

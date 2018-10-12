@@ -2,12 +2,34 @@
   .grid(:class="gridClass")
     svg(:viewBox="viewBox", :style="svgStyle")
       defs
-        filter(id="shadow", x="-10%", y="-10%", width="120%", height="120%")
+        filter(id="shadow", x="-40%", y="-40%", width="180%", height="180%")
           feOffset(result="offOut", in="SourceGraphic", dx="1", dy="5")
           feComponentTransfer(result="colorOut", in="offOut")
             feFuncA(type="table", tableValues="0 0.6")
           feGaussianBlur(result="blurOut", in="colorOut", stdDeviation="5")
           feComposite(in="SourceGraphic", in2="blurOut", operator="over")
+        radialGradient(id="kick")
+          stop(stop-color="rgba(255,255,255,0.4)", offset="41%")
+          stop(stop-color="rgba(55,55,55,0.2)", offset="43%")
+          stop(stop-color="rgba(255,255,255,0.3)", offset="50%")
+          stop(stop-color="rgba(255,255,255,0.1)", offset="54%")
+          stop(stop-color="rgba(55,55,55,0.2)", offset="55%")
+          stop(stop-color="rgba(255,255,255,0.1)", offset="75%")
+          stop(stop-color="rgba(255,255,255,0)", offset="100%")
+        radialGradient(id="snareFill")
+          stop(stop-color="rgba(255,255,255,1)", offset="40%")
+          stop(stop-color="rgba(155,155,155,0.3)", offset="42%")
+          stop(stop-color="rgba(255,255,255,0.9)", offset="50%")
+          stop(stop-color="rgba(255,255,255,0.3)", offset="54%")
+          stop(stop-color="rgba(55,55,55,0.3)", offset="55%")
+          stop(stop-color="rgba(255,255,255,0.4)", offset="75%")
+          stop(stop-color="rgba(255,255,255,0)", offset="100%")
+        filter(id="snareFilter")
+          feTurbulence(type="turbulence", baseFrequency="0.2", numOctaves="3", result="turb")
+          feComponentTransfer(result="noise")
+            feFuncA(type="discrete", tableValues="0 1 0 .5")
+          feComposite(in="SourceGraphic", in2="noise", operator="in")
+          feGaussianBlur(stdDeviation="1.5")
       rect#background(:height="backgroundHeight", :width="backgroundWidth")
       rect#position(:height="backgroundHeight", width="0")
       g(v-for="(key, index) in keys",
@@ -26,11 +48,16 @@
         line.measure-top(v-for="beats in measureTops", :stroke-width="pulseBorder",
             :x1="beats * beatUnit - pulseBorder", :x2="beats * beatUnit - pulseBorder",
             :y1="0.3 * beatSize", :y2="0.7 * beatSize")
-      g(v-for="(key, index) in keys",
+      g(v-for="(key, index) in keys", v-if="!blink",
           :transform="'translate(0,' + index * beatUnit + ')'")
         g(v-for="(pulses, beat) in pulsesByBeat",
             :transform="'translate(' + beat * beatUnit + ',0)'")
-          circle.note(v-for="(cursor, i) in cursorsByBeat[beat]",
+          circle.fx(v-for="(cursor, i) in cursorsByBeat[beat]", ref="fx",
+              :class="soundByKey[key]",
+              :cy="beatCenter", :cx="((2 * i) + 1) * beatSize / 2 / pulses",
+              :r="beatSize / 2 / pulses - 4 * beatBorder / pulses",
+              :transform-origin="((2 * i) + 1) * beatSize / 2 / pulses + ' ' + beatCenter",)
+          circle.note(v-for="(cursor, i) in cursorsByBeat[beat]", ref="note",
               :class="noteClass[cursor][key]",
               :cy="beatCenter", :cx="((2 * i) + 1) * beatSize / 2 / pulses",
               :r="beatSize / 2 / pulses - 4 * beatBorder / pulses",
@@ -42,6 +69,7 @@
 </template>
 
 <script>
+  import AnimatedMixin from '~/mixins/animated.mixin';
   import { TweenMax, Linear } from 'gsap'
   import { mapGetters } from 'vuex';
 
@@ -50,6 +78,7 @@
   import Tone from '~/common/tone';
 
   export default {
+    mixins: [AnimatedMixin],
     props: {
       grid: {
         type: Object,
@@ -60,10 +89,23 @@
       weenie: Boolean,
       disable: Boolean
     },
+    constants: {
+      animationDefinitions: {
+        note: [[0, {
+          transform: 'scale(1)'
+        }], [.4, {
+          transform: 'scale(1.1)'
+        }], [.3, {
+          transform: 'scale(0.9)'
+        }], [.3, {
+          transform: 'scale(1)'
+        }]]
+      }
+    },
     data() {
       return {
         activeCursor: null,
-        liveKeyCursor: null
+        blink: false
       };
     },
     mounted() {
@@ -79,6 +121,17 @@
         let cursor = _.indexOf(this.beatTicks, beatTick);
         if (this.active && cursor !== -1) {
           this.activeCursor = cursor;
+          this.$nextTick(() => {
+            // Need nextTick to give scene a change to update after top
+            if (!this.scene || this.scene === 'playback' || this.scene === 'victory') {
+              _.forEach(this.isOn[cursor], (on, key) => {
+                if (on) {
+                  this.animateNote(key, cursor);
+                }
+              });
+            }
+          });
+
         }
       },
       beatHandler({beat}) {
@@ -114,18 +167,27 @@
         }
         Sound.resume();
         let soundName = (cursor === undefined || !this.isOn[cursor][key]) &&
-          this.soundName[key];
+          this.soundByKey[key];
 
         this.$store.dispatch('player/set', {cursor, soundName,
           soundId: this.soundId
         });
         if (!this.playing && soundName) {
-          this.liveKeyCursor = key + this.cursor;
+          this.animateNote(key, this.cursor);
           Sound[soundName].play();
-        } else {
-          this.liveKeyCursor = null;
         }
       },
+      animateNote(key, cursor) {
+        let refIndex = this.refIndex[cursor][key];
+        this.animate('note', { element: this.$refs.note[refIndex] });
+        let fx = this.$refs.fx[refIndex];
+        new TimelineMax().
+            to(fx, .2, { opacity: 0, transform: 'scale(1)'}).
+            to(fx, .2, { opacity: 1, transform: 'scale(2)'}).
+            to(fx, .5, { opacity: .7, transform: this.transformByCursor[cursor] }).
+            to(fx, .1, { opacity: 0, transform: 'scale(1)'}).
+            duration(.25).play(0);
+      }
     },
     computed: {
       svgStyle() {
@@ -169,19 +231,29 @@
       keys() {
         return _.keys(this.grid.soundByKey);
       },
-      soundName() {
+      keyIndex() {
+        return _.invert(this.keys);
+      },
+      soundByKey() {
         return this.grid.soundByKey;
       },
       isSelected() {
         return this.keyMode || this.soundId === this.selected;
       },
+      refIndex() {
+        return _.times(this.numPulses, cursor => {
+          return _.mapValues(this.soundByKey, (soundName, key) => {
+            return this.keyIndex[key] * this.numPulses + cursor;
+          });
+        });
+      },
       isOn() {
         return _.times(this.numPulses, cursor => {
-          return _.mapValues(this.soundName, (soundName) => {
+          return _.mapValues(this.soundByKey, (soundName) => {
             return soundName === this.getDataFor({
-                beatTick: this.beatTicks[cursor],
-                soundId: this.soundId
-              });
+              beatTick: this.beatTicks[cursor],
+              soundId: this.soundId
+            });
           });
         });
       },
@@ -192,6 +264,12 @@
           playback: !this.scene && this.active,
           selected: this.isSelected
         }];
+      },
+      transformByCursor() {
+        return _.reduce(this.pulsesByBeat, (result, pulses) => {
+          return _.concat(result, _.times(pulses,
+              _.constant([, 'scale(3)', 'scale(3.5)', 'scale(3.75)', 'scale(4)'][pulses])));
+        }, []);
       },
       measureTops() {
         let last = 0;
@@ -210,9 +288,7 @@
       },
       noteClass() {
         return _.times(this.numPulses, cursor =>
-          _.mapValues(this.soundName, (soundName, key) => (!this.disable && {
-            active: this.activeCursor === cursor,
-            live: this.liveKeyCursor === key + cursor,
+          _.mapValues(this.soundByKey, (soundName, key) => (!this.disable && {
             cursor: this.scene !== 'victory' && this.cursor === cursor,
             hover: this.scene !== 'victory' && this.cursor === cursor && this.keyMode,
             on: this.isOn[cursor][key],
@@ -248,19 +324,17 @@
         }
         if (key === ' ' || key === 'Backspace') {
           this.$store.dispatch('player/unset', this.soundId);
-        } else if (this.soundName[key]) {
+        } else if (this.soundByKey[key]) {
           this.onNote(key);
         }
       },
       keyUp(key) {
-        if (!this.disable && this.noKeysHeld && this.soundName[key]) {
+        if (!this.disable && this.noKeysHeld && this.soundByKey[key]) {
           this.$store.dispatch('player/move', 1);
         }
       },
       playing(playing) {
-        if (playing) {
-          this.liveKeyCursor = null;
-        } else {
+        if (!playing) {
           this.activeCursor = -1;
           TweenMax.to('#position', this.duration, {
             opacity: 0
@@ -289,14 +363,19 @@
         if (scene === 'victory') {
           TweenMax.to('#glass', 0, { width: this.width });
         }
+      },
+      numPulses() {
+        // Blink out all notes and fx so that the refs are put back in the correct order.
+        this.blink = true;
+        this.$nextTick(() => {
+          this.blink = false;
+        });
       }
     }
   }
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  @import "~assets/stylus/note.styl"
-
   button-shadow-size = 4px;
 
   .grid
@@ -331,7 +410,6 @@
     .victory &
       stroke: back-green;
 
-
   .measure-top
     stroke: white;
 
@@ -348,6 +426,17 @@
     .victory &
       stroke: back-green;
 
+  .fx
+    fill: transparent;
+    opacity: 0;
+
+    &.snare
+      fill: url(#snareFill);
+      filter: url(#snareFilter);
+
+    &.kick
+      fill: url(#kick);
+
   .note
     opacity: 0;
     transition: opacity 200ms ease;
@@ -357,9 +446,6 @@
 
     .goal &.on
       opacity: 0.3;
-
-    .standby &.live, .playback &.active.on, .victory &.active.on
-      animation: actual 250ms;
 
     .selected &.cursor:not(.on)
       opacity: 0.1;
@@ -383,5 +469,4 @@
       opacity: 0;
     50%
       opacity: 0.05;
-
 </style>
