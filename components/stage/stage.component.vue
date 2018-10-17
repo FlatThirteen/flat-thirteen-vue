@@ -15,7 +15,8 @@
           play-button(ref="play", @click="onAction('playback')", :wrong="noteCount !== goalNoteCount")
             penalty-fx(ref="wrongPenalty", top="0", left="80%")
       .grids
-        svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface", v-bind="gridProps")
+        svg-grid(v-for="(surface, i) in layout", :key="i", v-bind="gridProps",
+            :grid="surface", :showFx="goalKeys")
         bouncing-points(:show="scene === 'victory'", :points="basePoints")
       faces(v-bind="facesProps")
       .footer: transition(name="footer")
@@ -106,6 +107,7 @@
         points: 100,
         penaltyLevel: { backing: 0, tempo: 0 },
         beatWrong: null,
+        goalKeys: [],
         stageWeenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
         powerTrigger: -1,
@@ -202,6 +204,7 @@
             });
           // fall through
           case 'goal':
+            this.goalKeys = this.scene !== 'goal' || this.autoGoal ? undefined : goalNotes;
             _.forEach(goalNotes, note => {
               note.play(time);
             });

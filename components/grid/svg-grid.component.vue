@@ -74,6 +74,7 @@
   import { mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
+  import Note from '~/common/core/note.model';
   import Sound from '~/common/sound/sound';
   import Tone from '~/common/tone';
 
@@ -86,6 +87,7 @@
       },
       scene: String,
       showPosition: Boolean,
+      showFx: Array,
       weenie: Boolean,
       disable: Boolean
     },
@@ -126,12 +128,14 @@
             if (!this.scene || this.scene === 'playback' || this.scene === 'victory') {
               _.forEach(this.isOn[cursor], (on, key) => {
                 if (on) {
-                  this.animateNote(key, cursor);
+                  this.animateNoteAt(cursor, key);
                 }
               });
             }
+            _.forEach(this.showFx, note => {
+              this.animateNoteAt(cursor, this.keyByNote[note.toString()]);
+            });
           });
-
         }
       },
       beatHandler({beat}) {
@@ -173,11 +177,11 @@
           soundId: this.soundId
         });
         if (!this.playing && soundName) {
-          this.animateNote(key, this.cursor);
+          this.animateNoteAt(this.cursor, key);
           Sound[soundName].play();
         }
       },
-      animateNote(key, cursor) {
+      animateNoteAt(cursor, key) {
         let refIndex = this.refIndex[cursor][key];
         this.animate('note', { element: this.$refs.note[refIndex] });
         let fx = this.$refs.fx[refIndex];
@@ -234,6 +238,9 @@
       keyIndex() {
         return _.invert(this.keys);
       },
+      keyByNote() {
+        return _.invert(_.mapValues(this.soundByKey, (soundName) => Note.toString(soundName)));
+      },
       soundByKey() {
         return this.grid.soundByKey;
       },
@@ -260,8 +267,6 @@
       gridClass() {
         return [this.scene, {
           disable: this.disable,
-          standby: this.scene ? this.starting : !this.active,
-          playback: !this.scene && this.active,
           selected: this.isSelected
         }];
       },

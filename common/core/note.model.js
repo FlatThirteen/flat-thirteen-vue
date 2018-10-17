@@ -21,10 +21,7 @@ export class Note {
   }
 
   toString() {
-    let pitch = this.params && this.params.pitch ? '(' + this.params.pitch + ')' : '';
-    let accent = this.params && this.params.variation === 'heavy' ? '>' :
-      this.params && this.params.variation === 'light' ? '*' : '';
-    return accent + this.soundName + pitch;
+    return Note.toString(this.soundName, this.params);
   }
 
   static from(soundString, duration = '8n') {
@@ -42,6 +39,12 @@ export class Note {
     }
     params.duration = duration;
     return new Note(soundName, params);
+  }
+
+  static toString(soundName, {pitch, variation} = {}) {
+    pitch = pitch ? '(' + pitch + ')' : '';
+    let accent = variation === 'heavy' ? '>' : variation === 'light' ? '*' : '';
+    return accent + soundName + pitch;
   }
 
   static pitch(input) {
