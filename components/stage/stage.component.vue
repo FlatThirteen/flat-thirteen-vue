@@ -48,7 +48,9 @@
   import PlayButton from '~/components/stage/play-button.component';
   import Transport from '~/components/stage/transport.component';
 
-   export default {
+  const MAX_POINTS = 100;
+
+  export default {
     mixins: [AnimatedMixin],
     components: {
       'svg-grid': SvgGrid,
@@ -104,13 +106,13 @@
         changed: false,
         goalCount: 0,
         loopCount: 0,
-        points: 100,
+        points: MAX_POINTS,
         penaltyLevel: { backing: 0, tempo: 0 },
         beatWrong: null,
         goalKeys: [],
         stageWeenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
-        powerTrigger: -1,
+        lastPoints: 0,
         pointsOverride: 0
       }
     },
@@ -147,7 +149,7 @@
         }
       },
       topHandler({first}) {
-        if (!first && this.active) {
+        if (!first && this.playing) {
           let scene = this.nextScene;
           if (this.scene === 'victory') {
             this.loopCount = 0;
@@ -182,6 +184,7 @@
             this.$store.commit('phrase/clear', { name: 'playback' });
           } else if (scene === 'victory') {
             this.$store.dispatch('phrase/setVictory', _.floor(this.basePoints / 10));
+            this.lastPoints = this.basePoints;
           }
         }
         this.lastBeat = false;
@@ -238,7 +241,7 @@
       },
       reset() {
         this.preGoal = !this.autoLoop;
-        this.points = 100;
+        this.points = MAX_POINTS;
         this.goalCount = 0;
         _.forEach(this.penaltyLevel, (level, penalty) => {
           this.penaltyLevel[penalty] = this.level[penalty]
@@ -322,9 +325,6 @@
       },
       setWeenie(weenie) {
         this.stageWeenie = this.autoGoal ? undefined : weenie;
-      },
-      randomTrigger() {
-        return _.random(this.numPulses - 1);
       }
     },
     computed: {
@@ -381,7 +381,6 @@
         getPlayerNotes: 'player/getNotes',
         notes: 'player/notes',
         noteCount: 'player/noteCount',
-        numPulses: 'player/numPulses',
         power: 'progress/power',
         level: 'progress/level',
         next: 'progress/next',
@@ -390,7 +389,6 @@
         showLoop: 'progress/showLoop',
         stageIndex: 'progress/stageIndex',
         lessonDone: 'progress/lessonDone',
-        active: 'transport/active',
         playing: 'transport/playing',
         paused: 'transport/paused'
       })
@@ -419,22 +417,8 @@
         this.reset();
         this.animate('next');
       },
-      numPulses: {
-        immediate: true,
-        handler(numPulses) {
-          if (numPulses) {
-            this.powerTrigger = this.randomTrigger();
-          }
-        }
-      },
-      cursor(cursor) {
-        if (this.goalCount && this.showNextAuto && this.next.auto && cursor === this.powerTrigger) {
-          this.powerTrigger = this.randomTrigger();
-          this.$refs.auto.appear(this.next.auto);
-        }
-      },
-      active(active) {
-        if (!active) {
+      paused(paused) {
+        if (paused) {
           this.lastBeat = false;
           this.beatWrong = null;
         }
@@ -449,6 +433,14 @@
         this.$refs.play.set({ opacity: preGoal ? 0 : 1 });
       },
       scene(scene, oldScene) {
+        if (this.goalCount && this.showNextAuto && this.next.auto &&
+            this.points === MAX_POINTS && this.lastPoints === MAX_POINTS) {
+          if (scene === 'standby' || scene === 'count' && this.nextScene === 'goal') {
+            this.$refs.auto.appear(this.next.auto);
+          } else {
+            this.$refs.auto.fade();
+          }
+        }
         if (scene === 'standby') {
           this.$refs.goal.animate(oldScene === 'goal' ? 'land' : 'appear');
           if (!this.preGoal) {
@@ -480,8 +472,6 @@
           if (oldScene === 'standby') {
             this.$refs.goal.animate('disappear');
           }
-        } else if (scene === 'victory') {
-          this.$refs.auto.fade();
         }
       },
       nextScene(nextScene) {
