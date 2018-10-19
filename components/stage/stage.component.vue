@@ -69,10 +69,7 @@
     props: {
       goal: [Array, Object],
       showNextAuto: Boolean,
-      tempo: {
-        type: Number,
-        default: 120
-      }
+      tempo: Number
     },
     constants: {
       animationTarget: 'stage',
@@ -118,10 +115,10 @@
     },
     mounted() {
       window.addEventListener('visibilitychange', this.onVisiblityChange);
-      this.preGoal = !this.autoLoop;
       this.$bus.$on(BeatTick.TOP, this.topHandler);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
+      this.preGoal = !this.autoLoop;
       // Wait until children are mounted
       this.$nextTick(() => {
         if (this.$refs.play) {
@@ -161,18 +158,15 @@
           } else if (this.scene === 'goal') {
             if (this.noteCount === this.goalNoteCount && this.changed) {
               scene = 'playback';
-            } else if (this.autoLoop) {
-              this.loopCount++;
-              if (this.loopCount % (this.autoRepeat ? 4 : 2) === 0) {
-                this.addPenalty('goal', this.autoRepeat ? 2 : 5, { silent: this.autoRepeat });
-              }
+            } else if (this.autoLoop && ++this.loopCount % (this.autoRepeat ? 4 : 2) === 0) {
+              this.addPenalty('goalPenalty', this.autoRepeat ? 2 : 5, { silent: this.autoRepeat });
             }
           } else if (this.scene === 'playback') {
             this.loopCount = 0;
             if (this.correct) {
               scene = 'victory';
             } else {
-              this.addPenalty('wrong', 10, { noisy: true });
+              this.addPenalty('wrongPenalty', 10, { noisy: true });
             }
           }
           this.toScene(scene, this.getNext(scene));
@@ -264,7 +258,7 @@
           this.$store.dispatch('transport/stop');
         } else {
           if (scene === 'goal' && this.goalCount > 1) {
-            this.addPenalty('goal', 10);
+            this.addPenalty('goalPenalty', 10);
           }
           this.$store.commit('phrase/clear', { name: 'playback' });
           this.$nextTick(() => {
@@ -309,12 +303,7 @@
         if (amount) {
           let previous = this.points;
           this.points = Math.max(5, previous - amount);
-          let penalty = ({
-            goal: this.$refs.goalPenalty,
-            wrong: this.$refs.wrongPenalty,
-            backing: this.$refs.backingPenalty,
-            tempo: this.$refs.tempoPenalty
-          }[type]);
+          let penalty = this.$refs[type];
           if (penalty) {
             penalty.appear(this.points - previous, options);
           }
@@ -529,13 +518,13 @@
       'level.backing'(level) {
         if (level < this.penaltyLevel.backing) {
           this.penaltyLevel.backing = level;
-          this.addPenalty('backing', 30);
+          this.addPenalty('backingPenalty', 30);
         }
       },
       'level.tempo'(level) {
         if (level < this.penaltyLevel.tempo) {
           this.penaltyLevel.tempo = level;
-          this.addPenalty('tempo', 10);
+          this.addPenalty('tempoPenalty', 10);
         }
       }
     }
