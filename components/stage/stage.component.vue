@@ -423,9 +423,11 @@
       },
       scene(scene, oldScene) {
         if (this.goalCount && this.showNextAuto && this.next.auto &&
-            this.points === MAX_POINTS && this.lastPoints === MAX_POINTS) {
-          if (scene === 'standby' || scene === 'count' && this.nextScene === 'goal') {
+            this.points === MAX_POINTS) {
+          if ((scene === 'standby' || scene === 'count' && this.nextScene === 'goal') &&
+              this.lastPoints === MAX_POINTS) {
             this.$refs.auto.appear(this.next.auto);
+            this.lastPoints = 0;
           } else {
             this.$refs.auto.fade();
           }

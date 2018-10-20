@@ -53,10 +53,12 @@
     },
     computed: {
       showNextBacking() {
-        return !!this.next.backing && this.level.auto > 1 && _.every(this.playable)
+        return !!this.next.backing && this.level.auto > 1 && _.every(this.playable) &&
+            this.totalPoints >= this.nextPoints;
       },
       showNextTempo() {
-        return !!this.next.tempo && this.tempo === this.maxTempo && this.rowsWithStars >= 5;
+        return !!this.next.tempo && this.tempo === this.maxTempo && this.rowsWithStars >= 5 &&
+            this.totalPoints >= this.nextPoints;
       },
       ...mapGetters({
         level: 'progress/level',
@@ -68,7 +70,8 @@
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
         playable: 'progress/playable',
-        rowsWithStars: 'progress/rowsWithStars'
+        rowsWithStars: 'progress/rowsWithStars',
+        nextPoints: 'progress/nextPoints'
       })
     },
     watch: {

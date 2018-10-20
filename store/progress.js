@@ -53,6 +53,7 @@ export const state = () => ({
     playable: false
   },
   points: [], // [layout][pulseBeat][tempo][backing] = [{base, heavy, light}]
+  nextPoints: 0
 });
 
 export const getters = {
@@ -82,10 +83,11 @@ export const getters = {
   weenie: state => state.weenie,
   hack: state => state.hack,
   next: state => _.mapValues(state.power, (value, power) =>
-      !state.power.notes && power !== 'auto' ? 0 : value === MAX_POWER[power] ? 0 : value + 1),
+      !state.power.notes && power !== 'auto' || value === MAX_POWER[power] ? 0 : value + 1),
   autoLevel: state => state.mode.auto,
   showLoop: state => state.power.auto > 1,
   points: state => state.points,
+  nextPoints: state => state.nextPoints,
   totalPoints: state => _.reduce(state.points, (result, pointsByLayout) => {
     _.forEach(pointsByLayout, pointsByPulseBeat => {
       _.forEach(pointsByPulseBeat, pointsByTempo => {
@@ -219,10 +221,11 @@ export const mutations = {
       console.error('Cannot advance stage any more');
     }
   },
-  nextPower(state, {power, updateMode}) {
+  nextPower(state, {power, nextPoints, updateMode}) {
     if (!MAX_POWER[power]) {
       console.error('Invalid power', power);
     } else if (state.power[power] < MAX_POWER[power]) {
+      state.nextPoints = nextPoints;
       state.power[power]++;
       if (updateMode) {
         state.mode[power]++;
@@ -294,9 +297,10 @@ export const actions = {
       commit('nextStage');
     }
   },
-  next({state, commit}, power) {
+  next({state, getters, commit}, power) {
     commit('nextPower', {
       power,
+      nextPoints: getters.totalPoints + 100,
       updateMode: state.mode[power] === state.power[power] && power === 'auto'
     });
   },

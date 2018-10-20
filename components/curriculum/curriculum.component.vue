@@ -172,8 +172,8 @@
                 (points, pulseBeat) => _.get(this.displayPoints, [pulseBeat, 0, 'base']) >= points);
       },
       showNextNotes() {
-        return !this.clicked && this.next.notes &&
-            (this.next.notes - 4) * 600 <= this.totalPoints;
+        return !this.clicked && this.next.notes &&  this.totalPoints >= this.nextPoints &&
+            this.totalPoints >= (this.next.notes - 4) * 600;
       },
       ...mapGetters({
         power: 'progress/power',
@@ -185,6 +185,7 @@
         pulseBeatGroups: 'progress/pulseBeatGroups',
         displayPoints: 'progress/displayPoints',
         prerequisite: 'progress/prerequisite',
+        nextPoints: 'progress/nextPoints',
         totalPoints: 'progress/totalPoints'
       })
     },

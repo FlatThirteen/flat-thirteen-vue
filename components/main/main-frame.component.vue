@@ -112,7 +112,7 @@
         return this.totalPoints + this.lessonPoints;
       },
       showNextAuto() {
-        return this.points >= Math.pow(2, this.next.auto) * 150;
+        return this.points >= Math.pow(2, this.next.auto) * 150 && this.points >= this.nextPoints;
       },
       ...mapGetters({
         stageGoal: 'progress/stageGoal',
