@@ -18,7 +18,7 @@
               :pulseBeat="pulseBeat", :points="displayPoints[pulseBeat]", :transition="transition",
               :backingChange="backingChange", :tempoChange="tempoChange",
               @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
-              @mouseenter.native="onMouseEnter(pulseBeat)", @mouseleave.native="highlight = {}")
+              @mouseenter.native="onMouseOver(pulseBeat)", @mouseleave.native="onMouseOver()")
       .end
     .bottom(:class="scaleClass")
       note-count(:notes="power.notes")
@@ -44,6 +44,9 @@
       'note-count': NoteCount,
       'power-layout': PowerLayout,
       'power-notes': PowerNotes,
+    },
+    props: {
+      hint: String
     },
     constants: {
       animationTarget: 'lessons',
@@ -136,9 +139,9 @@
           });
         }
       },
-      onMouseEnter(pulseBeat) {
-        this.highlight = this.displayPoints[pulseBeat] ? {} : _.reduce(this.prerequisite[pulseBeat],
-            (result, required) => _.set(result, required, true), {});
+      onMouseOver(pulseBeat) {
+        this.highlight = !pulseBeat || this.displayPoints[pulseBeat] ? {} : _.reduce(
+            this.prerequisite[pulseBeat], (result, required) => _.set(result, required, true), {});
       },
       onLesson(pulseBeat, {x, y}) {
         this.$store.dispatch('progress/weenie', { power: 'notes' });
@@ -183,6 +186,7 @@
         backing: 'progress/backing',
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',
+        groupsWithoutStars: 'progress/groupsWithoutStars',
         displayPoints: 'progress/displayPoints',
         prerequisite: 'progress/prerequisite',
         nextPoints: 'progress/nextPoints',
@@ -190,6 +194,16 @@
       })
     },
     watch: {
+      hint(hint) {
+        if (hint === 'backing') {
+          this.highlight = _.mapValues(this.displayPoints, value => !value);
+        } else if (hint === 'tempo') {
+          let pulseBeats = _.flatten(this.groupsWithoutStars);
+          this.highlight = _.zipObject(pulseBeats, _.times(pulseBeats.length, _.constant(true)));
+        } else {
+          this.highlight = {};
+        }
+      },
       showNextLayout(showNextLayout) {
         if (showNextLayout) {
           this.$refs.layout.appear();
@@ -269,10 +283,11 @@
       animation: weenie 1s infinite 500ms;
 
     .highlight:not(:hover)
-      shadow(#888, 3px);
+      shadow(primary-blue, 3px);
 
       &.button
-        shadow(#888, 8px);
+        shadow(primary-blue, 8px);
+        animation: none;
 
   .lesson-group-enter-active.transition
     transform-origin: top;

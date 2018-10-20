@@ -3,15 +3,17 @@
     slot
     .top
       transition(name="boing")
-        backing-button.left(v-if="showBacking", :backing="backing", :throttle="500",
-            :penalty="penalty.backing > 0 && level.backing === penalty.backing",
-            :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')")
+        backing-button.left(v-if="showBacking || hint.backing", :backing="backing", :throttle="500",
+            :penalty="penalty.backing > 0 && level.backing === penalty.backing", :hint="hint.backing",
+            :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')",
+            @mouseenter.native="onHint('backing')", @mouseleave.native="onHint()")
       power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
       transition(name="boing")
-        tempo-control.right(v-if="minTempo < maxTempo", :tempo="tempo",
+        tempo-control.right(v-if="minTempo < maxTempo || hint.tempo", :tempo="tempo",
             :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
-            :penalty="level.tempo === penalty.tempo",
-            @tempo="$store.dispatch('progress/tempo', $event)")
+            :penalty="level.tempo === penalty.tempo", :hint="hint.tempo",
+            @tempo="$store.dispatch('progress/tempo', $event)",
+            @mouseenter.native="onHint('tempo')", @mouseleave.native="onHint()")
       power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
       .left: slot(name="bottom-left")
@@ -53,7 +55,18 @@
         showPoints: 0
       }
     },
+    methods: {
+      onHint(type) {
+        this.$emit('hint', type && this.hint[type] ? type : null);
+      }
+    },
     computed: {
+      hint() {
+        return !this.stageGoal && this.power.notes >= 8 && {
+          backing: !this.showBacking && this.level.auto > 1,
+          tempo: this.minTempo === this.maxTempo && _.every(this.playable)
+        };
+      },
       showNextBacking() {
         return !!this.next.backing && this.level.auto > 1 && _.every(this.playable) &&
             this.totalPoints >= this.nextPoints;
@@ -63,7 +76,9 @@
             this.totalPoints >= this.nextPoints;
       },
       ...mapGetters({
+        stageGoal: 'progress/stageGoal',
         level: 'progress/level',
+        power: 'progress/power',
         next: 'progress/next',
         weenie: 'progress/weenie',
         penalty: 'progress/penalty',

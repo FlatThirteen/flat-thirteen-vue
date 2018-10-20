@@ -1,7 +1,8 @@
 <template lang="pug">
-  svg(height="60", width="60", viewBox="0 0 60 60", :class="{penalty, button: !throttled}",
-      @click="onClick()")
-    path.backing-icon(:d="path", stroke-width="5px", :class="[backingClass, {flip: throttled}]",
+  svg(height="60", width="60", viewBox="0 0 60 60", @click="onClick()",
+      :class="{penalty, button: !hint && !throttled}")
+    path.backing-icon(:d="path", stroke-width="5px",
+        :class="[backingClass, {hint, flip: throttled}]",
         :style="{animationDuration: throttle + 'ms'}")
 </template>
 
@@ -10,7 +11,8 @@
     props: {
       backing: String,
       throttle: Number,
-      penalty: Boolean
+      penalty: Boolean,
+      hint: Boolean
     },
     constants: {
       path: 'M2,30 L12,20 L12,35 L27,20 L27,35 L42,20 L42,35 L57,20 L57,40 L0,40 Z'
@@ -23,7 +25,7 @@
     },
     methods: {
       onClick() {
-        if (!this.throttled) {
+        if (!this.hint && !this.throttled) {
           if (this.throttle) {
             this.throttled = true;
           }
@@ -60,6 +62,12 @@
   .none
     fill: #DDD;
     stroke: @fill;
+
+  .hint
+    fill: transparent;
+    stroke: #DDD;
+    stroke-dasharray: 6px;
+    stroke-width: 2px;
 
   .bass
     fill: bass-color;

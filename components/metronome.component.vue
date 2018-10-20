@@ -1,7 +1,7 @@
 <template lang="pug">
   svg(height="60", width="60", viewBox="0 0 60 60")
-    path.metronome(:d="path", :fill="disabled ? '#DDD' : 'black'")
-    g.arm(:class="{playing}", :style="style")
+    path.metronome(:d="path", :class="{hint, disabled}")
+    g.arm(v-if="!hint", :class="{playing}", :style="style")
       line(x1="30", y1="3", x2="30", y2="45", stroke="#EEE", stroke-width="2px")
       circle(cx="30", cy="45", r="8", fill="#EEE")
 </template>
@@ -12,6 +12,7 @@
     props: {
       disabled: Boolean,
       playing: Boolean,
+      hint: Boolean,
       duration: Number,
     },
     constants: {
@@ -26,6 +27,18 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  .metronome
+    fill: black;
+
+    &.disabled
+      fill: #DDD;
+
+    &.hint
+      fill: transparent;
+      stroke: #DDD;
+      stroke-dasharray: 6px;
+      stroke-width: 3px;
+
   .playing
     transform-origin: 50% 60%;
     animation: tick linear infinite;

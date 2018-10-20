@@ -174,9 +174,11 @@ export const getters = {
     });
     return result;
   }, 0),
-  rowsWithStars: (state, getters) => _.reduce(getters.pulseBeatGroups, (total, pulseBeatGroup) =>
-      total + (_.some(pulseBeatGroup, pulseBeat =>
-          _.get(getters.pointsByPulseBeat, [pulseBeat, 0, 'base']) === MAX_POINTS) ? 1 : 0), 0),
+  groupsWithoutStars: (state, getters) => _.filter(getters.pulseBeatGroups,
+      pulseBeatGroup => !_.some(pulseBeatGroup, pulseBeat =>
+          _.get(getters.pointsByPulseBeat, [pulseBeat, 0, 'base']) === MAX_POINTS)),
+  rowsWithStars: (state, getters) =>
+      _.size(getters.pulseBeatGroups) - getters.groupsWithoutStars.length,
 };
 
 export const mutations = {

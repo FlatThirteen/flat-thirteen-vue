@@ -1,8 +1,8 @@
 <template lang="pug">
-  corner-frame(:totalPoints="points", :totalStars="totalStars")
+  corner-frame(:totalPoints="points", :totalStars="totalStars", @hint="hint = $event")
     composer(ref="composer")
     transition(name="lesson-container")
-      curriculum(v-if="!stageGoal", key="choose", @click="onLesson($event)")
+      curriculum(v-if="!stageGoal", key="choose", :hint="hint", @click="onLesson($event)")
         slot(name="curriculum")
       .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
@@ -38,6 +38,7 @@
       return {
         pulseBeat: null,
         lessonPoints: 0,
+        hint: null,
         transformOrigin: {}
       };
     },

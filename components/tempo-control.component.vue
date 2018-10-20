@@ -1,8 +1,9 @@
 <template lang="pug">
   .tempo
-    metronome.icon(:playing="playing", :duration="duration", :disabled="toggle === false",
-        :class="{button}", @click.native="button && $emit('update:toggle', !toggle)")
-    .control(:class="{stage: stageGoal, flip: throttled}",
+    metronome.icon(:playing="playing", :disabled="toggle === false", :hint="hint",
+        :duration="duration", :class="{button}",
+        @click.native="button && $emit('update:toggle', !toggle)")
+    .control(v-if="!hint", :class="{stage: stageGoal, flip: throttled}",
         :style="{animationDuration: throttle + 'ms'}") {{ displayTempo | three}}
       .up(v-show="tempo < max", :class="{button: !throttled, weenie: weenie && !stageGoal}",
           @click="onChange(tempo + increment)")
@@ -33,7 +34,11 @@
       max: Number,
       weenie: Number,
       penalty: Boolean,
-      toggle: Boolean,
+      hint: Boolean,
+      toggle: {
+        type: Boolean,
+        default: undefined
+      },
       throttle: Number
     },
     data() {
@@ -67,7 +72,7 @@
     },
     computed: {
       button() {
-        return this.toggle !== undefined;
+        return !this.hint && this.toggle !== undefined;
       },
       ...mapGetters({
         stageGoal: 'progress/stageGoal',
