@@ -78,8 +78,6 @@
       background-color: white;
       transition: background-color 200ms;
 
-    &.penalty.button:hover
-      shadow(primary-red)
   img
     posit(absolute, 0, x, x, 0);
     height: 40px;

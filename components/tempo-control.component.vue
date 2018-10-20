@@ -7,7 +7,7 @@
       .up(v-show="tempo < max", :class="{button: !throttled, weenie: weenie && !stageGoal}",
           @click="onChange(tempo + increment)")
         .arrow ▲
-      .down(v-show="tempo > min", :class="{button: !throttled}",
+      .down(v-show="tempo > min", :class="{penalty, button: !throttled}",
           @click="onChange(tempo - increment)") ▼
 </template>
 
@@ -32,10 +32,8 @@
       min: Number,
       max: Number,
       weenie: Number,
-      toggle: {
-        type: Boolean,
-        default: undefined
-      },
+      penalty: Boolean,
+      toggle: Boolean,
       throttle: Number
     },
     data() {

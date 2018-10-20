@@ -49,6 +49,10 @@ export const state = () => ({
     tempo: 0,
     notes: 0
   },
+  penalty: {
+    backing: 0,
+    tempo: 0
+  },
   hack: {
     playable: false
   },
@@ -81,6 +85,7 @@ export const getters = {
       _.mapValues(state.mode, (value, power) =>
           _.isUndefined(state.lesson[power]) ? state.mode[power] : state.lesson[power]),
   weenie: state => state.weenie,
+  penalty: (state, getters) => getters.stageGoal ? state.penalty : {},
   hack: state => state.hack,
   next: state => _.mapValues(state.power, (value, power) =>
       !state.power.notes && power !== 'auto' || value === MAX_POWER[power] ? 0 : value + 1),
@@ -206,20 +211,20 @@ export const mutations = {
       });
     }
   },
-  resetLesson(state, stages) {
-    state.lesson.stages = stages;
-    state.lesson.index = stages.length ? 0 : -1;
-    state.lesson.tempo = state.mode.tempo;
-    state.lesson.backing = state.mode.backing;
-  },
-  nextStage(state) {
-    if (state.lesson.index + 1 <= state.lesson.stages.length) {
+  newStage(state, stages) {
+    if (stages) {
+      state.lesson.stages = stages;
+      state.lesson.index = stages.length ? 0 : -1;
+    } else if (state.lesson.index + 1 <= state.lesson.stages.length) {
       state.lesson.index = state.lesson.index + 1;
-      state.lesson.tempo = state.mode.tempo;
-      state.lesson.backing = state.mode.backing;
     } else {
       console.error('Cannot advance stage any more');
     }
+    state.lesson.tempo = state.mode.tempo;
+    state.lesson.backing = state.mode.backing;
+    _.forEach(state.penalty, (level, penalty) => {
+      state.penalty[penalty] = state.mode[penalty]
+    });
   },
   nextPower(state, {power, nextPoints, updateMode}) {
     if (!MAX_POWER[power]) {
@@ -258,6 +263,9 @@ export const mutations = {
       console.error('Invalid lesson power:', power);
     } else if (_.inRange(level, min, state.mode[power] + 1)) {
       state.lesson[power] = level;
+      if (level < state.penalty[power]) {
+        state.penalty[power] = level;
+      }
     } else {
       console.error('Invalid lesson power level:', power, level, state.mode[power]);
     }
@@ -290,11 +298,11 @@ export const actions = {
     commit('resetPower', params);
   },
   setStages({commit}, stages = []) {
-    commit('resetLesson', stages);
+    commit('newStage', stages);
   },
   nextStage({state, commit}) {
     if (state.lesson.index > -1) {
-      commit('nextStage');
+      commit('newStage');
     }
   },
   next({state, getters, commit}, power) {

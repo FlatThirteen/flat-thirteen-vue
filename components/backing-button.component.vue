@@ -1,5 +1,5 @@
 <template lang="pug">
-  svg(height="60", width="60", viewBox="0 0 60 60", :class="{button: !throttled}",
+  svg(height="60", width="60", viewBox="0 0 60 60", :class="{penalty, button: !throttled}",
       @click="onClick()")
     path.backing-icon(:d="path", stroke-width="5px", :class="[backingClass, {flip: throttled}]",
         :style="{animationDuration: throttle + 'ms'}")
@@ -9,7 +9,8 @@
   export default {
     props: {
       backing: String,
-      throttle: Number
+      throttle: Number,
+      penalty: Boolean
     },
     constants: {
       path: 'M2,30 L12,20 L12,35 L27,20 L27,35 L42,20 L42,35 L57,20 L57,40 L0,40 Z'

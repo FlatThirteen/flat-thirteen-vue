@@ -104,7 +104,6 @@
         goalCount: 0,
         loopCount: 0,
         points: MAX_POINTS,
-        penaltyLevel: { backing: 0, tempo: 0 },
         beatWrong: null,
         goalKeys: [],
         stageWeenie: this.autoGoal ? undefined : 'goal',
@@ -127,9 +126,6 @@
             this.$refs.play.set({ opacity: 0 })
           }
         }
-        _.forEach(this.penaltyLevel, (level, penalty) => {
-          this.penaltyLevel[penalty] = this.level[penalty]
-        });
       });
     },
     destroyed() {
@@ -237,9 +233,6 @@
         this.preGoal = !this.autoLoop;
         this.points = MAX_POINTS;
         this.goalCount = 0;
-        _.forEach(this.penaltyLevel, (level, penalty) => {
-          this.penaltyLevel[penalty] = this.level[penalty]
-        });
       },
       onAction(scene = this.scene !== 'standby' ? 'standby' : 'goal') {
         if (this.scene === scene || this.nextScene === scene) {
@@ -374,6 +367,7 @@
         level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
+        penalty: 'progress/penalty',
         autoLevel: 'progress/autoLevel',
         showLoop: 'progress/showLoop',
         stageIndex: 'progress/stageIndex',
@@ -517,15 +511,13 @@
           this.nextScene = this.getNext(this.scene);
         }
       },
-      'level.backing'(level) {
-        if (level < this.penaltyLevel.backing) {
-          this.penaltyLevel.backing = level;
+      'penalty.backing'(level, oldLevel) {
+        if (level < oldLevel) {
           this.addPenalty('backingPenalty', 30);
         }
       },
-      'level.tempo'(level) {
-        if (level < this.penaltyLevel.tempo) {
-          this.penaltyLevel.tempo = level;
+      'penalty.tempo'(level, oldLevel) {
+        if (level < oldLevel) {
           this.addPenalty('tempoPenalty', 10);
         }
       }

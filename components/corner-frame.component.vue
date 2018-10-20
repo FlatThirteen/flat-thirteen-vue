@@ -4,11 +4,13 @@
     .top
       transition(name="boing")
         backing-button.left(v-if="showBacking", :backing="backing", :throttle="500",
+            :penalty="penalty.backing > 0 && level.backing === penalty.backing",
             :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')")
       power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
       transition(name="boing")
         tempo-control.right(v-if="minTempo < maxTempo", :tempo="tempo",
             :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
+            :penalty="level.tempo === penalty.tempo",
             @tempo="$store.dispatch('progress/tempo', $event)")
       power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
@@ -64,6 +66,7 @@
         level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
+        penalty: 'progress/penalty',
         backing: 'progress/backing',
         showBacking: 'progress/showBacking',
         tempo: 'progress/tempo',
