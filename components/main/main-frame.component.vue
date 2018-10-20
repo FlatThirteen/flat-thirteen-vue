@@ -70,13 +70,13 @@
               '1112': ['03:096']
             }[pulseBeat] || [];
           if (!notes) {
-            if (this.level.layout || !finished) {
+            if (pulseBeat !== '1111' && (this.level.layout || !finished)) {
               requiredBeatTicks.push('00:000'); // TODO: Do only when metronome off
             }
             let maxNotes = this.beatTicks.length - (this.level.layout ? 0 : 1);
             let minNotes = Math.max(3, maxNotes - this.pointsByPulseBeat[pulseBeat].length - i);
             notes = minNotes < maxNotes ? _.random(minNotes, maxNotes) : maxNotes;
-            // console.log(finished, this.level.layout, i, minNotes, maxNotes, notes);
+            // console.log(finished, this.level.layout, i, minNotes, maxNotes, notes, requiredBeatTicks);
           }
           return Monotonic.build(_.map(this.soundNames, (soundName) => [new Note(soundName)]),
             _.difference(this.beatTicks, requiredBeatTicks), requiredBeatTicks,
