@@ -11,7 +11,7 @@
       | Click
     h3
       .button(@mousedown="onSound('cowbell')") {{ showKey('cowbell') }}
-      | Cowbell
+      | Cowbell!
     h3
       .button(@mousedown="onSound('synth')") {{ showKey('synth') }}
       | Synth
