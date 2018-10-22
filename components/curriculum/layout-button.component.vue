@@ -19,11 +19,17 @@
     },
     data() {
       return {
+        initial: true,
         on: {}
       };
     },
     methods: {
       onBlock(index, key, soundName) {
+        if (this.initial) {
+          Sound.resume().then(() => {
+            this.initial = false;
+          });
+        }
         let on = this.on[index] === key ? '' : key;
         if (on) {
           Sound[soundName].play();
