@@ -125,6 +125,7 @@
         layout: 'progress/layout',
         tempo: 'progress/tempo',
         pointsByPulseBeat: 'progress/pointsByPulseBeat',
+        nextPoints: 'progress/nextPoints',
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })
