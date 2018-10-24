@@ -5,9 +5,9 @@ export class CowbellSound {
     this.hit = new Tone.MetalSynth({
       frequency: 10,
       envelope: {
-        attack: 0.001,
-        decay: 0.1,
-        release: 0.01
+        attack: 0.005,
+        decay: 0.05,
+        sustain: 0
       },
       harmonicity: 1.0,
       modulationIndex: 10,
@@ -21,8 +21,8 @@ export class CowbellSound {
       oscillator: {type: 'square4'},
       envelope: {
         attack: 0.001,
-        sustain: 0.01,
         decay: 0.05,
+        sustain: 0.01
       },
       volume: 0
     });
