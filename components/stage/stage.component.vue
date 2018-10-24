@@ -372,6 +372,7 @@
         showLoop: 'progress/showLoop',
         stageIndex: 'progress/stageIndex',
         lessonDone: 'progress/lessonDone',
+        totalPoints: 'progress/totalPoints',
         playing: 'transport/playing',
         paused: 'transport/paused'
       })
@@ -420,9 +421,9 @@
             this.points === MAX_POINTS) {
           if ((scene === 'standby' || scene === 'count' && this.nextScene === 'goal') &&
               this.lastPoints === MAX_POINTS) {
-            this.$refs.auto.appear(this.next.auto);
+            this.$refs.auto.appear(this.next.auto, { duration: 2 + this.totalPoints / 1000 });
             this.lastPoints = 0;
-          } else {
+          } else if (!this.autoLoop || scene === 'playback') {
             this.$refs.auto.fade();
           }
         }

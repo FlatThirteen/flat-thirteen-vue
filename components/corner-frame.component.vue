@@ -68,12 +68,12 @@
         };
       },
       showNextBacking() {
-        return !!this.next.backing && this.level.auto > 1 && _.every(this.playable) &&
-            this.totalPoints >= this.nextPoints;
+        return !this.stageGoal && !!this.next.backing && this.level.auto > 1 &&
+            _.every(this.playable) && this.totalPoints >= this.nextPoints;
       },
       showNextTempo() {
-        return !!this.next.tempo && this.tempo === this.maxTempo && this.rowsWithStars >= 5 &&
-            this.totalPoints >= this.nextPoints;
+        return !this.stageGoal && !!this.next.tempo && this.tempo === this.maxTempo &&
+            this.rowsWithStars >= 5 && this.totalPoints >= this.nextPoints;
       },
       ...mapGetters({
         stageGoal: 'progress/stageGoal',

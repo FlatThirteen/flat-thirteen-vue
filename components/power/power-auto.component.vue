@@ -16,13 +16,13 @@
       animationDefinitions: {
         appear: [[0, {
           bottom: '-100%'
-        }], [.4, {
+        }], [.3, {
           bottom: '10%'
-        }], [.1, {
+        }], [.2, {
           bottom: '15%'
-        }], [.1, {
+        }], [.2, {
           bottom: '5%'
-        }], [.4, {
+        }], [.3, {
           bottom: '-100%'
         }]],
         disappear: [[1, {
@@ -64,7 +64,7 @@
       }
     },
     methods: {
-      appear(level, duration = 2, repeat = 2, repeatDelay = 1) {
+      appear(level, {duration = 3, repeat = 2, repeatDelay = 1} = {}) {
         if (!this.show) {
           this.show = level;
           // Wait for nextTick so that power-up button shows up
