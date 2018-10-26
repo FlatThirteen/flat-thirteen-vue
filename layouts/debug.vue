@@ -19,6 +19,9 @@
           Lesson: '/lesson'
         }
       };
+    },
+    mounted() {
+      console.log('BUILD', this.$build);
     }
   }
 </script>
