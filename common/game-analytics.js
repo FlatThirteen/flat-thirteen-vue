@@ -10,9 +10,10 @@ let GameAnalytics = {
     this.GA = require('gameanalytics');
     this.STATUS = this.GA.EGAProgressionStatus;
     if (!this.isInitialized()) {
-      this.GA.GameAnalytics.setEnabledInfoLog(true);
-      this.GA.GameAnalytics.setEnabledVerboseLog(true);
-      this.GA.GameAnalytics.configureBuild('test'); // TODO
+      // TODO: Set from environment/BUILD
+      this.GA.GameAnalytics.setEnabledInfoLog(false);
+      this.GA.GameAnalytics.setEnabledVerboseLog(false);
+      this.GA.GameAnalytics.configureBuild('test');
       this.GA.GameAnalytics.initialize('70e722d79c31e00cefa6ddbd6b76c083',
           _.join(_.map([2486484157, 3889590087, 3576893628, 1290759513, 553095923], n => n.toString(16)), ''));
     }
