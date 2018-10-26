@@ -102,6 +102,7 @@
         nextScene: 'standby',
         preGoal: false,
         changed: false,
+        showGoal: false,
         goalCount: 0,
         loopCount: 0,
         points: MAX_POINTS,
@@ -151,6 +152,7 @@
       },
       topHandler({first}) {
         if (!first && this.playing) {
+          this.showGoal = false;
           let scene = this.nextScene;
           if (this.scene === 'victory') {
             this.loopCount = 0;
@@ -206,7 +208,7 @@
             });
           // fall through
           case 'goal':
-            this.goalKeys = this.scene !== 'goal' || this.autoGoal ? undefined : goalNotes;
+            this.goalKeys = this.showGoal ? goalNotes : undefined;
             _.forEach(goalNotes, note => {
               note.play(time);
             });
@@ -248,6 +250,9 @@
           scene = this.scene;
         } else {
           nextScene = this.getNext(scene);
+        }
+        if (scene === 'goal') {
+          this.showGoal = true;
         }
         this.toScene(scene, nextScene);
         this.loopCount = 0;
