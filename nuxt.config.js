@@ -26,7 +26,6 @@ module.exports = {
   loading: { color: '#008FFF' },
   plugins: [
     '~/plugins/axios.js',
-    '~/plugins/build.js',
     '~/plugins/constants.js',
     '~/plugins/filters.js',
     '~/plugins/event-bus.js',

@@ -2,12 +2,15 @@
   .page-frame
     nuxt.page
     .menu
-      .build {{ $build }}
+      .build {{ build }}
       nuxt-link(v-for="(link, label) in views", :to="link", :key="link") {{ label }}
 </template>
 
 <script>
+  import BuildMixin from '~/mixins/build.mixin';
+
   export default {
+    mixins: [BuildMixin],
     data() {
       return {
         views: {
@@ -19,9 +22,6 @@
           Lesson: '/lesson'
         }
       };
-    },
-    mounted() {
-      console.log('BUILD', this.$build);
     }
   }
 </script>
