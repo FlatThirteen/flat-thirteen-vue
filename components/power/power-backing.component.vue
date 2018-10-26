@@ -6,15 +6,14 @@
 </template>
 
 <script>
-  import AnimatedMixin from '~/mixins/animated.mixin';
+  import PowerMixin from './power.mixin';
 
-  import Sound from '~/common/sound/sound';
   import Svg from '~/common/svg';
 
   const backing = [[5, 23], [18, 10], [18, 25], [33, 10], [33, 27], [5, 27]];
 
   export default {
-    mixins: [AnimatedMixin],
+    mixins: [PowerMixin],
     constants: {
       animationTarget: 'backing',
       animationDefinitions: {
@@ -35,45 +34,6 @@
         }]]
       },
       path: Svg.path(backing, {z: true})
-    },
-    data() {
-      return {
-        show: false,
-        active: false
-      }
-    },
-    methods: {
-      appear() {
-        if (!this.show) {
-          this.show = true;
-          // Wait for nextTick so that power-up button shows up
-          this.$nextTick(() => {
-            this.animate('appear', { duration: 3 });
-          });
-          this.active = true;
-        }
-      },
-      onClick() {
-        Sound.playSequence('cowbell', ['A6', 'E7', 'A7'], '16t');
-        this.active = false;
-        this.animate('click', {
-          duration: .5,
-          onComplete: () => {
-            this.show = false;
-            this.$emit('click')
-          }
-        });
-      },
-      onMouseEnter() {
-        if (this.active && this.animated) {
-          this.animated.pause();
-        }
-      },
-      onMouseLeave() {
-        if (this.active && this.animated) {
-          this.animated.play();
-        }
-      }
     }
   }
 </script>

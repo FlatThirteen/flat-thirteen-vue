@@ -1,9 +1,12 @@
 <template lang="pug">
-  .page
-    main-frame
+  transition(name="page")
+    .page(v-if="ready")
+      main-frame
 </template>
 
 <script>
+  import GameAnalytics from '~/common/game-analytics';
+
   import MainFrame from '~/components/main/main-frame.component';
 
   export default {
@@ -12,6 +15,15 @@
     },
     head: {
       title: 'Flat Thirteen | A1'
+    },
+    data() {
+      return {
+        ready: false
+      }
+    },
+    mounted() {
+      GameAnalytics.init();
+      this.ready = true;
     }
   }
 </script>
@@ -20,4 +32,10 @@
   .page
     posit(absolute);
     user-select: none;
+
+  .page-enter-active
+    transition: all 3s;
+
+  .page-enter
+    transform: translateY(-100%);
 </style>

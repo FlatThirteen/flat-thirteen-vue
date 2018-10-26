@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import Combinatorics from 'js-combinatorics';
 
+import GameAnalytics from '~/common/game-analytics';
+
 export const MAX_POINTS = 400;
 
 const TEMPO = 120;
@@ -24,6 +26,7 @@ const MAX_POWER = {
 
 export const state = () => ({
   lesson: {
+    name: null,
     stages: [],
     index: -1,
     tempo: 0,
@@ -61,6 +64,7 @@ export const state = () => ({
 });
 
 export const getters = {
+  lessonName: state => state.lesson.name,
   stageIndex: state => state.lesson.index,
   stageGoal: state => state.lesson.stages[state.lesson.index],
   lessonDone: state => state.lesson.index === state.lesson.stages.length,
@@ -184,6 +188,7 @@ export const getters = {
 export const mutations = {
   resetPower(state, params) {
     state.points = [];
+    state.nextPoints = 0;
     if (params.max) {
       _.forEach(MAX_POWER, (max, power) => {
         state.power[power] = max;
@@ -213,14 +218,17 @@ export const mutations = {
       });
     }
   },
-  newStage(state, stages) {
-    if (stages) {
+  newStage(state, {name, stages = {}, next}) {
+    if (next) {
+      if (state.lesson.index + 1 <= state.lesson.stages.length) {
+        state.lesson.index = state.lesson.index + 1;
+      } else {
+        console.error('Cannot advance stage any more');
+      }
+    } else {
+      state.lesson.name = name;
       state.lesson.stages = stages;
       state.lesson.index = stages.length ? 0 : -1;
-    } else if (state.lesson.index + 1 <= state.lesson.stages.length) {
-      state.lesson.index = state.lesson.index + 1;
-    } else {
-      console.error('Cannot advance stage any more');
     }
     state.lesson.tempo = state.mode.tempo;
     state.lesson.backing = state.mode.backing;
@@ -238,6 +246,7 @@ export const mutations = {
         state.mode[power]++;
       }
       state.weenie[power] = state.power[power];
+      GameAnalytics.power('Next', power, state.power[power]);
     } else {
       console.error('Exceeding max', MAX_POWER[power], 'for', power);
     }
@@ -253,6 +262,9 @@ export const mutations = {
         state.weenie.notes = 4;
       }
       if (power === 'auto' || state.power[power] === level) {
+        if (state.weenie[power] === level) {
+          GameAnalytics.power('Weenie', power, state.weenie[power]);
+        }
         state.weenie[power] = power === 'layout' ? -1 : 0;
       }
     } else {
@@ -273,6 +285,9 @@ export const mutations = {
     }
   },
   weenie(state, {power, level = 0}) {
+    if (state.weenie[power]) {
+      GameAnalytics.power('Weenie', power, state.weenie[power]);
+    }
     state.weenie[power] = level;
   },
   points(state, {pulseBeat, tempo, amount}) {
@@ -299,12 +314,12 @@ export const actions = {
   initialize({commit}, params = {}) {
     commit('resetPower', params);
   },
-  setStages({commit}, stages = []) {
-    commit('newStage', stages);
+  setStages({commit}, params = {}) {
+    commit('newStage', params);
   },
   nextStage({state, commit}) {
     if (state.lesson.index > -1) {
-      commit('newStage');
+      commit('newStage', { next: true });
     }
   },
   next({state, getters, commit}, power) {

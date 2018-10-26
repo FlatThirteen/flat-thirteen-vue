@@ -1,6 +1,6 @@
 <template lang="pug">
   .grid(:class="gridClass")
-    svg(:viewBox="viewBox", :style="svgStyle")
+    svg(:viewBox="viewBox", :style="svgStyle", @mouseleave="unselect()")
       defs
         filter(id="shadow", x="-40%", y="-40%", width="180%", height="180%")
           feOffset(result="offOut", in="SourceGraphic", dx="1", dy="5")

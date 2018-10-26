@@ -1,4 +1,4 @@
-let Tone = {};
+let Tone = { rightNow() {} };
 
 if (process.browser) {
   // Load Tone only in browser

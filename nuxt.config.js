@@ -39,6 +39,7 @@ module.exports = {
   */
   build: {
     vendor: [
+      'gameanalytics',
       'gsap',
       'pixi.js',
       'Tone'

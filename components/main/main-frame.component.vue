@@ -7,7 +7,7 @@
       .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
         stage(:goal="stageGoal", :tempo="tempo", :showNextAuto="showNextAuto",
-            @complete="nextStage($event)")
+            @basePoints="stagePoints = $event", @complete="nextStage($event)")
         .quit.button(@click="clearLesson()") X
     slot(name="help", slot="bottom-left")
       .help
@@ -19,6 +19,7 @@
 
   import Monotonic from '~/common/composer/monotonic';
   import Note from '~/common/core/note.model';
+  import GameAnalytics from '~/common/game-analytics';
 
   import Backing from '~/components/backing.component';
   import Composer from '~/components/composer.component';
@@ -38,6 +39,7 @@
       return {
         pulseBeat: null,
         lessonPoints: 0,
+        stagePoints: 0,
         hint: null,
         transformOrigin: {}
       };
@@ -84,7 +86,9 @@
             notes - requiredBeatTicks.length)
         });
 
-        this.$store.dispatch('progress/setStages', stages);
+        this.$store.dispatch('progress/setStages', { stages,
+          name: this.level.layout + '-' + pulseBeat
+        });
         if (this.level.backing) {
           this.$refs.composer.reset();
         }
@@ -99,6 +103,10 @@
       },
       clearLesson(points) {
         console.assert(this.pulseBeat);
+        console.assert(this.stagePoints);
+        if (!points) {
+          GameAnalytics.fail(this.stagePoints);
+        }
         this.$store.dispatch('progress/addPoints', {
           pulseBeat: this.pulseBeat,
           amount: { base: points }
@@ -157,9 +165,9 @@
   .quit
     posit(fixed, 0, x, x, 0)
     background-color: white;
-    border: solid 1px #DDD;
+    border: solid 1px @color;
     border-radius: 5px;
-    color: #DDD;
+    color: #AAA;
     font-size: 23px;
     padding: 5px;
     margin: 5px;

@@ -2887,6 +2887,11 @@ functional-red-black-tree@^1.0.1:
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
+gameanalytics@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/gameanalytics/-/gameanalytics-3.0.1.tgz#d2bf22ae6791e38532bf2dbb93be9a4c13ca5437"
+  integrity sha512-Ta/4l6o59I3XwKI8v/4EGxDH6cDIQazlj6C7j1CIwbQ+clW4lVb/uWNUt0PjhGOaSzgVDZ0eh0uxfjuVGZ094Q==
+
 gauge@~2.7.3:
   version "2.7.4"
   resolved "https://registry.yarnpkg.com/gauge/-/gauge-2.7.4.tgz#2c03405c7538c39d7eb37b317022e325fb018bf7"

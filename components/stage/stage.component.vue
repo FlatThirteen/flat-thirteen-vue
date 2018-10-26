@@ -33,6 +33,7 @@
   import AnimatedMixin from '~/mixins/animated.mixin';
 
   import BeatTick from '~/common/core/beat-tick.model';
+  import GameAnalytics from '~/common/game-analytics';
   import Tone from '~/common/tone';
 
   import SvgGrid from '~/components/grid/svg-grid.component';
@@ -117,7 +118,7 @@
       this.$bus.$on(BeatTick.TOP, this.topHandler);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
-      this.preGoal = !this.autoLoop;
+      this.start();
       // Wait until children are mounted
       this.$nextTick(() => {
         if (this.$refs.play) {
@@ -136,6 +137,13 @@
       this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
     methods: {
+      start() {
+        this.preGoal = !this.autoLoop;
+        this.points = MAX_POINTS;
+        this.goalCount = 0;
+        GameAnalytics.start(this.lessonName, this.level.backing, this.tempo,
+            this.stageIndex, this.autoLevel);
+      },
       onVisiblityChange() {
         if (document.hidden) {
           this.onAction('standby');
@@ -175,6 +183,7 @@
           } else if (scene === 'victory') {
             this.$store.dispatch('phrase/setVictory', _.floor(this.basePoints / 10));
             this.lastPoints = this.basePoints;
+            GameAnalytics.complete(this.basePoints);
           }
         }
         this.lastBeat = false;
@@ -228,11 +237,6 @@
         } else if (this.autoLoop) {
           this.$refs.loop.pulse();
         }
-      },
-      reset() {
-        this.preGoal = !this.autoLoop;
-        this.points = MAX_POINTS;
-        this.goalCount = 0;
       },
       onAction(scene = this.scene !== 'standby' ? 'standby' : 'goal') {
         if (this.scene === scene || this.nextScene === scene) {
@@ -371,6 +375,7 @@
         autoLevel: 'progress/autoLevel',
         showLoop: 'progress/showLoop',
         stageIndex: 'progress/stageIndex',
+        lessonName: 'progress/lessonName',
         lessonDone: 'progress/lessonDone',
         totalPoints: 'progress/totalPoints',
         playing: 'transport/playing',
@@ -398,7 +403,7 @@
         }
       },
       stageIndex() {
-        this.reset();
+        this.start();
         this.animate('next');
       },
       paused(paused) {

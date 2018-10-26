@@ -1,6 +1,6 @@
 <template lang="pug">
-  corner-frame(:totalPoints="totalPoints", :totalStars="totalStars")
-    curriculum(@mousedown="onLesson($event)")
+  corner-frame(:totalPoints="totalPoints", :totalStars="totalStars", @hint="hint = $event")
+    curriculum(:hint="hint", @mousedown="onLesson($event)")
     .points(slot="bottom-left")
       span(@mouseover="showNextAuto()", @click="max()") +
       input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
@@ -29,6 +29,7 @@
     layout: 'debug',
     data() {
       return {
+        hint: null,
         addPoints: MAX_POINTS
       };
     },

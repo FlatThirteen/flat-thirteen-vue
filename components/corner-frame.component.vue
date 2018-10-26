@@ -102,12 +102,12 @@
       },
       showNextBacking(showNextBacking) {
         if (showNextBacking) {
-          this.$refs.backing.appear();
+          this.$refs.backing.appear(this.next.backing);
         }
       },
       showNextTempo(showNextTempo) {
         if (showNextTempo) {
-          this.$refs.tempo.appear();
+          this.$refs.tempo.appear(this.next.tempo);
         }
       },
       totalPoints(totalPoints) {

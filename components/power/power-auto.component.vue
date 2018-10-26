@@ -5,12 +5,13 @@
 </template>
 
 <script>
-  import AnimatedMixin from '~/mixins/animated.mixin';
+  import PowerMixin from './power.mixin';
 
+  import GameAnalytics from '~/common/game-analytics';
   import Sound from '~/common/sound/sound';
 
   export default {
-    mixins: [AnimatedMixin],
+    mixins: [PowerMixin],
     constants: {
       animationTarget: 'auto',
       animationDefinitions: {
@@ -57,12 +58,6 @@
         ['55px', '57px', '59px']
       ]
     },
-    data() {
-      return {
-        show: 0,
-        active: false
-      }
-    },
     methods: {
       appear(level, {duration = 3, repeat = 2, repeatDelay = 1} = {}) {
         if (!this.show) {
@@ -81,6 +76,7 @@
               }
             });
             this.active = true;
+            GameAnalytics.power('Show', 'auto', level);
           });
         }
       },
@@ -100,16 +96,6 @@
             this.$emit('click')
           }
         });
-      },
-      onMouseEnter() {
-        if (this.active && this.animated) {
-          this.animated.pause();
-        }
-      },
-      onMouseLeave() {
-        if (this.active && this.animated) {
-          this.animated.play();
-        }
       }
     },
     watch: {

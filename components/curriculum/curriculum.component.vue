@@ -80,11 +80,11 @@
       };
     },
     mounted() {
-      if (this.next.layout && this.showNextLayout) {
-        this.$refs.layout.appear();
+      if (this.showNextLayout) {
+        this.$refs.layout.appear(this.next.layout);
       }
-      if (this.next.notes && this.showNextNotes) {
-        this.$refs.notes.appear();
+      if (this.showNextNotes) {
+        this.$refs.notes.appear(this.next.notes);
       }
       this.$nextTick(() => {
         // Wait for reset to update layout
@@ -206,12 +206,12 @@
       },
       showNextLayout(showNextLayout) {
         if (showNextLayout) {
-          this.$refs.layout.appear();
+          this.$refs.layout.appear(this.next.layout);
         }
       },
       showNextNotes(showNextNotes) {
         if (showNextNotes) {
-          this.$nextTick(() => this.$refs.notes.appear());
+          this.$nextTick(() => this.$refs.notes.appear(this.next.notes));
         }
       },
       'level.backing'() {

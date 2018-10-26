@@ -2,7 +2,7 @@
   .container
     backing
     stage(ref="stage", :goal="goal", :showNextAuto="true", :tempo="tempo",
-        @basePoints="basePoints = $event", @complete="$refs.stage.reset()")
+        @basePoints="basePoints = $event", @complete="$refs.stage.start()")
     .top
       .backing.left
         backing-button.button(:backing="hasBacking ? 'bass' : 'none'",
@@ -58,7 +58,7 @@
       this.setAuto(false);
     },
     mounted() {
-      this.$refs.stage.reset();
+      this.$refs.stage.start();
     },
     methods: {
       setAuto(next) {
