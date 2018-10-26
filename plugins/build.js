@@ -5,6 +5,7 @@ const build = {};
 build.install = function (Vue) {
   if (process.browser) {
     Vue.axios.get('/BUILD').then((response) => {
+      console.log('BUILD response:', response.data);
       Vue.prototype.$build = response.data.trim();
     }).catch((error) => {
       Vue.prototype.$build = 'BUILD ' + error.message
