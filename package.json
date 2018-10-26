@@ -16,12 +16,14 @@
     "deploy": "push-dir --dir=dist --branch=gh-pages --cleanup"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "gameanalytics": "^3.0.1",
     "gsap": "^2.0.1",
     "js-combinatorics": "^0.5.3",
     "nuxt": "^1.0.0",
     "pixi.js": "^4.8.0",
     "tone": "0.11.11",
+    "vue-axios": "^2.1.4",
     "vue-constants": "^1.0.3"
   },
   "devDependencies": {

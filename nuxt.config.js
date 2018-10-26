@@ -25,6 +25,8 @@ module.exports = {
   */
   loading: { color: '#008FFF' },
   plugins: [
+    '~/plugins/axios.js',
+    '~/plugins/build.js',
     '~/plugins/constants.js',
     '~/plugins/filters.js',
     '~/plugins/event-bus.js',
@@ -39,10 +41,12 @@ module.exports = {
   */
   build: {
     vendor: [
+      'axios',
       'gameanalytics',
       'gsap',
       'pixi.js',
-      'Tone'
+      'Tone',
+      'vue-axios'
     ],
     plugins: [
       new webpack.ProvidePlugin({

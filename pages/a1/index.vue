@@ -22,7 +22,7 @@
       }
     },
     mounted() {
-      GameAnalytics.init();
+      GameAnalytics.init(this.$build);
       this.ready = true;
     }
   }

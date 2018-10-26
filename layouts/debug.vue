@@ -2,6 +2,7 @@
   .page-frame
     nuxt.page
     .menu
+      .build {{ $build }}
       nuxt-link(v-for="(link, label) in views", :to="link", :key="link") {{ label }}
 </template>
 
@@ -43,4 +44,9 @@
 
       &.nuxt-link-active
         font-weight: 800;
+
+  .build
+    posit(fixed, 2px, 2px, x, x);
+    color: white;
+    font-size: 14px;
 </style>

@@ -6,14 +6,13 @@ let GameAnalytics = {
   isInitialized() {
     return this.GA && this.GA.state.GAState.isInitialized();
   },
-  init() {
+  init(build) {
     this.GA = require('gameanalytics');
     this.STATUS = this.GA.EGAProgressionStatus;
     if (!this.isInitialized()) {
-      // TODO: Set from environment/BUILD
-      this.GA.GameAnalytics.setEnabledInfoLog(false);
-      this.GA.GameAnalytics.setEnabledVerboseLog(false);
-      this.GA.GameAnalytics.configureBuild('test');
+      this.GA.GameAnalytics.setEnabledInfoLog(build === 'local');
+      this.GA.GameAnalytics.setEnabledVerboseLog(build === 'local');
+      this.GA.GameAnalytics.configureBuild(build);
       this.GA.GameAnalytics.initialize('70e722d79c31e00cefa6ddbd6b76c083',
           _.join(_.map([2486484157, 3889590087, 3576893628, 1290759513, 553095923], n => n.toString(16)), ''));
     }
