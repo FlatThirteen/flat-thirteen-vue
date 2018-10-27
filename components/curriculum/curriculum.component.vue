@@ -176,7 +176,9 @@
       },
       showNextNotes() {
         return !this.clicked && this.next.notes &&  this.totalPoints >= this.nextPoints &&
-            this.totalPoints >= (this.next.notes - 4) * 600;
+            this.totalPoints >= (this.next.notes - 4) * 600 &&
+            _.some(_.last(_.values(this.pulseBeatGroups)),
+                pulseBeat => !_.isEmpty(this.displayPoints[pulseBeat]));
       },
       ...mapGetters({
         power: 'progress/power',
