@@ -1,5 +1,5 @@
 <template lang="pug">
-  .curriculum-container
+  .curriculum-container(ref="container")
     .main-content(:class="scaleClass")
       .settings
         .layouts
@@ -46,7 +46,8 @@
       'power-notes': PowerNotes,
     },
     props: {
-      hint: String
+      hint: String,
+      scrollTop: Number
     },
     constants: {
       animationTarget: 'lessons',
@@ -80,6 +81,7 @@
       };
     },
     mounted() {
+      this.$refs.container.scrollTop = this.scrollTop;
       if (this.showNextLayout) {
         this.$refs.layout.appear(this.next.layout);
       }
@@ -145,11 +147,10 @@
       },
       onLesson(pulseBeat, {x, y}) {
         this.$store.dispatch('progress/weenie', { power: 'notes' });
-        let scaleRatio = this.scaleClass === 'first' ? 2 : this.scaleClass === 'second' ? 1.5 : 1;
-        let halfWidth = this.$refs.lessons.offsetWidth / 2;
         this.$emit('click', { pulseBeat,
-          x: (x - halfWidth) * scaleRatio + halfWidth,
-          y: y * scaleRatio
+          x: x * (this.scaleClass === 'second' ? 1.5 : 1),
+          y: y * (this.scaleClass === 'first' ? 2 : this.scaleClass === 'second' ? 1.5 : 1),
+          scrollTop: this.$refs.container.scrollTop
         });
       },
       onNext(power) {
@@ -312,7 +313,7 @@
       transform: scale(0);
 
   .main-content, .bottom
-    transition: transform 500ms ease-in-out;
+    transition: all 500ms ease-in-out;
     transition-delay: 250ms;
 
   .initial
@@ -323,5 +324,6 @@
     transition-delay: 0;
 
   .second
+    margin: 0 15%;
     transform: scale(1.5);
 </style>

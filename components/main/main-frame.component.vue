@@ -2,7 +2,8 @@
   corner-frame(:totalPoints="points", :totalStars="totalStars", @hint="hint = $event")
     composer(ref="composer")
     transition(name="lesson-container")
-      curriculum(v-if="!stageGoal", key="choose", :hint="hint", @click="onLesson($event)")
+      curriculum(v-if="!stageGoal", key="choose", :scrollTop="scrollTop", :hint="hint",
+          @click="onLesson($event)")
         slot(name="curriculum")
       .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
@@ -41,6 +42,7 @@
         lessonPoints: 0,
         stagePoints: 0,
         hint: null,
+        scrollTop: 0,
         transformOrigin: {}
       };
     },
@@ -48,9 +50,10 @@
       this.$store.dispatch('progress/setStages');
     },
     methods: {
-      onLesson({pulseBeat, x, y}) {
+      onLesson({pulseBeat, x, y, scrollTop}) {
+        this.scrollTop = scrollTop;
         this.transformOrigin = {
-          transformOrigin: x + 'px ' + y + 'px'
+          transformOrigin: x + 'px ' + (y - scrollTop) + 'px'
         };
         this.$store.dispatch('player/update', { pulseBeat,
           layout: this.layout,

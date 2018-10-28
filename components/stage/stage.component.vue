@@ -543,6 +543,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow: hidden;
 
   .top-container
     height: 10vh;

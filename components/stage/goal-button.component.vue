@@ -38,10 +38,10 @@
           transform: 'translateY(-1vh)'
         }], [.2, {
           transform: 'translateY(0vh)'
-        }], [.2, {
-          transform: 'translateY(0vh)'
-        }], [.2, {
-          transform: 'translateY(12vh)'
+        }], [.3, {
+          transform: 'translateY(15vh)'
+        }], [.3, {
+          transform: 'scale(0)'
         }]],
         appear: [[0, {
           transform: 'translateY(5vh) scale(0)'
