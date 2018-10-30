@@ -1,7 +1,7 @@
 <template lang="pug">
   .note-count(v-if="goalNoteCount")
     .note
-    .info(:class="noteCountClass") {{ noteCount }}
+    .info(ref="count", :class="noteCountClass") {{ noteCount }}
     .info(:class="goalCountClass") /
     .info(:class="goalCountClass") {{ goalNoteCount }}
 
@@ -10,11 +10,28 @@
 <script>
   import { mapGetters } from 'vuex';
 
+  import AnimatedMixin from '~/mixins/animated.mixin';
+
   import Sound from '~/common/sound/sound';
 
   export default {
+    mixins: [AnimatedMixin],
     props: {
       scene: String
+    },
+    constants: {
+      animationTarget: 'count',
+      animationDefinitions: {
+        boing: [[.4, {
+          transform: 'scale(.8, 1.2)'
+        }], [.2, {
+          transform: 'scale(1.2, .8)'
+        }], [.3, {
+          transform: 'scale(.9, 1.1)'
+        }], [.3, {
+          transform: 'scale(1, 1)'
+        }]]
+      }
     },
     computed: {
       noteCountClass() {
@@ -40,6 +57,7 @@
     },
     watch: {
       noteCount(noteCount, oldNoteCount) {
+        this.animate('boing');
         if (oldNoteCount === this.goalNoteCount && noteCount > this.goalNoteCount) {
           Sound.playSequence('cowbell', ['F0', 'E5', 'F4'], '32n');
         }
