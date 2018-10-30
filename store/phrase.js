@@ -17,9 +17,6 @@ export const getters = {
   goalNoteCount: state => _.flatten(_.values(state.live.goal)).length,
   hasBacking: state => !!_.flatten(_.values(state.live.backing)).length,
   getNotes: state => (name, beatTick) => state.live[name][beatTick],
-  numNotes: state => (name, beatTick) => beatTick === undefined ?
-      _.flatten(_.values(state.live[name])).length :
-      state.live[name][beatTick].length,
   asArray: state => name => _.chain(state.live[name]).toPairs().sortBy([0]).
       map((pair) => _.replace(_.toString(pair), ',', ': ')).value(),
   asString: state => name => _.toString(_.toPairs(state.live[name])),
