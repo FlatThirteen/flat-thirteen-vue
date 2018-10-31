@@ -7,7 +7,7 @@
         .controls.whole
           loop-button(ref="loop", @click="$store.dispatch('progress/auto')",
               :show="showLoop", :off="!autoLoop", :repeat="autoRepeat",
-              :weenie="!!weenie.auto && (loopCount > 2 * weenie.auto)")
+              :assist="!!weenie.auto && scene === 'goal' && loopCount > 2 * weenie.auto")
           power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
           goal-button(ref="goal", @click="onAction('goal')",
               :penalty="!preGoal", :weenie="stageWeenie === 'goal'")
@@ -228,7 +228,7 @@
           this.$refs.loop.animate('bumper', { unless: 'drop' })
         }
       },
-      beatHandler({time, lastBeat, count}) {
+      beatHandler({time, beat, lastBeat, count}) {
         if (this.lastBeat !== lastBeat) {
           Tone.Draw.schedule(() => {
             if (this.playing) {
@@ -239,7 +239,7 @@
         if (this.nextScene === 'playback') {
           this.$refs.play.count(count);
         } else if (this.autoLoop) {
-          this.$refs.loop.pulse();
+          this.$refs.loop.pulse(beat);
         }
       },
       onAction(scene = this.scene !== 'standby' ? 'standby' : 'goal') {

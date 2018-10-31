@@ -1,5 +1,5 @@
 <template lang="pug">
-  .loop(ref="loop", @click="show && $emit('click')", :class="{button: show, off, repeat, weenie}")
+  .loop(ref="loop", @click="show && $emit('click')", :class="{button: show, off, repeat, assist}")
 </template>
 
 <script>
@@ -11,17 +11,21 @@
       show: Boolean,
       off: Boolean,
       repeat: Boolean,
-      weenie: Boolean
+      assist: Boolean
     },
     constants: {
       animationTarget: 'loop',
       animationDefinitions: {
         pulse: [[.2, {
-          transform: 'scale(1.05)'
+          transform: 'scale(1.05)',
+          outlineOffset: '13px'
         }], [.6, {
-          transform: 'scale(0.95)'
+          transform: 'scale(0.95)',
+          outlineOffset: '8px'
         }], [.2, {
-          transform: 'scale(1)'
+          transform: 'scale(1)',
+          outlineOffset: '10px',
+          outlineWidth: 0
         }]],
         bumper: [[0, {
           transform: 'translateX(0)'
@@ -52,18 +56,15 @@
       }
     },
     methods: {
-      pulse() {
-        if (!this.weenie) {
-          this.animate('pulse', { unless: 'drop', skip: true });
-        }
+      pulse(beat) {
+        this.set({ outlineWidth: (3 + beat) + 'px'});
+        this.animate('pulse', { unless: 'drop', skip: true });
       }
     }
   }
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-  @import "~assets/stylus/weenie.styl"
-
   .loop
     display: flex;
     flex-direction: column;
@@ -94,6 +95,9 @@
 
         &:hover:before, &:hover:after
           border-color: faint-grey - 20%;
+
+      &.assist
+        outline: solid alpha(primary-green, 0.3);
 
     &.repeat:before, &.repeat:after
       background-color: primary-blue;
