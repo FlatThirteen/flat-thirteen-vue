@@ -29,19 +29,19 @@ export class CowbellSound {
     this.click.chain(Tone.Master);
   }
 
-  play(time, params = {pitch: 'A5', variation: 'normal'}) {
-    switch (params.variation) {
+  play(time, {pitch = 'A5', variation = 'normal', velocity = 1} = {}) {
+    switch (variation) {
       case 'heavy':
-        this.hit.triggerAttackRelease(0.5, time, 1.0);
-        this.click.triggerAttackRelease(params.pitch, '16n', time);
+        this.hit.triggerAttackRelease(0.5, time, velocity);
+        this.click.triggerAttackRelease(pitch, '16n', time, velocity);
         break;
       case 'light':
-        this.hit.triggerAttackRelease(0.5, time, 0.50);
-        this.click.triggerAttackRelease(params.pitch, '16n', time);
+        this.hit.triggerAttackRelease(0.5, time, .5 * velocity);
+        this.click.triggerAttackRelease(pitch, '16n', time, .7 * velocity);
         break;
       default:
-        this.hit.triggerAttackRelease(0.5, time, 1.0);
-        this.click.triggerAttackRelease(params.pitch, '16n', time, 0.8);
+        this.hit.triggerAttackRelease(0.5, time, velocity);
+        this.click.triggerAttackRelease(pitch, '16n', time, .8 * velocity);
     }
   }
 

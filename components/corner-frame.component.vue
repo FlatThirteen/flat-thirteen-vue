@@ -94,7 +94,7 @@
     },
     watch: {
       backing(backing) {
-        Sound.playSequence('synth', backing === 'bass' ? ['A1', 'A2'] : ['A1'], '32n', undefined, 0.5);
+        Sound.playSequence('synth', backing === 'bass' ? ['A1', 'A2'] : ['A1'], '32n', 0.5);
       },
       tempo(tempo, oldTempo) {
         Sound.click.play('+0', { variation: tempo > oldTempo ? 'normal' : 'heavy' });
@@ -108,6 +108,11 @@
       showNextTempo(showNextTempo) {
         if (showNextTempo) {
           this.$refs.tempo.appear(this.next.tempo);
+        }
+      },
+      stageGoal(stageGoal) {
+        if (stageGoal) {
+          this.$refs.tempo.disappear();
         }
       },
       totalPoints(totalPoints) {

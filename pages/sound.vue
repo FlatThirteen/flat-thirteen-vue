@@ -1,34 +1,27 @@
 <template lang="pug">
   .content(@keyup="key(event)")
-    h3
-      .button(@mousedown="onSound('kick')") {{ kickKey }}
-      | Kick
-    h3
-      .button(@mousedown="onSound('snare')") {{ snareKey }}
-      | Snare
-    h3
-      .button(@mousedown="onSound('click')") {{ clickKey }}
-      | Click
-    h3
-      .button(@mousedown="onSound('cowbell')") {{ showKey('cowbell') }}
-      | Cowbell!
-    h3
-      .button(@mousedown="onSound('synth')") {{ showKey('synth') }}
-      | Synth
-    .active(v-if="active.length") {{ active }}
+    .sounds
+      .sound(v-for="soundName in soundNames")
+        .button(@mousedown="onSound(soundName)", v-html="soundButtonLabels[soundName]")
+        .name {{ soundName }}
+      .active(v-if="active.length") {{ active.join(',') }}
+    .sequences
+      .sequence(v-for="(name, i) in fx")
+        .button(@click="onEffect(name)") {{ percussionMode ? i : '&nbsp;' }}
+        .name {{ name }}
 </template>
 
 <script>
   import Sound from '~/common/sound/sound';
-
-  let globalKeyDown;
-  let globalKeyUp;
 
   export default {
     head: {
       title: 'Flat Thirteen | Sound'
     },
     layout: 'debug',
+    constants: {
+      soundNames: ['kick', 'snare', 'click', 'cowbell', 'synth']
+    },
     data() {
       return {
         lastSound: null,
@@ -38,18 +31,16 @@
         octaveShift: 0
       };
     },
-    mounted: function() {
-      globalKeyDown = (e) => this.keyDown(e);
-      globalKeyUp = (e) => this.keyUp(e);
-      window.addEventListener('keydown', globalKeyDown);
-      window.addEventListener('keyup', globalKeyUp);
+    mounted() {
+      window.addEventListener('keydown', this.onKeyDown);
+      window.addEventListener('keyup', this.onKeyUp);
     },
-    destroyed: function() {
-      window.removeEventListener('keydown', globalKeyDown);
-      window.removeEventListener('keyup', globalKeyUp);
+    destroyed() {
+      window.removeEventListener('keydown', this.onKeyDown);
+      window.removeEventListener('keyup', this.onKeyUp);
     },
     methods: {
-      keyDown(event) {
+      onKeyDown(event) {
         if (this.percussionMode) {
           this.lastSoundName = {
             q: 'kick',
@@ -59,6 +50,8 @@
           this.lastSound = Sound[this.lastSoundName];
           if (this.lastSound) {
             this.lastSound.play();
+          } else if (this.fx[event.key]) {
+            this.onEffect(this.fx[event.key]);
           }
           if (event.key === 'ArrowDown') {
             this.onSound('cowbell', false);
@@ -89,7 +82,7 @@
           }
         }
       },
-      keyUp(event) {
+      onKeyUp(event) {
         let pitch = getPitch(event.key, this.octaveShift);
         if (this.lastSound && this.lastSound.release && pitch) {
           delete this.activeSounds[pitch];
@@ -108,16 +101,11 @@
           if (play) {
             if (this.lastSound) {
               this.lastSound.play();
-              console.log('Play sound:', soundName);
             } else {
               console.log('Play ' + soundName + ' not supported');
             }
           }
         });
-      },
-      showKey(soundName) {
-        return this.lastSoundName === soundName && this.lastSound.attack ?
-          this.octaveShift : '';
       },
       releaseAll(shift) {
         let activeSounds = {};
@@ -133,26 +121,28 @@
         }
         this.activeSounds = activeSounds;
         this.active = _.keys(this.activeSounds);
+      },
+      onEffect(name) {
+        Sound.effect(name);
+        this.lastSound = null;
+        this.lastSoundName = null;
       }
     },
     computed: {
+      fx() {
+        return _.keys(Sound.FX);
+      },
       percussionMode() {
         return !this.lastSound || !this.lastSound.attack;
       },
-      kickKey() {
-        return this.percussionMode ? 'q' : '';
-      },
-      snareKey() {
-        return this.percussionMode ? 'a' : '';
-      },
-      clickKey() {
-        return this.percussionMode ? 'z' : '';
-      },
-      cowbellKey() {
-        return this.lastSound === 'cowbell' ? this.octaveShift : '';
-      },
-      synthKey() {
-        return this.lastSound === 'synth' ? this.octaveShift : '';
+      soundButtonLabels() {
+        return {
+          kick: this.percussionMode ? 'q' : '&nbsp;',
+          snare: this.percussionMode ? 'a' : '&nbsp;',
+          click: this.percussionMode ? 'z' : '&nbsp;',
+          cowbell: this.lastSoundName === 'cowbell' ? this.octaveShift : '&nbsp;',
+          synth: this.lastSoundName === 'synth' ? this.octaveShift : '&nbsp;'
+        }
       }
     }
   }
@@ -219,20 +209,35 @@
     margin: 10px 0;
 
   .content
+    display: grid;
+    grid-template-columns: auto auto;
     margin: 100px content-side-margin 50px;
-    position: relative;
+    font-size: 20px;
 
-    .button
-      border-radius: 50%;
-      position: absolute;
-      padding: size;
-      height: 5 * size;
-      width: @height;
-      margin-left: -8 * size;
-      background-color: main-blue;
-      font-size: 4 * size;
-      line-height: 5 * size;
+  .name
+    display: inline-block;
+    font-size: 4 * size;
 
-      &:hover
-        margin-top: -1 button-shadow-size;
+  .button
+    background-color: main-blue;
+    vertical-align: baseline;
+
+  .sound .button
+    border-radius: 50%;
+    padding: size;
+    height: 5 * size;
+    width: @height;
+    margin: size;
+    font-size: 4 * size;
+    line-height: 5 * size;
+
+  .sequences
+    display: flex;
+    flex-direction: column;
+
+  .sequence .button
+    border-radius: 10px;
+    font-size: 3 * size;
+    margin: 10px;
+    padding: .5 * size 2 * size;
 </style>

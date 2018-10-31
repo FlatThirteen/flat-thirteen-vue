@@ -59,7 +59,7 @@
       noteCount(noteCount, oldNoteCount) {
         this.animate('boing');
         if (oldNoteCount === this.goalNoteCount && noteCount > this.goalNoteCount) {
-          Sound.playSequence('cowbell', ['F0', 'E5', 'F4'], '32n');
+          Sound.effect('exceeded');
         }
       },
     }

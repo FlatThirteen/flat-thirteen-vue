@@ -28,7 +28,8 @@
           transform: 'scale(2.5) rotate(205deg)',
           opacity: 0
         }]]
-      }
+      },
+      soundEffectDelay: 1200
     }
   }
 </script>

@@ -45,7 +45,7 @@
           this.buffer.push(amount);
         } else if (amount) {
           if (!silent) {
-            Sound.playSequence('cowbell', ['F4', 'D4'], '32n');
+            Sound.effect('penalty');
           }
           this.penalty = amount;
           this.animate('appear', {
@@ -58,7 +58,7 @@
             }
           });
         } else if (noisy) {
-          Sound.playSequence('cowbell', ['D4', 'D4'], '32n');
+          Sound.effect('wrong');
         }
       }
     }

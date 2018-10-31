@@ -2,7 +2,6 @@
   .power.button(ref="notes", v-if="show", @click="onClick()", :class="{active}",
       @mouseenter="onMouseEnter()", @mouseleave="onMouseLeave()")
     .note
-
 </template>
 
 <script>
@@ -29,7 +28,8 @@
           transform: 'scale(2.5) rotate(205deg)',
           opacity: 0
         }]]
-      }
+      },
+      soundEffectDelay: 1500
     }
   }
 </script>

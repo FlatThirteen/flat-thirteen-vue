@@ -77,17 +77,12 @@
             });
             this.active = true;
             GameAnalytics.power('Show', 'auto', level);
+            Sound.effect('auto');
           });
         }
       },
-      fade() {
-        if (this.active) {
-          this.active = false;
-          this.animate('disappear');
-        }
-      },
       onClick() {
-        Sound.playSequence('cowbell', ['A6', 'E7', 'A7'], '16t');
+        Sound.effect('next');
         this.active = false;
         this.animate(this.show === 1 ? 'center' : 'right', {
           duration: .5,

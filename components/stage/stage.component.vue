@@ -111,6 +111,7 @@
         stageWeenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
         lastPoints: 0,
+        consecutiveMaxPoints: false,
         pointsOverride: 0
       }
     },
@@ -184,6 +185,7 @@
             this.$store.commit('phrase/clear', { name: 'playback' });
           } else if (scene === 'victory') {
             this.$store.dispatch('phrase/setVictory', _.floor(this.basePoints / 10));
+            this.consecutiveMaxPoints = this.lastPoints === MAX_POINTS && this.basePoints === MAX_POINTS;
             this.lastPoints = this.basePoints;
             GameAnalytics.complete(this.basePoints);
           }
@@ -427,14 +429,13 @@
         this.$refs.play.set({ opacity: preGoal ? 0 : 1 });
       },
       scene(scene, oldScene) {
-        if (this.goalCount && this.showNextAuto && this.next.auto &&
-            this.points === MAX_POINTS) {
+        if (this.goalCount && this.showNextAuto && this.next.auto) {
           if ((scene === 'standby' || scene === 'count' && this.nextScene === 'goal') &&
-              this.lastPoints === MAX_POINTS) {
+            this.consecutiveMaxPoints) {
             this.$refs.auto.appear(this.next.auto, { duration: 2 + this.totalPoints / 1000 });
-            this.lastPoints = 0;
-          } else if (!this.autoLoop || scene === 'playback') {
-            this.$refs.auto.fade();
+            this.consecutiveMaxPoints = false;
+          } else if (!this.autoLoop) {
+            this.$refs.auto.disappear();
           }
         }
         if (scene === 'standby') {
@@ -472,6 +473,9 @@
       },
       nextScene(nextScene) {
         if (nextScene === 'playback') {
+          if (this.goalCount && this.showNextAuto && this.next.auto) {
+            this.$refs.auto.disappear();
+          }
           if (this.scene !== 'count') {
             this.$refs.play.animate('enter');
           }
@@ -521,6 +525,8 @@
         if (this.nextScene !== 'playback') {
           this.nextScene = this.getNext(this.scene);
         }
+        this.lastPoints = 0;
+        this.consecutiveMaxPoints = false;
       },
       'penalty.backing'(level, oldLevel) {
         if (level < oldLevel) {

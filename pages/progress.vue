@@ -36,7 +36,7 @@
     methods: {
       max() {
         this.$store.dispatch('progress/initialize', { max: !this.power.notes});
-        this.$refs.auto.fade();
+        this.$refs.auto.disappear();
       },
       onLesson(pulseBeat) {
         if (this.invalidPoints) {

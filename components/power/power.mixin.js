@@ -19,12 +19,22 @@ export default {
         this.$nextTick(() => {
           this.animate('appear', { duration: 3 });
           GameAnalytics.power('Show', this.animationTarget, level);
+          setTimeout(() => {
+            Sound.effect(this.animationTarget);
+          }, this.soundEffectDelay || 0);
         });
         this.active = true;
       }
     },
+    disappear() {
+      if (this.active) {
+        this.active = false;
+        this.show = 0;
+        this.animate('disappear');
+      }
+    },
     onClick() {
-      Sound.playSequence('cowbell', ['A6', 'E7', 'A7'], '16t');
+      Sound.effect('next');
       this.active = false;
       this.animate('click', {
         duration: .5,

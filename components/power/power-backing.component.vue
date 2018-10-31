@@ -21,7 +21,7 @@
           marginLeft: '-70px'
         }], [1, {
           marginLeft: 0,
-          delay: 1
+          delay: 1.8
         }]],
         click: [[.5, {
           marginLeft: '10px'
@@ -33,7 +33,8 @@
           opacity: 0
         }]]
       },
-      path: Svg.path(backing, {z: true})
+      path: Svg.path(backing, {z: true}),
+      soundEffectDelay: 2000
     }
   }
 </script>

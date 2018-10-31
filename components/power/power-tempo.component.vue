@@ -21,7 +21,7 @@
           marginTop: '-70px'
         }], [1, {
           marginTop: '3px',
-          delay: 1
+          delay: .5
         }]],
         click: [[.5, {
           marginTop: '35px'
@@ -33,7 +33,8 @@
           opacity: 0
         }]]
       },
-      path: Svg.path(Svg.mirror(halfBacking, [20, 0]), {z: true})
+      path: Svg.path(Svg.mirror(halfBacking, [20, 0]), {z: true}),
+      soundEffectDelay: 900
     }
   }
 </script>
