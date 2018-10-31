@@ -10,7 +10,7 @@ let Sound = {
     auto: 'cowbell:32n:C#6,E6,E6,A6',
     layout: 'cowbell:32n:D6,F#6,Eb6,G6,E6,G#6,F6,A6',
     notes: 'cowbell:32n:F#6,G6,G#6,A6',
-    backing: 'cowbell:16t:B5,A6,G#6,B5,G#6,B5,G#6,A6',
+    backing: 'cowbell:16t:B5,A6,G#6,E6,G#6,E6,G#6,A6',
     tempo: 'cowbell:16t:A5,D6,F#6,D6,E6,A6',
     exceeded: 'cowbell:32n:,,E5,F4',
     penalty: 'cowbell:32n:F4,D4',

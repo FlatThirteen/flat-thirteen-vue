@@ -209,14 +209,13 @@
     margin: 10px 0;
 
   .content
-    display: grid;
-    grid-template-columns: auto auto;
-    margin: 100px content-side-margin 50px;
-    font-size: 20px;
+    display: flex;
+    margin: 60px 20px 10px;
 
   .name
     display: inline-block;
-    font-size: 4 * size;
+    font-size: 5vw;
+    margin-right: 4vw;
 
   .button
     background-color: main-blue;
@@ -233,7 +232,8 @@
 
   .sequences
     display: flex;
-    flex-direction: column;
+    flex-flow: column wrap;
+    flex: 2
 
   .sequence .button
     border-radius: 10px;
