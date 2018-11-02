@@ -9,9 +9,9 @@ const TEMPO = 120;
 const INCREMENT = 10;
 
 const LAYOUTS = [
-  [{ soundByKey: { a: 'kick' } }],
-  [{ soundByKey: { q: 'snare', a: 'kick' } }],
-  [{ soundByKey: { q: 'snare' } }, { soundByKey: { a: 'kick' } }]
+  [{ noteByKey: { a: 'kick' } }],
+  [{ noteByKey: { q: 'snare', a: 'kick' } }],
+  [{ noteByKey: { q: 'snare' } }, { noteByKey: { a: 'kick' } }]
 ];
 
 const BACKINGS = ['none', 'bass'];

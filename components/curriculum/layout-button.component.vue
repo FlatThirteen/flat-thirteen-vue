@@ -2,13 +2,13 @@
   .layout(:class="{selected}")
     .button(@click="$emit('click')", :class="{weenie, disabled: selected}")
       .group(v-for="(surface, index) in layout")
-        .block(v-for="(soundName, key) in surface.soundByKey", :class="{selected}",
-            @click="onBlock(index, key, soundName)")
+        .block(v-for="(note, key) in surface.noteByKey", :class="{selected}",
+            @click="onBlock(index, key, note)")
           .note(:class="{on:selected && on[index] === key}")
 </template>
 
 <script>
-
+  import Note from '~/common/core/note.model';
   import Sound from '~/common/sound/sound';
 
   export default {
@@ -24,7 +24,7 @@
       };
     },
     methods: {
-      onBlock(index, key, soundName) {
+      onBlock(index, key, note) {
         if (this.initial) {
           Sound.resume().then(() => {
             this.initial = false;
@@ -32,7 +32,7 @@
         }
         let on = this.on[index] === key ? '' : key;
         if (on) {
-          Sound[soundName].play();
+          Note.from(note).play();
         }
         this.$set(this.on, index, on);
       }

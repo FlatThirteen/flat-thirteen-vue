@@ -47,7 +47,7 @@
       return {
         pulseBeat: '1111',
         layout: [
-          { soundByKey: { q: 'snare', a: 'kick' } },
+          { noteByKey: { q: 'snare', a: 'kick' } },
         ],
         tempo: 120,
         basePoints: 0,

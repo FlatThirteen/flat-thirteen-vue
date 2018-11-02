@@ -1,26 +1,26 @@
 <template lang="pug">
   .grid(:class="gridClass", @mouseleave="unselect()")
     .strip-container
-      .strip(v-for="key in keys")
+      .strip(v-for="note in supportedNotes")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
           .pulse(v-for="cursor in cursorsByBeat[beat]", :class="pulseClass[cursor]")
-            .fx.note(v-if="isOn[cursor][key]",
-                :class="[live[cursor][key], soundName[key], noteName[pulses]]")
+            .fx.note(v-if="noteByCursor[cursor] === note",
+                :class="[live[cursor][note], note, noteName[pulses]]")
     .overlay
-      .strip(v-for="key in keys")
+      .strip(v-for="note in supportedNotes")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
           .pulse(v-for="cursor in cursorsByBeat[beat]", :class="pulseClass[cursor]")
-            .actual.note(v-if="isOn[cursor][key]",
-                :class="[live[cursor][key], soundName[key], noteName[pulses]]")
+            .actual.note(v-if="noteByCursor[cursor] === note",
+                :class="[live[cursor][note], note, noteName[pulses]]")
     slot
     .overlay
-      .strip(v-for="key in keys")
+      .strip(v-for="note in supportedNotes")
         .beat(v-for="(pulses, beat) in pulsesByBeat", :class="beatClass[beat]")
           .pulse(v-for="cursor in cursorsByBeat[beat]", :class="pulseClass[cursor]",
               @mouseenter="select(cursor)")
             .controls
-              .note(@click="onNote(key, cursor)",
-                  :class="[noteName[pulses], isOn[cursor][key] && 'on']")
+              .note(@click="onNote(note, cursor)",
+                  :class="[noteName[pulses], noteByCursor[cursor] === note && 'on']")
     .glass.overlay(v-if="scene === 'victory'")
 </template>
 
@@ -28,13 +28,14 @@
   import { mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
+  import Note from '~/common/core/note.model';
   import Sound from '~/common/sound/sound';
 
   export default {
     props: {
       grid: {
         type: Object,
-        default: () => ({ soundByKey: { q: 'kick' } })
+        default: () => ({ noteByKey: { q: 'kick' } })
       },
       scene: {
         type: String,
@@ -44,7 +45,7 @@
     data() {
       return {
         activeBeatTick: null,
-        liveKeyCursor: null,
+        liveNoteCursor: null,
         noteName: {
           1: 'quarter',
           2: 'eighth',
@@ -66,52 +67,45 @@
         }
       },
       select(cursor) {
-        this.$store.dispatch('player/select', { cursor, soundId: this.soundId });
+        this.$store.dispatch('player/select', { cursor, surfaceId: this.surfaceId });
       },
       unselect() {
         this.$store.dispatch('player/unselect');
       },
-      onNote(key, cursor) {
+      onNote(note, cursor) {
         Sound.resume();
-        let soundName = (cursor === undefined || !this.isOn[cursor][key]) &&
-            this.soundName[key];
-
-        this.$store.dispatch('player/set', {cursor, soundName,
-          soundId: this.soundId
+        if (cursor !== undefined && this.noteByCursor[cursor] === note) {
+          note = null;
+        }
+        this.$store.dispatch('player/set', {cursor, note,
+          surfaceId: this.surfaceId
         });
-        if (!this.playing && soundName) {
-          this.liveKeyCursor = key + this.cursor;
-          Sound[soundName].play();
+        if (!this.playing && note) {
+          this.liveNoteCursor = note + this.cursor;
+          Note.from(note).play();
         }
       },
     },
     computed: {
-      soundId() {
-        return _.join(this.keys);
+      noteByKey() {
+        return this.grid.noteByKey;
       },
-      keys() {
-        return _.keys(this.grid.soundByKey);
+      surfaceId() {
+        return _.join(_.keys(this.noteByKey));
       },
-      soundName() {
-        return this.grid.soundByKey;
+      supportedNotes() {
+        return _.values(this.noteByKey);
       },
-      isSelected() {
-        return this.keyMode || this.soundId === this.selected;
+      selected() {
+        return this.keyMode || this.surfaceId === this.selectedId;
       },
-      isOn() {
-        return _.times(this.numPulses, cursor => {
-          return _.mapValues(this.soundName, (soundName) => {
-            return soundName === this.getDataFor({
-              beatTick: this.beatTicks[cursor],
-              soundId: this.soundId
-            });
-          });
-        });
+      noteByCursor() {
+        return this.playerData[this.surfaceId];
       },
       live() {
         return _.times(this.numPulses, cursor => {
-          return _.mapValues(this.soundName, (soundName, key) => {
-            return this.liveKeyCursor === key + cursor ? 'live' : '';
+          return _.mapValues(_.invert(this.noteByKey), (key, name) => {
+            return this.liveNoteCursor === name + cursor ? 'live' : '';
           });
         });
       },
@@ -119,7 +113,7 @@
         return [this.scene, {
           standby: !this.scene && !this.active,
           playback: ! this.scene && this.active,
-          selected: this.isSelected
+          selected: this.selected
         }];
       },
       beatClass() {
@@ -143,8 +137,8 @@
         numPulses: 'player/numPulses',
         cursorsByBeat: 'player/cursorsByBeat',
         beatTicks: 'player/beatTicks',
-        getDataFor: 'player/getDataFor',
-        selected: 'player/selected',
+        playerData: 'player/dataBySurfaceCursor',
+        selectedId: 'player/selected',
         cursor: 'player/cursor',
         playerCursor: 'player/cursor'
       })
@@ -152,19 +146,19 @@
     watch: {
       keyDown(key) {
         if (key === ' ' || key === 'Backspace') {
-          this.$store.dispatch('player/unset', this.soundId);
-        } else if (this.soundName[key]) {
-          this.onNote(key);
+          this.$store.dispatch('player/unset', this.surfaceId);
+        } else if (this.noteByKey[key]) {
+          this.onNote(this.noteByKey[key]);
         }
       },
       keyUp(key) {
-        if (this.noKeysHeld && this.soundName[key]) {
+        if (this.noKeysHeld && this.noteByKey[key]) {
           this.$store.dispatch('player/move', 1);
         }
       },
       active(active) {
         if (active) {
-          this.liveKeyCursor = null;
+          this.liveNoteCursor = null;
         } else {
           this.activeBeatTick = '';
         }

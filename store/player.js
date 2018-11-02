@@ -1,12 +1,12 @@
 import Vue from 'vue';
 
-import { beatTickFrom, ticks } from '~/common/core/beat-tick.model';
+import BeatTick from '~/common/core/beat-tick.model';
 import Note from '~/common/core/note.model'
 
 export const state = () => ({
   pulseBeat: '', // '1234,4321'
-  layout: [], // [{ soundByKey: { q: 'snare', a: 'kick' } }]
-  data: {}, // data[beatTick][soundId] = soundName
+  layout: [], // [{ noteByKey: { q: 'snare', a: 'kick' } }]
+  data: {}, // data[beatTick][surfaceId] = noteString
   selected: null,
   cursor: 0,
   touched: false
@@ -28,20 +28,22 @@ export const getters = {
   }), { result: [], offset: 0 }).result,
   beatTicks: (state, getters) => beatTicksFrom(getters.pulsesByBeat),
   layout: state => state.layout,
-  soundByKey: state => _.map(state.layout, 'soundByKey'),
-  soundIds: (state, getters) => _.map(getters.soundByKey, (soundByKey) => _.join(_.keys(soundByKey))),
-  soundNames: (state, getters) => _.flatMap(getters.soundByKey, _.values),
-  getDataFor: state => ({beatTick, soundId}) => (state.data[beatTick] || {})[soundId],
+  noteByKey: state => _.map(state.layout, 'noteByKey'),
+  surfaceIds: (state, getters) => _.map(getters.noteByKey, (noteByKey) => _.join(_.keys(noteByKey))),
+  availableNotes: (state, getters) => _.flatMap(getters.noteByKey, _.values),
+  dataBySurfaceCursor: (state, getters) => _.zipObject(getters.surfaceIds,
+      _.map(getters.surfaceIds, surfaceId =>
+          _.map(getters.beatTicks, beatTick => (state.data[beatTick] || {})[surfaceId]))),
   getNotes: state => beatTick => _.map(_.values(state.data[beatTick]),
-      soundName => new Note(soundName)),
-  notes: state => _.flatten(_.map(_.values(state.data), _.values)),
-  noteCount: (state, getters) => _.size(getters.notes),
+      note => Note.from(note)),
+  notesByBeat: (state, getters) => _.map(getters.pulsesByBeat, (pulses, beat) => _.times(pulses,
+      pulse => _.values(state.data[BeatTick.from(beat, pulse, pulses)]).sort().join('.')).join(',')),
+  noteCount: (state, getters) => _.size(_.flatten(_.map(_.values(state.data), _.values)),),
   selected: state => state.selected,
   cursor: state => state.cursor,
-  beatPulse: (state, getters) => _.reduce(getters.pulsesByBeat, ([beat, pulse, working], pulses) =>
+  cursorBeatPulse: (state, getters) => _.reduce(getters.pulsesByBeat, ([beat, pulse, working], pulses) =>
       working && pulse >= pulses ? [beat + 1, pulse - pulses, true] : [beat, pulse],
       [0, state.cursor, true]),
-  beatTick: (state, getters) => beatTickFrom(...getters.beatPulse),
   touched: state => state.touched
 };
 
@@ -62,25 +64,25 @@ export const mutations = {
     state.cursor = 0;
     state.touched = false;
   },
-  setNote(state, {beatTick, soundId, soundName}) {
+  setNote(state, {beatTick, surfaceId, note}) {
     if (!state.data[beatTick]) {
-      Vue.set(state.data, beatTick, _.fromPairs([[soundId, soundName]]));
+      Vue.set(state.data, beatTick, _.fromPairs([[surfaceId, note]]));
     } else {
-      Vue.set(state.data[beatTick], soundId, soundName);
+      Vue.set(state.data[beatTick], surfaceId, note);
     }
-    state.selected = soundId;
+    state.selected = surfaceId;
     state.touched = true;
   },
-  unsetNote(state, {beatTick, soundId}) {
-    _.forEach(_.isArray(soundId) ? soundId : [soundId], soundId => {
+  unsetNote(state, {beatTick, surfaceId}) {
+    _.forEach(_.isArray(surfaceId) ? surfaceId : [surfaceId], surfaceId => {
       if (state.data[beatTick]) {
-        Vue.delete(state.data[beatTick], soundId);
+        Vue.delete(state.data[beatTick], surfaceId);
       }
     });
     state.touched = true;
   },
-  select(state, {cursor, soundId = state.selected}) {
-    state.selected = soundId;
+  select(state, {cursor, surfaceId = state.selected}) {
+    state.selected = surfaceId;
     state.cursor = cursor;
   },
   unselect(state) {
@@ -96,32 +98,32 @@ export const actions = {
   update({commit, state, getters}, {pulseBeat, layout, clear}) {
     commit('setup', { pulseBeat, layout });
     commit('setData', clear ? {} : _.mapValues(_.pick(state.data, getters.beatTicks),
-          (soundData) => _.pick(soundData, getters.soundIds)));
+          (soundData) => _.pick(soundData, getters.surfaceIds)));
   },
   move({commit, state, getters}, move) {
     commit('select', {
       cursor: (state.cursor + move + getters.numPulses) % getters.numPulses
     });
   },
-  set({commit, state, getters}, {cursor = state.cursor, soundId = state.selected, soundName}) {
+  set({commit, state, getters}, {cursor = state.cursor, surfaceId = state.selected, note}) {
     if (state.cursor !== cursor) {
-      commit('select', { cursor, soundId });
+      commit('select', { cursor, surfaceId });
     }
-    commit(soundName ? 'setNote' : 'unsetNote', {
+    commit(note ? 'setNote' : 'unsetNote', {
       beatTick: getters.beatTicks[cursor],
-      soundId,
-      soundName
+      surfaceId,
+      note
     });
   },
-  unset({commit, state, getters}, soundId) {
+  unset({commit, state, getters}, surfaceId) {
     commit('unsetNote', {
       beatTick: getters.beatTicks[state.cursor],
-      soundId
+      surfaceId
     });
   },
-  select({commit, state, rootGetters}, {cursor, soundId = state.selected}) {
-    if (!rootGetters['keyMode'] && (state.cursor !== cursor || state.selected !== soundId)) {
-      commit('select', { cursor, soundId });
+  select({commit, state, rootGetters}, {cursor, surfaceId = state.selected}) {
+    if (!rootGetters['keyMode'] && (state.cursor !== cursor || state.selected !== surfaceId)) {
+      commit('select', { cursor, surfaceId });
     }
   },
   unselect({commit, rootGetters}) {
@@ -134,7 +136,7 @@ export const actions = {
 function beatTicksFrom(pulsesByBeat) {
   return _.reduce(pulsesByBeat, (result, pulses, beat) => {
     return _.concat(result, ..._.times(pulses, pulse => {
-      return beatTickFrom(beat, ticks(pulse, pulses));
+      return BeatTick.from(beat, pulse, pulses);
     }));
   }, []);
 }

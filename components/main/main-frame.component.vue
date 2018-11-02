@@ -84,7 +84,7 @@
             notes = minNotes < maxNotes ? _.random(minNotes, maxNotes) : maxNotes;
             // console.log(finished, this.level.layout, i, minNotes, maxNotes, notes, requiredBeatTicks);
           }
-          return Monotonic.build(_.map(this.soundNames, (soundName) => [new Note(soundName)]),
+          return Monotonic.build(_.map(this.availableNotes, (note) => [Note.from(note)]),
             _.difference(this.beatTicks, requiredBeatTicks), requiredBeatTicks,
             notes - requiredBeatTicks.length)
         });
@@ -130,7 +130,7 @@
         stageGoal: 'progress/stageGoal',
         lessonDone: 'progress/lessonDone',
         beatTicks: 'player/beatTicks',
-        soundNames: 'player/soundNames',
+        availableNotes: 'player/availableNotes',
         level: 'progress/level',
         next: 'progress/next',
         layout: 'progress/layout',

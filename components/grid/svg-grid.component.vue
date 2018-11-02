@@ -1,5 +1,5 @@
 <template lang="pug">
-  .grid(:class="gridClass")
+  .grid(:class="[scene, {disable, selected}]")
     svg(:viewBox="viewBox", :style="svgStyle", @mouseleave="unselect()")
       defs
         filter(id="shadow", x="-40%", y="-40%", width="180%", height="180%")
@@ -32,7 +32,7 @@
           feGaussianBlur(stdDeviation="1.5")
       rect#background(:height="backgroundHeight", :width="backgroundWidth")
       rect#position(:height="backgroundHeight", width="0")
-      g(v-for="(key, index) in keys",
+      g(v-for="(index, note) in noteIndex",
           :transform="'translate(0,' + index * beatUnit + ')'")
         g(v-for="(pulses, beat) in pulsesByBeat",
             :transform="'translate(' + beat * beatUnit + ',0)'")
@@ -48,21 +48,20 @@
         line.measure-top(v-for="beats in measureTops", :stroke-width="pulseBorder",
             :x1="beats * beatUnit - pulseBorder", :x2="beats * beatUnit - pulseBorder",
             :y1="0.3 * beatSize", :y2="0.7 * beatSize")
-      g(v-for="(key, index) in keys", v-if="!blink",
+      g(v-for="(index, note) in noteIndex", v-if="!blink",
           :transform="'translate(0,' + index * beatUnit + ')'")
         g(v-for="(pulses, beat) in pulsesByBeat",
             :transform="'translate(' + beat * beatUnit + ',0)'")
-          circle.fx(v-for="(cursor, i) in cursorsByBeat[beat]", ref="fx",
-              :class="soundByKey[key]",
+          circle.fx(v-for="(cursor, i) in cursorsByBeat[beat]", ref="fx", :class="note",
               :cy="beatCenter", :cx="((2 * i) + 1) * beatSize / 2 / pulses",
               :r="beatSize / 2 / pulses - 4 * beatBorder / pulses",
               :transform-origin="((2 * i) + 1) * beatSize / 2 / pulses + ' ' + beatCenter",)
           circle.note(v-for="(cursor, i) in cursorsByBeat[beat]", ref="note",
-              :class="noteClass[cursor][key]",
+              :class="noteClass[cursor][note]",
               :cy="beatCenter", :cx="((2 * i) + 1) * beatSize / 2 / pulses",
               :r="beatSize / 2 / pulses - 4 * beatBorder / pulses",
               :transform-origin="((2 * i) + 1) * beatSize / 2 / pulses + ' ' + beatCenter",
-              @mouseenter="select(cursor)", @click="onNote(key, cursor)")
+              @mouseenter="select(cursor)", @click="onNote(note, cursor)")
       rect#glass(:height="backgroundHeight", width="0")
     slot
 
@@ -83,7 +82,7 @@
     props: {
       grid: {
         type: Object,
-        default: () => ({ soundByKey: { q: 'kick' } })
+        default: () => ({ noteByKey: { q: 'kick' } })
       },
       scene: String,
       showPosition: Boolean,
@@ -126,14 +125,10 @@
           this.$nextTick(() => {
             // Need nextTick to give scene a change to update after top
             if (!this.scene || this.scene === 'playback' || this.scene === 'victory') {
-              _.forEach(this.isOn[cursor], (on, key) => {
-                if (on) {
-                  this.animateNoteAt(cursor, key);
-                }
-              });
+              this.animateNoteAt(this.noteByCursor[cursor], cursor)
             }
             _.forEach(this.showFx, note => {
-              this.animateNoteAt(cursor, this.keyByNote[note.toString()]);
+              this.animateNoteAt(note.toString(), cursor);
             });
           });
         }
@@ -159,44 +154,46 @@
       },
       select(cursor) {
         if (!this.disable) {
-          this.$store.dispatch('player/select', { cursor, soundId: this.soundId });
+          this.$store.dispatch('player/select', { cursor, surfaceId: this.surfaceId });
         }
       },
       unselect() {
         this.$store.dispatch('player/unselect');
       },
-      onNote(key, cursor) {
+      onNote(note, cursor) {
         if (this.disable) {
           return;
         }
-        Sound.resume();
-        let soundName = (cursor === undefined || !this.isOn[cursor][key]) &&
-          this.soundByKey[key];
-
-        this.$store.dispatch('player/set', {cursor, soundName,
-          soundId: this.soundId
+        if (cursor !== undefined && this.noteByCursor[cursor] === note) {
+          note = null;
+        }
+        this.$store.dispatch('player/set', {cursor, note,
+          surfaceId: this.surfaceId
         });
-        if (!this.playing && soundName) {
-          this.animateNoteAt(this.cursor, key);
-          Sound[soundName].play();
+        if (!this.playing && note) {
+          this.animateNoteAt(note, this.cursor);
+          Note.from(note).play();
         }
       },
-      animateNoteAt(cursor, key) {
-        let refIndex = this.refIndex[cursor][key];
-        this.animate('note', { element: this.$refs.note[refIndex] });
-        let fx = this.$refs.fx[refIndex];
-        new TimelineMax().
-            to(fx, .2, { opacity: 0, transform: 'scale(1)'}).
-            to(fx, .2, { opacity: 1, transform: 'scale(2)'}).
-            to(fx, .5, { opacity: .7, transform: this.transformByCursor[cursor] }).
-            to(fx, .1, { opacity: 0, transform: 'scale(1)'}).
-            duration(.25).play(0);
+      animateNoteAt(note, cursor) {
+        let index = this.noteIndex[note];
+        if (index !== undefined) {
+          let refIndex = index * this.numPulses + cursor;
+          this.animate('note', { element: this.$refs.note[refIndex] });
+          let fx = this.$refs.fx[refIndex];
+          new TimelineMax().
+              to(fx, .2, { opacity: 0, transform: 'scale(1)'}).
+              to(fx, .2, { opacity: 1, transform: 'scale(2)'}).
+              to(fx, .5, { opacity: .7, transform: this.transformByCursor[cursor] }).
+              to(fx, .1, { opacity: 0, transform: 'scale(1)'}).
+              duration(.25).play(0);
+        }
       }
     },
     computed: {
       svgStyle() {
         return {
-          'max-height': this.keys.length * 20 + 'vh'
+          'max-height': this.size * 20 + 'vh'
         }
       },
       beatUnit() {
@@ -215,7 +212,7 @@
         return this.beatBorder / 2;
       },
       height() {
-        return this.beatUnit * this.keys.length;
+        return this.beatUnit * this.size;
       },
       width() {
         return this.beatUnit * this.numBeats;
@@ -229,52 +226,27 @@
       viewBox() {
         return '0 0 ' + this.width + ' ' + this.height;
       },
-      soundId() {
-        return _.join(this.keys);
+      noteByKey() {
+        return this.grid.noteByKey;
       },
-      keys() {
-        return _.keys(this.grid.soundByKey);
+      surfaceId() {
+        return _.join(_.keys(this.noteByKey));
       },
-      keyIndex() {
-        return _.invert(this.keys);
+      noteIndex() {
+        return _.invert(_.values(this.noteByKey));
       },
-      keyByNote() {
-        return _.invert(_.mapValues(this.soundByKey, (soundName) => Note.toString(soundName)));
+      size() {
+        return _.size(this.noteByKey);
       },
-      soundByKey() {
-        return this.grid.soundByKey;
+      selected() {
+        return this.keyMode || this.surfaceId === this.selectedId;
       },
-      isSelected() {
-        return this.keyMode || this.soundId === this.selected;
-      },
-      refIndex() {
-        return _.times(this.numPulses, cursor => {
-          return _.mapValues(this.soundByKey, (soundName, key) => {
-            return this.keyIndex[key] * this.numPulses + cursor;
-          });
-        });
-      },
-      isOn() {
-        return _.times(this.numPulses, cursor => {
-          return _.mapValues(this.soundByKey, (soundName) => {
-            return soundName === this.getDataFor({
-              beatTick: this.beatTicks[cursor],
-              soundId: this.soundId
-            });
-          });
-        });
-      },
-      gridClass() {
-        return [this.scene, {
-          disable: this.disable,
-          selected: this.isSelected
-        }];
+      noteByCursor() {
+        return this.playerData[this.surfaceId];
       },
       transformByCursor() {
-        return _.reduce(this.pulsesByBeat, (result, pulses) => {
-          return _.concat(result, _.times(pulses,
-              _.constant([, 'scale(3)', 'scale(3.5)', 'scale(3.75)', 'scale(4)'][pulses])));
-        }, []);
+        return _.reduce(this.pulsesByBeat, (result, pulses) => _.concat(result, _.times(pulses,
+              _.constant([, 'scale(3)', 'scale(3.5)', 'scale(3.75)', 'scale(4)'][pulses]))), []);
       },
       measureTops() {
         let last = 0;
@@ -293,11 +265,12 @@
       },
       noteClass() {
         return _.times(this.numPulses, cursor =>
-          _.mapValues(this.soundByKey, (soundName, key) => (!this.disable && {
+          _.mapValues(this.noteIndex, (index, note) => (!this.disable && {
             cursor: this.scene !== 'victory' && this.cursor === cursor,
             hover: this.scene !== 'victory' && this.cursor === cursor && this.keyMode,
-            on: this.isOn[cursor][key],
-            weenie: this.weenie && !this.active && !this.isSelected && !this.isOn[cursor][key]
+            on: this.noteByCursor[cursor] === note,
+            weenie: this.weenie && !this.active && !this.selected &&
+                this.noteByCursor[cursor] !== note
           })));
       },
       ...mapGetters({
@@ -315,8 +288,8 @@
         numPulses: 'player/numPulses',
         cursorsByBeat: 'player/cursorsByBeat',
         beatTicks: 'player/beatTicks',
-        getDataFor: 'player/getDataFor',
-        selected: 'player/selected',
+        playerData: 'player/dataBySurfaceCursor',
+        selectedId: 'player/selected',
         cursor: 'player/cursor'
       })
     },
@@ -328,13 +301,13 @@
           return;
         }
         if (key === ' ' || key === 'Backspace') {
-          this.$store.dispatch('player/unset', this.soundId);
-        } else if (this.soundByKey[key]) {
-          this.onNote(key);
+          this.$store.dispatch('player/unset', this.surfaceId);
+        } else if (this.noteByKey[key]) {
+          this.onNote(this.noteByKey[key]);
         }
       },
       keyUp(key) {
-        if (!this.disable && this.noKeysHeld && this.soundByKey[key]) {
+        if (!this.disable && this.noKeysHeld && this.noteByKey[key]) {
           this.$store.dispatch('player/move', 1);
         }
       },

@@ -106,8 +106,8 @@
         goalCount: 0,
         loopCount: 0,
         points: MAX_POINTS,
-        beatWrong: null,
         goalKeys: [],
+        goalNotesByBeat: null,
         stageWeenie: this.autoGoal ? undefined : 'goal',
         lastBeat: false,
         lastPoints: 0,
@@ -193,16 +193,6 @@
         this.lastBeat = false;
       },
       beatTickHandler({time, beat, tick, beatTick, lastBeat}) {
-        let goalNotes = this.getNotes('goal', beatTick);
-        let playedNotes = this.getPlayerNotes(beatTick);
-        if (this.scene === 'playback' || this.scene === 'goal') {
-          if (_.xor(_.invokeMap(goalNotes, 'toString'),
-              _.invokeMap(playedNotes, 'toString')).length) {
-            this.beatWrong = beat;
-          } else if (this.beatWrong !== null && this.beatWrong !== beat) {
-            this.beatWrong = null;
-          }
-        }
         switch(this.scene) {
           case 'victory':
             _.forEach(this.getNotes('victory', beatTick), note => {
@@ -210,13 +200,14 @@
             });
           // fall through
           case 'goal':
+            let goalNotes = this.getNotes('goal', beatTick);
             this.goalKeys = this.showGoal ? goalNotes : undefined;
             _.forEach(goalNotes, note => {
               note.play(time);
             });
             break;
           case 'playback':
-            _.forEach(playedNotes, note => {
+            _.forEach(this.getPlayerNotes(beatTick), note => {
               note.play(time);
               if (this.scene === 'playback') {
                 this.$store.commit('phrase/add', { name: 'playback', beatTick, note });
@@ -333,6 +324,9 @@
       basePoints() {
         return this.pointsOverride || this.points;
       },
+      beatsWrong() {
+        return _.zipWith(this.notesByBeat, this.goalNotesByBeat, _.negate(_.eq));
+      },
       bouncingBallProps() {
         return {
           showBall: this.lastBeat ? this.nextScene === 'goal' : this.scene === 'goal',
@@ -352,7 +346,7 @@
           scene: this.scene,
           nextScene: this.nextScene,
           basePoints: this.basePoints,
-          beatWrong: this.beatWrong,
+          beatsWrong: this.beatsWrong,
           disable: !this.autoGoal && !this.goalCount
         };
       },
@@ -371,8 +365,9 @@
         beatsPerMeasure: 'player/beatsPerMeasure',
         layout: 'player/layout',
         cursor: 'player/cursor',
+        pulsesByBeat: 'player/pulsesByBeat',
         getPlayerNotes: 'player/getNotes',
-        notes: 'player/notes',
+        notesByBeat: 'player/notesByBeat',
         noteCount: 'player/noteCount',
         power: 'progress/power',
         level: 'progress/level',
@@ -401,6 +396,8 @@
         handler(goal) {
           if (goal) {
             this.$store.dispatch('phrase/initialize', { goal });
+            this.goalNotesByBeat = _.map(this.pulsesByBeat, (pulses, beat) => _.times(pulses,
+                pulse => _.join(this.getNotes('goal', BeatTick.from(beat, pulse, pulses)), '.')).join(','));
             this.$nextTick(() => {
               if (this.paused && this.autoGoal) {
                 this.onAction('count');
@@ -416,7 +413,6 @@
       paused(paused) {
         if (paused) {
           this.lastBeat = false;
-          this.beatWrong = null;
         }
       },
       basePoints: {
@@ -487,7 +483,7 @@
           }
         }
       },
-      notes() {
+      notesByBeat() {
         if (this.stageWeenie === 'grid') {
           this.setWeenie();
         }

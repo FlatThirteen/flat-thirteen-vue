@@ -70,10 +70,10 @@
     layout: 'debug',
     constants: {
       layouts: [
-        [{ soundByKey: { a: 'kick' } }],
-        [{ soundByKey: { q: 'snare', a: 'kick' } }],
-        [{ soundByKey: { q: 'snare' } }, { soundByKey: { a: 'kick' } }],
-        [{ soundByKey: { q: 'snare', a: 'kick' } }, { soundByKey: { z: 'cowbell' } }]
+        [{ noteByKey: { a: 'kick' } }],
+        [{ noteByKey: { q: 'snare', a: 'kick' } }],
+        [{ noteByKey: { q: 'snare' } }, { noteByKey: { a: 'kick' } }],
+        [{ noteByKey: { q: 'snare', a: 'kick' } }, { noteByKey: { z: 'cowbell' } }]
       ]
     },
     data() {

@@ -20,7 +20,7 @@
       scene: String,
       nextScene: String,
       basePoints: Number,
-      beatWrong: Number,
+      beatsWrong: Array,
       disable: Boolean
     },
     data() {
@@ -51,7 +51,8 @@
         return _.times(this.numBeats, beat => ({
           active: this.activeBeat === beat,
           cursor: this.cursorBeat === beat,
-          wrong: this.beatWrong === beat && this.basePoints < 90,
+          wrong: this.beatsWrong[beat] &&
+              (this.basePoints < 40 || this.activeBeat === beat && this.basePoints < 90),
           very: this.basePoints < 70
         }));
       },
@@ -71,7 +72,7 @@
         });
       },
       cursorBeat() {
-        return this.scene === 'victory' ? -1 : this.beatPulse[0];
+        return this.scene === 'victory' ? -1 : this.cursorBeatPulse[0];
       },
       particleType() {
         return this.scene === 'victory' ? 'confetti' : null;
@@ -87,7 +88,7 @@
         noteCount: 'player/noteCount',
         pulsesByBeat: 'player/pulsesByBeat',
         selected: 'player/selected',
-        beatPulse: 'player/beatPulse'
+        cursorBeatPulse: 'player/cursorBeatPulse'
       })
     },
     watch: {

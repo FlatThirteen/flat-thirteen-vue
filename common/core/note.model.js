@@ -24,12 +24,12 @@ export class Note {
     return Note.toString(this.soundName, this.params);
   }
 
-  static from(soundString, duration = '8n') {
-    let matches = soundString.match(/([>\*]?)(\w+)(?:\((.+)\))?/);
+  static from(noteString, duration = '8n') {
+    let matches = noteString.match(/([>\*]?)(\w+)(?:\((.+)\))?/);
     if (!matches || !Sound.hasOwnProperty(matches[2])) {
       return null;
     }
-    let [whole, accent, soundName, pitch] = matches;
+    let [, accent, soundName, pitch] = matches;
     let params = {};
     if (accent) {
       params.variation = accent === '>' ? 'heavy' : accent === '*' ? 'light' : 'normal';
