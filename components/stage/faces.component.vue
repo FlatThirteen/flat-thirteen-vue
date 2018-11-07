@@ -51,7 +51,7 @@
         return _.times(this.numBeats, beat => ({
           active: this.activeBeat === beat,
           cursor: this.cursorBeat === beat,
-          wrong: this.beatsWrong[beat] &&
+          wrong: this.beatsWrong && this.beatsWrong[beat] &&
               (this.basePoints < 40 || this.activeBeat === beat && this.basePoints < 90),
           very: this.basePoints < 70
         }));
