@@ -66,9 +66,9 @@
           [{ type: 'drums', notes: 'K|K|K' }],
           [{ type: 'drums', notes: 'K||K|K' }],
           [{ type: 'drums', notes: 'K|K||K' }]
-        ] : _.times(4, (i) => {
-          let notes = finished || this.level.layout || i ? 0 : this.beatTicks.length;
-          let requiredBeatTicks = i < 3 && !finished && {
+        ] : _.times(4, (stage) => {
+          let notes = finished || this.level.layout || stage ? 0 : this.beatTicks.length;
+          let requiredBeatTicks = stage < 3 && !finished && {
               '1111': ['00:000'],
               '2111': ['00:096'],
               '1211': ['01:096'],
@@ -80,7 +80,7 @@
               requiredBeatTicks.push('00:000'); // TODO: Do only when metronome off
             }
             let maxNotes = this.beatTicks.length - (this.level.layout ? 0 : 1);
-            let minNotes = Math.max(3, maxNotes - this.pointsByPulseBeat[pulseBeat].length - i);
+            let minNotes = Math.max(3, maxNotes - finished - stage);
             notes = minNotes < maxNotes ? _.random(minNotes, maxNotes) : maxNotes;
             // console.log(finished, this.level.layout, i, minNotes, maxNotes, notes, requiredBeatTicks);
           }
