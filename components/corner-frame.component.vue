@@ -112,6 +112,7 @@
       },
       stageGoal(stageGoal) {
         if (stageGoal) {
+          this.$refs.backing.disappear();
           this.$refs.tempo.disappear();
         }
       },
