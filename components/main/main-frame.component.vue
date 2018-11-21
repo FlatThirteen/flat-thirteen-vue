@@ -1,6 +1,7 @@
 <template lang="pug">
   corner-frame(:totalPoints="points", :totalStars="totalStars", @hint="hint = $event")
     composer(ref="composer")
+    lesson-builder(ref="lessonBuilder")
     transition(name="lesson-container")
       curriculum(v-if="!stageGoal", key="choose", :scrollTop="scrollTop", :hint="hint",
           @click="onLesson($event)")
@@ -26,6 +27,7 @@
   import Composer from '~/components/composer.component';
   import CornerFrame from '~/components/corner-frame.component';
   import Curriculum from '~/components/curriculum/curriculum.component';
+  import LessonBuilder from '~/components/lesson-builder.component';
   import Stage from '~/components/stage/stage.component';
 
   export default {
@@ -34,6 +36,7 @@
       'composer': Composer,
       'corner-frame': CornerFrame,
       'curriculum': Curriculum,
+      'lesson-builder': LessonBuilder,
       'stage': Stage,
     },
     data() {
@@ -59,37 +62,8 @@
           layout: this.layout,
           clear: true
         });
-
-        let finished = this.pointsByPulseBeat[pulseBeat].length;
-        let stages = !this.level.layout && pulseBeat === '1111' && !finished ? [
-          [{ type: 'drums', notes: 'K|K|K|K' }],
-          [{ type: 'drums', notes: 'K|K|K' }],
-          [{ type: 'drums', notes: 'K||K|K' }],
-          [{ type: 'drums', notes: 'K|K||K' }]
-        ] : _.times(4, (stage) => {
-          let notes = finished || this.level.layout || stage ? 0 : this.beatTicks.length;
-          let requiredBeatTicks = stage < 3 && !finished && {
-              '1111': ['00:000'],
-              '2111': ['00:096'],
-              '1211': ['01:096'],
-              '1121': ['02:096'],
-              '1112': ['03:096']
-            }[pulseBeat] || [];
-          if (!notes) {
-            if (pulseBeat !== '1111' && (this.level.layout || !finished)) {
-              requiredBeatTicks.push('00:000'); // TODO: Do only when metronome off
-            }
-            let maxNotes = this.beatTicks.length - (this.level.layout ? 0 : 1);
-            let minNotes = Math.max(3, maxNotes - finished - stage);
-            notes = minNotes < maxNotes ? _.random(minNotes, maxNotes) : maxNotes;
-            // console.log(finished, this.level.layout, i, minNotes, maxNotes, notes, requiredBeatTicks);
-          }
-          return Monotonic.build(_.map(this.availableNotes, (note) => [Note.from(note)]),
-            _.difference(this.beatTicks, requiredBeatTicks), requiredBeatTicks,
-            notes - requiredBeatTicks.length)
-        });
-
-        this.$store.dispatch('progress/setStages', { stages,
+        this.$store.dispatch('progress/setStages', {
+          stages: this.$refs.lessonBuilder.build(this.pointsByPulseBeat[pulseBeat].length),
           name: this.level.layout + '-' + pulseBeat
         });
         if (this.level.backing) {

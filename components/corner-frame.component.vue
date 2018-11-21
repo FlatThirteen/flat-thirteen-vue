@@ -144,9 +144,11 @@
 
     .left, .right
       bottom: 0;
-      background-color: white;
-      box-shadow: 0 0 25px 15px white;
       margin: 5px 10px;
+
+  .left, .right
+    filter: drop-shadow(0 0 4px white);
+    text-shadow: 0 0 5px white;
 
   .left
     posit(absolute, x, x, x, 0);

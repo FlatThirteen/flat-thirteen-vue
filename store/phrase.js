@@ -1,7 +1,7 @@
 import Vue from 'vue';
 
-import { beatTickFrom, duration, ticks } from '~/common/core/beat-tick.model';
-import { Note } from '~/common/core/note.model';
+import Parser from '~/common/composer/parser';
+import Note from '~/common/core/note.model';
 
 export const state = () => ({
   live: {
@@ -83,55 +83,6 @@ export const actions = {
     }
   },
   setTracks({commit}, {name, tracks}) {
-    let notes = {};
-    _.forEach(tracks, track => {
-      if (parser[track.type] && track.notes) {
-        _.forEach(track.notes.split('|'), (beatNote, beatIndex) => {
-          _.forEach(beatNote.split(','), (pulseNote, pulseIndex, array) => {
-            if (pulseIndex > 3) {
-              return;
-            }
-            let pulses = Math.min(array.length, 4);
-            let beatTick = beatTickFrom(beatIndex, ticks(pulseIndex, pulses));
-            _.forEach(pulseNote.split('.'), chordNote => {
-              try {
-                let note = parser[track.type](chordNote, duration(pulses));
-                if (note) {
-                  (notes[beatTick] || (notes[beatTick] = [])).push(note);
-                }
-              } catch (error) {
-                console.log('Parse error:', error);
-              }
-            });
-          });
-        });
-      }
-    });
-    commit('set', { name, notes})
-  }
-};
-
-const parser = {
-  synth: (data, duration) => {
-    let frequency = Note.pitch(data);
-    if (frequency) {
-      return new Note('synth', {
-        pitch: frequency.toNote(),
-        duration: duration
-      });
-    }
-  },
-  drums: (data) => {
-    let sound = data.match(/[kK]/) ? 'kick' :
-      data.match(/[sS]/) ? 'snare' : null;
-    if (sound) {
-      return new Note(sound);
-    }
-  },
-  cowbell: (data) => {
-    let frequency = Note.pitch(data);
-    if (frequency) {
-      return new Note('cowbell', { pitch: frequency.toNote() });
-    }
+    commit('set', { name, notes: Parser.parseTracks(tracks)})
   }
 };

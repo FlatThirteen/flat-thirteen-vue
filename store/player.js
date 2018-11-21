@@ -31,6 +31,16 @@ export const getters = {
   noteByKey: state => _.map(state.layout, 'noteByKey'),
   surfaceIds: (state, getters) => _.map(getters.noteByKey, (noteByKey) => _.join(_.keys(noteByKey))),
   availableNotes: (state, getters) => _.flatMap(getters.noteByKey, _.values),
+  phraseProperties: (state, getters) => ({
+    unitHeight: getters.availableNotes.length,
+    xByBeatTick: _.reduce(getters.pulsesByBeat, (result, pulses, beat) => {
+      _.times(pulses, pulse => {
+        result[BeatTick.from(beat, pulse, pulses)] = beat + (pulse * 2 + 1) / pulses / 2;
+      });
+      return result;
+    }, {}),
+    yByNote: _.mapValues(_.invert(getters.availableNotes), i => _.toNumber(i) + .5)
+  }),
   dataBySurfaceCursor: (state, getters) => _.zipObject(getters.surfaceIds,
       _.map(getters.surfaceIds, surfaceId =>
           _.map(getters.beatTicks, beatTick => (state.data[beatTick] || {})[surfaceId]))),

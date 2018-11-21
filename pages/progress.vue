@@ -1,11 +1,15 @@
 <template lang="pug">
   corner-frame(:totalPoints="totalPoints", :totalStars="totalStars", @hint="hint = $event")
     curriculum(:hint="hint", @mousedown="onLesson($event)")
-    .points(slot="bottom-left")
-      span(@mouseover="showNextAuto()", @click="max()") +
-      input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
-      .power
-        power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
+    transition(name="lesson-container")
+      .lesson-container(v-show="pulseBeat")
+        lesson-builder(ref="lessonBuilder", :debug="true")
+        .points
+          span(@mouseover="showNextAuto()", @click="max()") +
+          input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
+          .power
+            power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
+        .quit.button(@click="exitLesson()") X
 </template>
 
 <script>
@@ -13,6 +17,7 @@
 
   import CornerFrame from '~/components/corner-frame.component';
   import Curriculum from '~/components/curriculum/curriculum.component';
+  import LessonBuilder from '~/components/lesson-builder.component';
   import PowerAuto from '~/components/power/power-auto.component';
 
   import { MAX_POINTS } from '~/store/progress';
@@ -21,6 +26,7 @@
     components: {
       'corner-frame': CornerFrame,
       'curriculum': Curriculum,
+      'lesson-builder': LessonBuilder,
       'power-auto': PowerAuto
     },
     head: {
@@ -30,6 +36,7 @@
     data() {
       return {
         hint: null,
+        pulseBeat: null,
         addPoints: MAX_POINTS
       };
     },
@@ -39,12 +46,22 @@
         this.$refs.auto.disappear();
       },
       onLesson(pulseBeat) {
-        if (this.invalidPoints) {
-          return;
-        }
-        this.$store.dispatch('progress/addPoints', { pulseBeat,
-          amount: { base: this.addPoints }
+        this.pulseBeat = pulseBeat;
+        this.$store.dispatch('player/update', { pulseBeat,
+          layout: this.layout,
+          clear: true
         });
+        let finished = this.pointsByPulseBeat[pulseBeat].length;
+        this.$refs.lessonBuilder.build(finished);
+      },
+      exitLesson() {
+        if (!this.invalidPoints) {
+          this.$store.dispatch('progress/addPoints', {
+            pulseBeat: this.pulseBeat,
+            amount: { base: this.addPoints }
+          });
+        }
+        this.pulseBeat = null;
       },
       showNextAuto() {
         if (this.next.auto) {
@@ -59,6 +76,8 @@
       ...mapGetters({
         power: 'progress/power',
         next: 'progress/next',
+        layout: 'progress/layout',
+        pointsByPulseBeat: 'progress/pointsByPulseBeat',
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })
@@ -72,20 +91,53 @@
     position: absolute;
     user-select: none;
 
-  .points input
-    border: none;
-    color: active-blue;
-    font-size: 40px;
-    font-weight: 600;
-    width: 100px;
+  .lesson-container-enter-active, .lesson-container-leave-active
+    transition: all 500ms;
 
-    &.invalid
-      color: primary-red;
+  .lesson-container-enter, .lesson-container-leave-to
+    transform: scale(.1);
+    opacity: 0.5;
 
-    &:focus
-      outline: none;
+  .lesson-container
+    posit(absolute);
+    background-color: white;
+    overflow: scroll;
+
+  .points
+    posit(fixed, x, x, 0, 0);
+
+    input
+      border: none;
+      color: active-blue;
+      font-size: 40px;
+      font-weight: 600;
+      width: 100px;
+      filter: drop-shadow(0 0 4px white);
+      text-shadow: 0 0 5px white;
+      background-color: transparent;
+
+      &.invalid
+        color: primary-red;
+
+      &:focus
+        outline: none;
 
   .power
     posit(absolute, x, x, 0, 160px)
     height: 100%;
+
+  .quit
+    posit(fixed, 0, x, x, 0)
+    background-color: white;
+    border: solid 1px @color;
+    border-radius: 5px;
+    color: #AAA;
+    font-size: 23px;
+    padding: 5px;
+    margin: 5px;
+    z-index: 1;
+
+    &:hover
+      color: #888;
+      border-color: #888;
 </style>
