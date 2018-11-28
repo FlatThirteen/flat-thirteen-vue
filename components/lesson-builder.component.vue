@@ -1,5 +1,6 @@
 <template lang="pug">
   .builder(v-if="debug")
+    arrangement.arrangement(:phrases="phrases", :tempo="tempo")
     .notes
       .note.toggle(:class="{active: !notes}", @click="build(finished)") Default
       .note.toggle(v-for="numNotes in notesRange", :class="{active: numNotes === notes}",
@@ -7,26 +8,29 @@
       .finished.toggle(:class="{active: finished}",
           @click="finished = !finished; notes ? setNotes(notes) : build(finished)") Finished
     .stages
-      .stage(v-for="stage in stages")
+      .stage.button(v-for="(stage, i) in stages", @click="onPhrase(i)")
         .debug(v-if="stage.rhythmSeed !== undefined || stage.noteSeed !== undefined", :class="{top: firstLayout}")
           .overlay
             span(v-if="stage.minNotes") {{ stage.notes }} ({{ stage.minNotes }} {{ stage.maxNotes }})
             span  {{ stage.rhythmSeed }}:{{ stage.noteSeed }}
-        phrase.phrase(v-bind="{phrase: stage, pulsesByBeat, phraseProperties}")
+        phrase.phrase(ref="phrase", v-bind="{phrase: stage, phraseKey: String(i), pulsesByBeat, phraseProperties}")
 </template>
 
 <script>
-  import { mapGetters } from 'vuex'
+  import { mapActions, mapGetters } from 'vuex'
 
   import Monotonic from '~/common/composer/monotonic';
   import Parser from '~/common/composer/parser';
   import Rhythm from '~/common/composer/rhythm';
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
+
+  import Arrangement from '~/components/arrangement.component';
   import Phrase from '~/components/phrase.component';
 
   export default {
     components: {
+      arrangement: Arrangement,
       phrase: Phrase
     },
     props: {
@@ -34,6 +38,7 @@
     },
     data() {
       return {
+        phrases: [],
         stages: [],
         notes: null,
         finished: false
@@ -158,7 +163,16 @@
             beatTick => Parser.beatFromBeatTick(beatTick) < halfwayBeat));
         }
         return requiredBeatTicks;
-      }
+      },
+      onPhrase(stage) {
+        this.phrases.push(this.$refs.phrase[stage]);
+        if (this.paused) {
+          this.start();
+        }
+      },
+      ...mapActions({
+        start: 'transport/start'
+      })
     },
     computed: {
       notesRange() {
@@ -174,7 +188,16 @@
         phraseProperties: 'player/phraseProperties',
         layout: 'player/layout',
         availableNotes: 'player/availableNotes',
+        tempo: 'progress/tempo',
+        paused: 'transport/paused'
       })
+    },
+    watch: {
+      paused(paused) {
+        if (paused) {
+          this.phrases = [];
+        }
+      }
     }
   }
 </script>
@@ -183,6 +206,10 @@
 
   .builder
     margin: 90px 10px 10px;
+    position: relative;
+
+  .arrangement
+    posit(absolute, x, 0, 100%);
 
   .notes
     text-align: center;

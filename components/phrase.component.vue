@@ -2,20 +2,60 @@
   svg.phrase(:viewBox="viewBox")
     rect.background(:width="width", :height="height", :class="backgroundClass")
     rect.required(v-for="beatTick in requiredBeatTicks", v-bind="beatTick")
-    circle.note(v-for="note in notes", ref="note", v-bind="note")
+    circle.fx(v-for="note in notes", ref="fx", v-bind="note.properties")
+    circle.note(v-for="note in notes", ref="note", v-bind="note.properties")
 </template>
 
 <script>
+  import AnimatedMixin from '~/mixins/animated.mixin';
+
   import Parser from '~/common/composer/parser';
+  import Note from '~/common/core/note.model';
+  import Tone from '~/common/tone';
 
   export default {
+    mixins: [AnimatedMixin],
     props: {
+      phraseKey: String,
       pulsesByBeat: Array,
-      phrase: Object,
-      phraseProperties: Object
+      phrase: Object, // phrase[beatTick] = [Note]
+      phraseProperties: Object // { unitHeight, xByBeatTick, yByNote }
     },
     constants: {
-      beatUnit: 100
+      beatUnit: 100,
+      animationDefinitions: {
+        note: [[0, {
+          transform: 'scale(1)'
+        }], [.4, {
+          transform: 'scale(1.2)'
+        }], [.3, {
+          transform: 'scale(0.8)'
+        }], [.3, {
+          transform: 'scale(1)'
+        }]],
+        fx: [[0, {
+          transform: 'scale(1)',
+          opacity: 1
+        }], [.4, {
+          transform: 'scale(1.5)',
+          opacity: 0.5
+        }], [.6, {
+          transform: 'scale(2)',
+          opacity: 0
+        }]]
+      }
+    },
+    methods: {
+      onBeatTick(beatTick, time) {
+        let indices = this.indicesByBeatTick[beatTick];
+        _.forEach(indices, index => {
+          Note.from(this.notes[index].note.toString()).play(time);
+          Tone.Draw.schedule(() => {
+            this.animate('note', { element: this.$refs.note[index] });
+            this.animate('fx', { element: this.$refs.fx[index] });
+          }, time);
+        });
+      }
     },
     computed: {
       height() {
@@ -32,11 +72,16 @@
           let cx = this.phraseProperties.xByBeatTick[beatTick] * this.beatUnit;
           let cy = this.phraseProperties.yByNote[note.toString()] * this.beatUnit;
           let pulses = this.pulsesByBeat[Parser.beatFromBeatTick(beatTick)];
-          return cx && cy && { cx, cy,
-            r: this.beatUnit / 2 / pulses - 10 / pulses,
-            transformOrigin: cx + ' ' + cy
+          return cx && cy && { beatTick, note,
+            properties: { cx, cy,
+              r: this.beatUnit / 2 / pulses - 10 / pulses,
+              'transform-origin': cx + ' ' + cy
+            }
           };
         })));
+      },
+      indicesByBeatTick() {
+        return _.invertBy(this.notes, note => note.beatTick);
       },
       requiredBeatTicks() {
         return _.compact(_.flatMap(this.phrase.requiredBeatTicks, (beatTicks, i) => _.map(beatTicks, beatTick => {
@@ -76,4 +121,7 @@
 
   .required
     fill: yellow;
+
+  .fx
+    fill: white;
 </style>
