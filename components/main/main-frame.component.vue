@@ -10,7 +10,7 @@
         backing
         stage(:goal="stageGoal", :tempo="tempo", :showNextAuto="showNextAuto",
             @basePoints="stagePoints = $event", @complete="nextStage($event)")
-        .quit.button(@click="clearLesson()") X
+        quit-button(@click="clearLesson()")
     slot(name="help", slot="bottom-left")
       .help
 </template>
@@ -28,6 +28,7 @@
   import CornerFrame from '~/components/corner-frame.component';
   import Curriculum from '~/components/curriculum/curriculum.component';
   import LessonBuilder from '~/components/lesson-builder.component';
+  import QuitButton from '~/components/quit-button.component';
   import Stage from '~/components/stage/stage.component';
 
   export default {
@@ -37,6 +38,7 @@
       'corner-frame': CornerFrame,
       'curriculum': Curriculum,
       'lesson-builder': LessonBuilder,
+      'quit-button': QuitButton,
       'stage': Stage,
     },
     data() {
@@ -139,19 +141,4 @@
     &.lesson-container
       transform: scale(.1);
       opacity: 0.5;
-
-  .quit
-    posit(fixed, 0, x, x, 0)
-    background-color: white;
-    border: solid 1px @color;
-    border-radius: 5px;
-    color: #AAA;
-    font-size: 23px;
-    padding: 5px;
-    margin: 5px;
-    z-index: 1;
-
-    &:hover
-      color: #888;
-      border-color: #888;
 </style>

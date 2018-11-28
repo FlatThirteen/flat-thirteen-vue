@@ -9,7 +9,7 @@
           input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
           .power
             power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
-        .quit.button(@click="exitLesson()") X
+        quit-button(@click="exitLesson()")
 </template>
 
 <script>
@@ -19,6 +19,7 @@
   import Curriculum from '~/components/curriculum/curriculum.component';
   import LessonBuilder from '~/components/lesson-builder.component';
   import PowerAuto from '~/components/power/power-auto.component';
+  import QuitButton from '~/components/quit-button.component';
 
   import { MAX_POINTS } from '~/store/progress';
 
@@ -27,7 +28,8 @@
       'corner-frame': CornerFrame,
       'curriculum': Curriculum,
       'lesson-builder': LessonBuilder,
-      'power-auto': PowerAuto
+      'power-auto': PowerAuto,
+      'quit-button': QuitButton
     },
     head: {
       title: 'Flat Thirteen | Progress'
@@ -125,19 +127,4 @@
   .power
     posit(absolute, x, x, 0, 160px)
     height: 100%;
-
-  .quit
-    posit(fixed, 0, x, x, 0)
-    background-color: white;
-    border: solid 1px @color;
-    border-radius: 5px;
-    color: #AAA;
-    font-size: 23px;
-    padding: 5px;
-    margin: 5px;
-    z-index: 1;
-
-    &:hover
-      color: #888;
-      border-color: #888;
 </style>
