@@ -1,7 +1,8 @@
 <template lang="pug">
   .anchor
     slot
-    .play.button(ref="play", :class="{penalty: wrong}", @click="$emit('click')")
+    .play(ref="play", :class="{penalty: wrong, button: !disable}",
+        @click="!disable && $emit('click')")
       svg(height="60", width="60", viewBox="0 0 60 60")
         defs(v-if="wrong !== undefined")
           linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
@@ -23,10 +24,10 @@
   export default {
     mixins: [AnimatedMixin],
     props: {
-      wrong: Boolean
+      wrong: Boolean,
+      disable: Boolean
     },
     constants: {
-      color: hexString(primaryGreen),
       playPath: 'M5,5L50,30L5,55Z',
       animationTarget: 'play',
       animationDefinitions: {
@@ -118,6 +119,11 @@
         let notch = (75 - highest) / (goalNotes - 1);
         let stopLevel = playNotes === goalNotes ? 0 : 75 - notch * playNotes;
         TweenMax.to(this.$data, this.animationDuration, { stopLevel });
+      }
+    },
+    computed: {
+      color() {
+        return this.disable ? '#DDD' : hexString(primaryGreen);
       }
     }
   }

@@ -12,7 +12,8 @@
           goal-button(ref="goal", @click="onAction('goal')",
               :penalty="!preGoal", :weenie="stageWeenie === 'goal'")
             penalty-fx(ref="goalPenalty", top="50%", left="10%")
-          play-button(ref="play", @click="onAction('playback')", :wrong="noteCount !== goalNoteCount")
+          play-button(ref="play", @click="onAction('playback')",
+              :wrong="noteCount !== goalNoteCount", :disable="!noteCount")
             penalty-fx(ref="wrongPenalty", top="0", left="80%")
       .grids
         svg-grid(v-for="(surface, i) in layout", :key="i", v-bind="gridProps",
