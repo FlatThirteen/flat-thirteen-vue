@@ -107,16 +107,20 @@
 
   .points
     posit(fixed, x, x, 0, 0);
+    font-size: 40px;
+    font-weight: 600;
+    margin-left: 5px;
 
     input
+      background-color: transparent;
       border: none;
       color: active-blue;
       font-size: 40px;
       font-weight: 600;
+      vertical-align: text-top;
       width: 100px;
       filter: drop-shadow(0 0 4px white);
       text-shadow: 0 0 5px white;
-      background-color: transparent;
 
       &.invalid
         color: primary-red;

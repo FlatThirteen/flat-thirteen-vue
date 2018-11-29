@@ -236,7 +236,7 @@
     flex-flow: row wrap;
     align-items: center;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 35px;
 
   .stage
     position: relative;
