@@ -20,7 +20,7 @@
       },
       type: {
         type: String,
-        default: 'synth'
+        default: 'sawtooth6'
       },
       rootNote: {
         type: String,
@@ -81,7 +81,6 @@
       },
       ...mapGetters({
         paused: 'transport/paused',
-        hasBacking: 'phrase/hasBacking',
         numBeats: 'player/numBeats'
       })
     },

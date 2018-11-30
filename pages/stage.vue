@@ -75,17 +75,13 @@
         this.$refs.stage.setVictory(clear ? 0 : this.victoryLevel);
       },
       toggleBackingLevel() {
+        if (this.paused) {
+          Sound.playSequence(this.$refs.composer.type, this.hasBacking ? ['A1'] : ['A1', 'A2'], '32n');
+        }
         if (this.hasBacking) {
-          this.playIfPaused(['A1']);
           this.$refs.composer.clear();
         } else {
-          this.playIfPaused(['A1', 'A2']);
           this.$refs.composer.reset();
-        }
-      },
-      playIfPaused(notes) {
-        if (this.paused) {
-          Sound.playSequence('synth', notes, '32n');
         }
       }
     },

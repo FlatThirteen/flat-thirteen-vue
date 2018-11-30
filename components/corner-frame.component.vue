@@ -89,12 +89,15 @@
         maxTempo: 'progress/maxTempo',
         playable: 'progress/playable',
         rowsWithStars: 'progress/rowsWithStars',
-        nextPoints: 'progress/nextPoints'
+        nextPoints: 'progress/nextPoints',
+        paused: 'transport/paused'
       })
     },
     watch: {
       backing(backing) {
-        Sound.playSequence('synth', backing === 'bass' ? ['A1', 'A2'] : ['A1'], '32n', 0.5);
+        if (this.paused) {
+          Sound.playSequence('sawtooth6', backing === 'bass' ? ['A1', 'A2'] : ['A1'], '32n');
+        }
       },
       tempo(tempo, oldTempo) {
         Sound.click.play('+0', { variation: tempo > oldTempo ? 'normal' : 'heavy' });

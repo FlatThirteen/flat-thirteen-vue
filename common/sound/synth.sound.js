@@ -1,21 +1,10 @@
 import Tone from '../tone';
 
 export class SynthSound {
-  constructor() {
-    this.synth = new Tone.PolySynth(9, Tone.Synth, {
-      oscillator: {
-        type: 'fatsawtooth',
-        count: 3,
-        spread: 30
-      },
-      envelope: {
-        attack: 0.01,
-        decay: 0.1,
-        sustain: 0.5,
-        release: 0.4,
-        attackCurve: 'exponential'
-      }
-    }).toMaster();
+  constructor(oscillator = {type: 'fatsawtooth'}, envelope = {
+    attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.4, attackCurve: 'exponential'
+  }) {
+    this.synth = new Tone.PolySynth(9, Tone.Synth, { oscillator, envelope }).toMaster();
   }
 
   play(time, {pitch = 'A4', duration = '4n', velocity = 1} = {}) {

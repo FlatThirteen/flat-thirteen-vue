@@ -60,6 +60,7 @@
         this.drawCount = 0;
         this.undrawCount = 0;
         this.activeNotes = 0;
+        this.notes = {};
       },
       beatTickHandler({beatTick, time}) {
         if (!this.backingVolume) {
@@ -96,7 +97,8 @@
         let backingNote = this.notes[id];
         let frequency = note.frequency;
         backingNote.on = true;
-        backingNote.fxClass = note.soundName + (frequency ?
+        let soundClass = note.soundName.match(/(fm|am|fat|)(\D+)(\d*)/)[2];
+        backingNote.fxClass = soundClass + (frequency ?
             ' rotate' + (frequency.toMidi() % 12) :
             ' rotate' + _.random(11) + ' offset' + _.random(24));
         backingNote.tiltTransform = frequency ? 'rotateX(40deg)' : 'rotateX(10deg)';
@@ -233,7 +235,7 @@
         star-background(5);
         box-shadow: 0 0 15px 3px alpha(gray, 0.2);
 
-    &.synth .note
+    &.synth .note, &.sawtooth .note, &.triangle .note, &.square .note, &.sine .note
       transform-origin: top;
       height: 10vh;
       width: 300%;

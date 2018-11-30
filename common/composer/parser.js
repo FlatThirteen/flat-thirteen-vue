@@ -1,16 +1,21 @@
 import BeatTick from '~/common/core/beat-tick.model';
 import Note from '~/common/core/note.model';
+import Sound from '~/common/sound/sound';
 
-const parser = {
-  synth: (data, duration) => {
+function synthParser(type) {
+  return (data, duration) => {
     let frequency = Note.pitch(data);
     if (frequency) {
-      return new Note('synth', {
+      return new Note(type, {
         pitch: frequency.toNote(),
         duration: duration
       });
     }
-  },
+  };
+}
+
+const parser = {
+  synth: synthParser('synth'),
   drums: (data) => {
     let sound = data.match(/[kK]/) ? 'kick' :
       data.match(/[sS]/) ? 'snare' : null;
@@ -29,6 +34,9 @@ const parser = {
 const parseTracks = function(tracks) {
   let notes = {};
   _.forEach(tracks, track => {
+    if (!parser[track.type] && Sound.create(track.type)) {
+      parser[track.type] = synthParser(track.type);
+    }
     if (parser[track.type] && track.notes) {
       _.forEach(track.notes.split('|'), (beatNote, beatIndex) => {
         _.forEach(beatNote.split(','), (pulseNote, pulseIndex, array) => {

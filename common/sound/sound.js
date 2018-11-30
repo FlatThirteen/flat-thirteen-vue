@@ -28,6 +28,11 @@ let Sound = {
       return Promise.resolve();
     }
   },
+  create(soundName) {
+    try {
+      return Sound[soundName] = new SynthSound({ type: soundName });
+    } catch (e) {}
+  },
   playSequence(soundName, pitches, duration, velocity) {
     let sound = Sound[soundName];
     _.forEach(pitches, (pitch, index) => {

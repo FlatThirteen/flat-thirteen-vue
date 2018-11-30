@@ -32,7 +32,7 @@
 </template>
 
 <script>
-  import { mapGetters } from 'vuex';
+  import { mapActions, mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
@@ -62,8 +62,8 @@
         fixedBeat: '',
         showFx: true,
         tracks: [
-          { type: 'synth', notes: 'C2,C2| G1,G1| Bb1,Bb1| B1,B1| C2,C3| G1,G2| Bb1,Bb2| B1,B2' },
-          { type: 'synth', notes: 'G4.C5.Eb5,| ,G4.C5.Eb5| | G4.C5.F5| G4.C5.Eb5,| ,G4.C5.Eb5| | A4.C5.F5' },
+          { type: 'sawtooth6', notes: 'C2,C2| G1,G1| Bb1,Bb1| B1,B1| C2,C3| G1,G2| Bb1,Bb2| B1,B2' },
+          { type: 'triangle4', notes: 'G4.C5.Eb5,| ,G4.C5.Eb5| | G4.C5.F5| G4.C5.Eb5,| ,G4.C5.Eb5| | A4.C5.F5' },
           { type: 'drums', notes: 'K| ,K| S,K| ,K| K| ,K| S,K| S,S,K,S' }
         ],
         more: {
@@ -76,7 +76,8 @@
             'C2,B1,Bb1,A1| G#1,G1,F#1,F1| E1,Eb1,D1,C#1| C1,E1,G1,B1',
             'C1.C2.C3.C4.C5.C6.C7.C8.C9| C4.E4.G4.Bb4| Db6.F6.Ab6.Cb7| D8.F#8.A8.C9'
           ]
-        }
+        },
+        parseTracks: _.debounce(this._parseTracks, 500)
       }
     },
     mounted() {
@@ -121,7 +122,26 @@
       },
       _getFixed(beatDebug) {
         return _.split(_.split(beatDebug, ': ')[1], ',')
-      }
+      },
+      _parseTracks(tracks) {
+        let activeTracks = _.filter(tracks, track => track.solo && !track.mute);
+        this.anySolo = !!activeTracks.length;
+        if (!activeTracks.length) {
+          activeTracks = _.filter(tracks, track => !track.mute);
+        }
+
+        this.setTracks({ name: 'backing', tracks: activeTracks });
+        this.debugPhrase = this.asArray('backing');
+        if (this.selected) {
+          let selectedBeatTick = _.split(this.selected, ': ')[0];
+          this.selected = _.find(this.debugPhrase, debugPhrase =>
+              _.startsWith(debugPhrase, selectedBeatTick));
+          this.fixed = this.selected ? this._getFixed(this.selected) : [];
+        }
+      },
+      ...mapActions({
+        setTracks: 'phrase/setTracks'
+      })
     },
     computed: {
       ...mapGetters({
@@ -133,33 +153,8 @@
         deep: true,
         immediate: true,
         handler(tracks) {
-          if (!process.browser) {
-            // Can't parse frequencies on server without Tone
-            return;
-          }
-          let solo = true;
-          let activeTracks = _.filter(tracks, (track) => {
-            return track.solo && !track.mute;
-          });
-          if (!activeTracks.length) {
-            solo = false;
-            activeTracks = _.filter(tracks, (track) => {
-              return !track.mute;
-            });
-          }
-
-          this.$store.dispatch('phrase/setTracks', {
-            name: 'backing',
-            tracks: activeTracks
-          });
-          this.debugPhrase = this.asArray('backing');
-          this.anySolo = solo;
-          if (this.selected) {
-            let selectedBeatTick = _.split(this.selected, ': ')[0];
-            this.selected = _.find(this.debugPhrase, (debugPhrase) => {
-              return _.startsWith(debugPhrase, selectedBeatTick);
-            });
-            this.fixed = this.selected ? this._getFixed(this.selected) : [];
+          if (process.browser) {
+            this.parseTracks(tracks);
           }
         }
       }
@@ -208,7 +203,7 @@
         outline: none;
 
     input.type
-      width: 6vw;
+      width: 12vw;
 
     input.notes
       width: 40vw;
