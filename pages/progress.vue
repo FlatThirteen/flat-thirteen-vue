@@ -1,15 +1,25 @@
 <template lang="pug">
-  corner-frame(:totalPoints="totalPoints", :totalStars="totalStars", @hint="hint = $event")
-    curriculum(:hint="hint", @mousedown="onLesson($event)")
+  corner-frame(:totalPoints="totalPoints", :totalStars="totalStars",
+      :hideTop="!!finaleStages.length", @hint="hint = $event")
+    curriculum(:hint="hint", :debug="true", @mousedown="onLesson($event)")
+    .points(v-if="!pulseBeat")
+      .button(@click="max()") o
     transition(name="lesson-container")
       .lesson-container(v-show="pulseBeat")
-        lesson-builder(ref="lessonBuilder", :debug="true")
-        .points
-          span(@mouseover="showNextAuto()", @click="max()") +
-          input(type="number", v-model.number="addPoints", :class="{invalid: invalidPoints}")
-          .power
-            power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
-        quit-button(@click="exitLesson()")
+        transition(name="finale", mode="out-in")
+          .finale(v-if="finaleStages.length")
+            finale(:stages="finaleStages", @finish="finale($event)")
+            quit-button(@click="redoLesson()")
+          .lesson(v-else)
+            lesson-builder(ref="lessonBuilder", :debug="true")
+            .power
+              power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
+            .points
+              .button(@click="finishLesson()") +
+              input(v-for="(points, i) in pointsByStage", type="number",
+                  v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}",
+                  @mouseover="i > 1 && showNextAuto()")
+            quit-button(@click="exitLesson()")
 </template>
 
 <script>
@@ -17,16 +27,18 @@
 
   import CornerFrame from '~/components/corner-frame.component';
   import Curriculum from '~/components/curriculum/curriculum.component';
+  import Finale from '~/components/finale.component';
   import LessonBuilder from '~/components/lesson-builder.component';
   import PowerAuto from '~/components/power/power-auto.component';
   import QuitButton from '~/components/quit-button.component';
 
-  import { MAX_POINTS } from '~/store/progress';
+  const MAX_POINTS = 100;
 
   export default {
     components: {
       'corner-frame': CornerFrame,
       'curriculum': Curriculum,
+      'finale': Finale,
       'lesson-builder': LessonBuilder,
       'power-auto': PowerAuto,
       'quit-button': QuitButton
@@ -39,7 +51,8 @@
       return {
         hint: null,
         pulseBeat: null,
-        addPoints: MAX_POINTS
+        pointsByStage: _.times(4, _.constant(MAX_POINTS)),
+        finaleStages: []
       };
     },
     methods: {
@@ -53,31 +66,54 @@
           layout: this.layout,
           clear: true
         });
-        let finished = this.pointsByPulseBeat[pulseBeat].length;
+        this.$store.dispatch('progress/setStages', {
+          name: this.level.layout + '-' + pulseBeat
+        });
+        this.buildLesson();
+      },
+      buildLesson() {
+        let finished = this.pointsByPulseBeat[this.pulseBeat].length;
         this.$refs.lessonBuilder.build(finished);
       },
-      exitLesson() {
-        if (!this.invalidPoints) {
-          this.$store.dispatch('progress/addPoints', {
-            pulseBeat: this.pulseBeat,
-            amount: { base: this.addPoints }
-          });
+      finishLesson() {
+        let stages = this.$refs.lessonBuilder.stages;
+        if (!_.some(this.invalidPoints) && stages.length >= this.pointsByStage.length) {
+          this.finaleStages = _.map(this.pointsByStage, (points, i) => ({ points,
+            phrase: stages[i]
+          }));
         }
+      },
+      redoLesson() {
+        this.finaleStages = [];
+        // Wait for nextTick so that $refs are updated again
+        this.$nextTick(this.buildLesson);
+      },
+      exitLesson() {
         this.pulseBeat = null;
+        this.finaleStages = [];
+        this.$store.dispatch('progress/setStages');
+      },
+      finale(points) {
+        this.$store.dispatch('progress/addPoints', {
+          pulseBeat: this.pulseBeat,
+          amount: { base: points }
+        });
+        this.exitLesson();
       },
       showNextAuto() {
-        if (this.next.auto) {
+        if (this.next.auto && this.pointsByStage[0] === 100 && this.pointsByStage[1] === 100) {
           this.$refs.auto.appear(this.next.auto);
         }
       }
     },
     computed: {
       invalidPoints() {
-        return this.addPoints <= 0 || this.addPoints > MAX_POINTS;
+        return _.map(this.pointsByStage, points => points < 5 || points > MAX_POINTS);
       },
       ...mapGetters({
         power: 'progress/power',
         next: 'progress/next',
+        level: 'progress/level',
         layout: 'progress/layout',
         pointsByPulseBeat: 'progress/pointsByPulseBeat',
         totalPoints: 'progress/totalPoints',
@@ -93,12 +129,20 @@
     position: absolute;
     user-select: none;
 
-  .lesson-container-enter-active, .lesson-container-leave-active
+  .lesson-container-enter-active, .lesson-container-leave-active, .finale-enter-active, .finale-leave-active
     transition: all 500ms;
 
   .lesson-container-enter, .lesson-container-leave-to
     transform: scale(.1);
     opacity: 0.5;
+
+  .finale-enter
+    opacity: 0;
+    transform: translateX(100%);
+
+  .finale-leave-to
+    opacity: 0;
+    transform: translateX(-100%);
 
   .lesson-container
     posit(absolute);
@@ -129,6 +173,6 @@
         outline: none;
 
   .power
-    posit(absolute, x, x, 0, 160px)
-    height: 100%;
+    posit(fixed, x, 100px, 0, 250px);
+    height: 100px;
 </style>

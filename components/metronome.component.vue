@@ -1,7 +1,7 @@
 <template lang="pug">
-  svg(height="60", width="60", viewBox="0 0 60 60")
+  svg(:height="size", :width="size", viewBox="0 0 60 60")
     path.metronome(:d="path", :class="{hint, disabled}")
-    g.arm(v-if="!hint", :class="{playing}", :style="style")
+    g.arm(v-if="!hint && !mini", :class="{playing}", :style="style")
       line(x1="30", y1="3", x2="30", y2="45", stroke="#EEE", stroke-width="2px")
       circle(cx="30", cy="45", r="8", fill="#EEE")
 </template>
@@ -13,12 +13,16 @@
       disabled: Boolean,
       playing: Boolean,
       hint: Boolean,
+      mini: Boolean,
       duration: Number,
     },
     constants: {
       path: 'M0,60 L15,0 L45,0 L60,60 Z'
     },
     computed: {
+      size() {
+        return this.mini ? 20 : 60;
+      },
       style() {
         return !this.duration ? {} : { animationDuration: ( this.duration * 2) + 's'};
       }

@@ -1,11 +1,14 @@
 import Vue from 'vue';
 
 import Parser from '~/common/composer/parser';
+import BeatTick from '~/common/core/beat-tick.model';
 import Note from '~/common/core/note.model';
+import Tone from '~/common/tone';
 
 export const state = () => ({
   live: {
     backing: {},
+    finale: {},
     goal: {},
     playback: {},
     victory: {}
@@ -81,6 +84,34 @@ export const actions = {
     if (notes) {
       commit('set', { name: 'victory', notes });
     }
+  },
+  setFinale({commit}, {part, number, backing, alternate}) {
+    if (backing !== 'none') {
+      let rootNote = ['D2', 'E2', 'F2', 'G2'][part];
+      let pitches = _.map([0, -5, -2, 3, 4], interval =>
+        new Tone.Frequency(rootNote).transpose(interval).toNote());
+      let rhythm = '%1,%2|%3,%1|,%2|' + (part < 3 ? '%3,%1' : '%4,%5,%1,');
+      let notes = Parser.parseTracks([{
+        type: 'sawtooth6',
+        notes: _.reduceRight(pitches, (template, pitch, index) =>
+            _.replace(template, new RegExp('%' + (index + 1), 'g'), pitch), rhythm)
+      }]);
+      commit('set', { name: 'finale', notes });
+    } else {
+      commit('clear', { name: 'finale' });
+    }
+    let rootNote = ['D6', 'E6', 'F6', 'G6'][part];
+    let sequence = [0, -5, 2, -5, 4, 0, 2, -5, 4, -5, 0, 2, 4, 0, 7, part < 3 || !alternate ? 0 : 9];
+    let order = _.take([0, 6, 8, 12, 10, 4, 2, 14, 11, 5, 13, 9, 3, 7, 1, 15], number);
+    _.forEach(order, index => {
+      commit('add', {
+        name: 'finale',
+        beatTick: BeatTick.from(index >> 2, index % 4, 4),
+        note: new Note('cowbell', {
+          pitch: new Tone.Frequency(rootNote).transpose(sequence[index]).toNote()
+        })
+      });
+    });
   },
   setTracks({commit}, {name, tracks}) {
     commit('set', { name, notes: Parser.parseTracks(tracks)})

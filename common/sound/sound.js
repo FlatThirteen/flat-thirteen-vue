@@ -35,6 +35,9 @@ let Sound = {
   },
   playSequence(soundName, pitches, duration, velocity) {
     let sound = Sound[soundName];
+    if (!sound) {
+      sound = Sound.create(soundName);
+    }
     _.forEach(pitches, (pitch, index) => {
       if (pitch) {
         let time = new Tone.Time(duration) * index;

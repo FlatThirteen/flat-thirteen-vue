@@ -47,7 +47,8 @@
     },
     props: {
       hint: String,
-      scrollTop: Number
+      scrollTop: Number,
+      debug: Boolean
     },
     constants: {
       animationTarget: 'lessons',
@@ -107,7 +108,7 @@
             TweenMax.to(this.$refs.selected, 1, {
               left: this.getLayoutLeft(layout),
               top: 0,
-              delay: 2,
+              delay: this.debug ? 0 : 2,
               onComplete: () => {
                 this.$store.dispatch('progress/layout', layout);
                 this.animate('back', { duration: 0 });

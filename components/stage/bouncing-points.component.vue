@@ -30,8 +30,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: active-blue;
-    font-size: 15vw;
     font-weight: 600;
     text-shadow: 0 3px 6px rgba(255, 255, 255, 0.6)
     white-space: nowrap;

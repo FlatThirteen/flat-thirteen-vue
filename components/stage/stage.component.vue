@@ -18,7 +18,7 @@
       .grids
         svg-grid(v-for="(surface, i) in layout", :key="i", v-bind="gridProps",
             :grid="surface", :showFx="goalKeys")
-        bouncing-points(:show="scene === 'victory'", :points="basePoints")
+        bouncing-points.bouncing-points(:show="scene === 'victory'", :points="basePoints")
       faces(v-bind="facesProps")
       .footer: transition(name="footer")
         .contents(v-show="stageWeenie !== 'goal' && scene !== 'victory'")
@@ -567,6 +567,10 @@
 
   .grids
     position: relative;
+
+  .bouncing-points
+    color: active-blue;
+    font-size: 15vh;
 
   .footer
     height: 15vh;

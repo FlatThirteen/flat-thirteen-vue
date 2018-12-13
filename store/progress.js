@@ -95,7 +95,6 @@ export const getters = {
       !state.power.notes && power !== 'auto' || value === MAX_POWER[power] ? 0 : value + 1),
   autoLevel: state => state.mode.auto,
   showLoop: state => state.power.auto > 1,
-  points: state => state.points,
   nextPoints: state => state.nextPoints,
   totalPoints: state => _.reduce(state.points, (result, pointsByLayout) => {
     _.forEach(pointsByLayout, pointsByPulseBeat => {
@@ -148,6 +147,38 @@ export const getters = {
       return pointsByPulseBeat;
     }, {});
   }),
+  ranking: (state, getters) => (layout, pulseBeat, base) => {
+    let newAmount = { backing: getters.backing, tempo: getters.tempo, base, newScore: true };
+    let lessonName = layout + '-' + pulseBeat;
+    let ranking = getters.rankingForDisplay[lessonName];
+    let insertion = _.sortedLastIndexBy(ranking, newAmount, sortAmount);
+    return _.take(ranking, insertion).concat(newAmount, _.takeRight(ranking, ranking.length - insertion),
+        getters.rankingFiltered[lessonName]);
+  },
+  rankingByLesson: (state, getters) => {
+    let ranking = {};
+    _.times(getters.layouts.length, layout => {
+      _.forEach(getters.pulseBeats, pulseBeat => {
+        let pointRank = [];
+        _.forEachRight(getters.tempos, tempo => {
+          _.forEach(getters.backings, (backing, backingLevel) => {
+            let pointsForLevel = _.get(state.points, [layout, pulseBeat, tempo, backingLevel], []);
+            _.forEach(pointsForLevel, nextPoints => {
+              let amount = _.assign({ backing, tempo }, nextPoints);
+              let insertion = _.sortedLastIndexBy(pointRank, amount, sortAmount);
+              pointRank.splice(insertion, 0, amount);
+            });
+          });
+        });
+        ranking[layout + '-' + pulseBeat] = pointRank;
+      });
+    });
+    return ranking;
+  },
+  rankingForDisplay: (state, getters) => _.mapValues(getters.rankingByLesson, ranking =>
+      _.filter(ranking, amount => amount.tempo >= getters.tempo)),
+  rankingFiltered: (state, getters) => _.mapValues(getters.rankingByLesson, ranking =>
+      _.filter(ranking, amount => amount.tempo < getters.tempo)),
   pointsByPulseBeat: (state, getters) => _.mapValues(getters.highPoints[state.mode.layout],
       _.property([getters.tempo, state.mode.backing])),
   prerequisite: (state, getters) => _.reduce(getters.pulseBeats, (result, pulseBeat) => {
@@ -180,7 +211,7 @@ export const getters = {
   }, 0),
   groupsWithoutStars: (state, getters) => _.filter(getters.pulseBeatGroups,
       pulseBeatGroup => !_.some(pulseBeatGroup, pulseBeat =>
-          _.get(getters.pointsByPulseBeat, [pulseBeat, 0, 'base']) === MAX_POINTS)),
+          _.some(getters.pointsByPulseBeat[pulseBeat], amount => amount.base === MAX_POINTS))),
   rowsWithStars: (state, getters) =>
       _.size(getters.pulseBeatGroups) - getters.groupsWithoutStars.length,
 };
@@ -365,5 +396,6 @@ function splice(string, startIndex, length, insertString) {
 }
 
 function sortAmount(amount) {
-  return -amount.base * Math.pow(2, (amount.heavy || 0) + (amount.light || 0));
+  return -amount.base * Math.pow(2, (amount.heavy || 0) + (amount.light || 0)) -
+      amount.tempo / 1000 - _.indexOf(BACKINGS, amount.backing) / 10000 - (amount.newScore || 0) / 100000;
 }

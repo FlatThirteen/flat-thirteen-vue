@@ -1,11 +1,14 @@
 <template lang="pug">
-  corner-frame(:totalPoints="points", :totalStars="totalStars", @hint="hint = $event")
+  corner-frame(:totalPoints="points", :totalStars="totalStars",
+      :hideTop="lessonDone", @hint="hint = $event")
     composer(ref="composer")
     lesson-builder(ref="lessonBuilder")
     transition(name="lesson-container")
-      curriculum(v-if="!stageGoal", key="choose", :scrollTop="scrollTop", :hint="hint",
+      curriculum(v-if="!pulseBeat", key="choose", :scrollTop="scrollTop", :hint="hint",
           @click="onLesson($event)")
         slot(name="curriculum")
+      finale.finale(v-else-if="lessonDone", key="finale", :stages="stages",
+          :style="transformOrigin", @finish="clearLesson($event)")
       .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
         stage(:goal="stageGoal", :tempo="tempo", :showNextAuto="showNextAuto",
@@ -17,7 +20,7 @@
 
 <script>
   import { TweenMax } from 'gsap';
-  import { mapGetters } from 'vuex';
+  import { mapActions, mapGetters } from 'vuex';
 
   import Monotonic from '~/common/composer/monotonic';
   import Note from '~/common/core/note.model';
@@ -27,6 +30,7 @@
   import Composer from '~/components/composer.component';
   import CornerFrame from '~/components/corner-frame.component';
   import Curriculum from '~/components/curriculum/curriculum.component';
+  import Finale from '~/components/finale.component';
   import LessonBuilder from '~/components/lesson-builder.component';
   import QuitButton from '~/components/quit-button.component';
   import Stage from '~/components/stage/stage.component';
@@ -37,6 +41,7 @@
       'composer': Composer,
       'corner-frame': CornerFrame,
       'curriculum': Curriculum,
+      'finale': Finale,
       'lesson-builder': LessonBuilder,
       'quit-button': QuitButton,
       'stage': Stage,
@@ -44,15 +49,15 @@
     data() {
       return {
         pulseBeat: null,
-        lessonPoints: 0,
         stagePoints: 0,
+        stages: [],
         hint: null,
         scrollTop: 0,
         transformOrigin: {}
       };
     },
     destroyed() {
-      this.$store.dispatch('progress/setStages');
+      this.setStages();
     },
     methods: {
       onLesson({pulseBeat, x, y, scrollTop}) {
@@ -60,11 +65,8 @@
         this.transformOrigin = {
           transformOrigin: x + 'px ' + (y - scrollTop) + 'px'
         };
-        this.$store.dispatch('player/update', { pulseBeat,
-          layout: this.layout,
-          clear: true
-        });
-        this.$store.dispatch('progress/setStages', {
+        this.update({ pulseBeat, layout: this.layout, clear: true });
+        this.setStages({
           stages: this.$refs.lessonBuilder.build(this.pointsByPulseBeat[pulseBeat].length),
           name: this.level.layout + '-' + pulseBeat
         });
@@ -74,7 +76,7 @@
         this.pulseBeat = pulseBeat;
       },
       nextStage(points) {
-        this.lessonPoints += points;
+        this.stages.push({ phrase: this.stageGoal, points });
         this.$store.dispatch('progress/nextStage');
         if (this.level.backing) {
           this.$refs.composer.updateRhythm();
@@ -86,18 +88,24 @@
         if (!points) {
           GameAnalytics.fail(this.stagePoints);
         }
-        this.$store.dispatch('progress/addPoints', {
+        this.addPoints({
           pulseBeat: this.pulseBeat,
           amount: { base: points }
         });
-        this.lessonPoints = 0;
+        this.pulseBeat = null;
+        this.stages = [];
         this.$refs.composer.clear();
-        this.$store.dispatch('progress/setStages');
-      }
+        this.setStages();
+      },
+      ...mapActions({
+        update: 'player/update',
+        addPoints: 'progress/addPoints',
+        setStages: 'progress/setStages'
+      })
     },
     computed: {
       points() {
-        return this.totalPoints + this.lessonPoints;
+        return this.totalPoints + _.sumBy(this.stages, 'points');
       },
       showNextAuto() {
         return this.points >= Math.pow(2, this.next.auto) * 150 && this.points >= this.nextPoints &&
@@ -117,13 +125,6 @@
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })
-    },
-    watch: {
-      lessonDone(lessonDone) {
-        if (lessonDone) {
-          this.clearLesson(this.lessonPoints);
-        }
-      }
     }
   }
 </script>
@@ -132,13 +133,16 @@
   .lesson-container
     posit(absolute);
 
-  .lesson-container-enter-active, .lesson-container-leave-active
-    transition: all 500ms;
+    &-enter-active, &-leave-active
+      transition: all 500ms;
 
-  .lesson-container-enter, .lesson-container-leave-to
-    opacity: 0;
+    &-enter, &-leave-to
+      opacity: 0;
 
-    &.lesson-container
+    &-enter.lesson-container, &-leave-to.finale
       transform: scale(.1);
       opacity: 0.5;
+
+    &-enter.finale
+      transform: translateX(100%);
 </style>

@@ -1,6 +1,6 @@
 <template lang="pug">
   .builder(v-if="debug")
-    arrangement.arrangement(:phrases="phrases", :tempo="tempo")
+    arrangement.arrangement(:phrases="phrases", :tempo="tempo", :show="true")
     .notes
       .note.toggle(:class="{active: !notes}", @click="build(finished)") Default
       .note.toggle(v-for="numNotes in notesRange", :class="{active: numNotes === notes}",

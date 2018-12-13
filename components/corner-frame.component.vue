@@ -1,20 +1,21 @@
 <template lang="pug">
   .frame
     slot
-    .top
-      transition(name="boing")
-        backing-button.left(v-if="showBacking || hint.backing", :backing="backing", :throttle="500",
-            :penalty="penalty.backing > 0 && level.backing === penalty.backing", :hint="hint.backing",
-            :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')",
-            @mouseenter.native="onHint('backing')", @mouseleave.native="onHint()")
-      power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
-      transition(name="boing")
-        tempo-control.right(v-if="minTempo < maxTempo || hint.tempo", :tempo="tempo",
-            :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
-            :penalty="level.tempo === penalty.tempo", :hint="hint.tempo",
-            @tempo="$store.dispatch('progress/tempo', $event)",
-            @mouseenter.native="onHint('tempo')", @mouseleave.native="onHint()")
-      power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
+    transition(name="top")
+      .top(v-show="!hideTop")
+        transition(name="boing")
+          backing-button.left(v-if="showBacking || hint.backing", :backing="backing", :throttle="500",
+              :penalty="penalty.backing > 0 && level.backing === penalty.backing", :hint="hint.backing",
+              :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')",
+              @mouseenter.native="onHint('backing')", @mouseleave.native="onHint()")
+        power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
+        transition(name="boing")
+          tempo-control.right(v-if="minTempo < maxTempo || hint.tempo", :tempo="tempo",
+              :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
+              :penalty="level.tempo === penalty.tempo", :hint="hint.tempo",
+              @tempo="$store.dispatch('progress/tempo', $event)",
+              @mouseenter.native="onHint('tempo')", @mouseleave.native="onHint()")
+        power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
       .left: slot(name="bottom-left")
       .right
@@ -49,6 +50,7 @@
     props: {
       totalPoints: Number,
       totalStars: Number,
+      hideTop: Boolean
     },
     data() {
       return {
@@ -62,21 +64,21 @@
     },
     computed: {
       hint() {
-        return !this.stageGoal && this.power.notes >= 8 && {
+        return !this.lessonName && this.power.notes >= 8 && {
           backing: !this.showBacking && this.level.auto > 1,
           tempo: this.minTempo === this.maxTempo && _.every(this.playable)
         };
       },
       showNextBacking() {
-        return !this.stageGoal && !!this.next.backing && this.level.auto > 1 &&
+        return !this.lessonName && !!this.next.backing && this.level.auto > 1 &&
             _.every(this.playable) && this.totalPoints >= this.nextPoints;
       },
       showNextTempo() {
-        return !this.stageGoal && !!this.next.tempo && this.tempo === this.maxTempo &&
+        return !this.lessonName && !!this.next.tempo && this.tempo === this.maxTempo &&
             this.rowsWithStars >= 5 && this.totalPoints >= this.nextPoints;
       },
       ...mapGetters({
-        stageGoal: 'progress/stageGoal',
+        lessonName: 'progress/lessonName',
         level: 'progress/level',
         power: 'progress/power',
         next: 'progress/next',
@@ -113,8 +115,8 @@
           this.$refs.tempo.appear(this.next.tempo);
         }
       },
-      stageGoal(stageGoal) {
-        if (stageGoal) {
+      lessonName(lessonName) {
+        if (lessonName) {
           this.$refs.backing.disappear();
           this.$refs.tempo.disappear();
         }
@@ -140,6 +142,12 @@
     .left, .right
       top: 0;
       margin: 20px;
+
+    &-enter-active, &-leave-active
+      transition: all 250ms;
+
+    &-enter, &-leave-to
+      opacity: 0;
 
   .bottom
     posit(fixed, x, 0, 0, 0);

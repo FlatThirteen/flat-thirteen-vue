@@ -32,6 +32,13 @@ export const mutations = {
   },
   keyMode(state, mode) {
     state.keyMode = !!mode;
+  },
+  keyClear(state) {
+    state.keyDown = null;
+    state.keyUp = null;
+    _.forEach(state.keysHeld, (truth, key) => {
+      Vue.delete(state.keysHeld, key);
+    });
   }
 };
 

@@ -7,8 +7,8 @@
 
   export default {
     props: {
-      show: false,
-      player: false
+      show: Boolean,
+      player: Boolean
     },
     mounted() {
       window.addEventListener('keydown', this.onKeyDown);
@@ -16,6 +16,7 @@
       window.addEventListener('mousemove', this.onMouseMove);
     },
     destroyed() {
+      this.$store.commit('keyClear');
       window.removeEventListener('keydown', this.onKeyDown);
       window.removeEventListener('keyup', this.onKeyUp);
       window.removeEventListener('mousemove', this.onMouseMove);

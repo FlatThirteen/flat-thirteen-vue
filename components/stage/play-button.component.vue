@@ -3,7 +3,7 @@
     slot
     .play(ref="play", :class="{penalty: wrong, button: !disable}",
         @click="!disable && $emit('click')")
-      svg(height="60", width="60", viewBox="0 0 60 60")
+      svg(viewBox="0 0 60 60")
         defs(v-if="wrong !== undefined")
           linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
             stop(:offset="stopLevel + '%'", stop-color="white")
@@ -132,11 +132,15 @@
 <style scoped lang="stylus" type="text/stylus">
   .anchor
     position: relative;
+    height: 60px;
+    width: 60px;
 
   .play
     position: relative;
-    height: 60px;
-    width: 60px;
+    height: 100%;
+
+    & svg
+      height: 100%;
 
   .counter
     posit(absolute, 0, x, x);
