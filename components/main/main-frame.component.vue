@@ -114,8 +114,6 @@
       ...mapGetters({
         stageGoal: 'progress/stageGoal',
         lessonDone: 'progress/lessonDone',
-        beatTicks: 'player/beatTicks',
-        availableNotes: 'player/availableNotes',
         level: 'progress/level',
         next: 'progress/next',
         layout: 'progress/layout',
