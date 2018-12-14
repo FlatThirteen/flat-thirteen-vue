@@ -9,10 +9,11 @@
           @click="finished = !finished; notes ? setNotes(notes) : build(finished)") Finished
     .stages
       .stage.button(v-for="(stage, i) in stages", @click="onPhrase(i)")
-        .debug(v-if="stage.rhythmSeed !== undefined || stage.noteSeed !== undefined", :class="{top: firstLayout}")
+        .debug(v-if="stage.rhythmSeed !== undefined || stage.noteSeed !== undefined", :class="{top: oneNote}")
           .overlay
             span(v-if="stage.minNotes") {{ stage.notes }} ({{ stage.minNotes }} {{ stage.maxNotes }})
-            span  {{ stage.rhythmSeed }}:{{ stage.noteSeed }}
+            span  {{ stage.rhythmSeed }}
+            span(v-if="!oneNote") :{{ stage.noteSeed }}
         phrase.phrase(ref="phrase", v-bind="{phrase: stage, phraseKey: String(i), pulsesByBeat, phraseProperties}")
 </template>
 
@@ -47,7 +48,8 @@
     methods: {
       build(finished) {
         this.notes = null;
-        if (this.firstLayout && this.pulseBeat === '1111' && !finished) {
+        if (this.oneNote && this.noteCombinations[0][0] === 'kick' &&
+            this.pulseBeat === '1111' && !finished) {
           this.stages = _.map([
             [{ type: 'drums', notes: 'K|K|K|K' }],
             [{ type: 'drums', notes: 'K|K|K' }],
@@ -63,7 +65,7 @@
           this.stages = _.times(numStages, (stage) => {
             let debug = {
               minNotes: Math.max(3, this.beatTicks.length - finished - stage),
-              maxNotes: this.beatTicks.length - (this.firstLayout && !!(finished || stage))
+              maxNotes: this.beatTicks.length - (this.oneNote && !!(finished || stage))
             };
             let beatTicks;
             let noteSequence;
@@ -79,7 +81,7 @@
               beatTicks = debug.notes === this.beatTicks.length ? this.beatTicks : null;
               if (!beatTicks) {
                 debug.requiredBeatTicks = this.requiredBeatTicks(
-                  this.pulseBeat !== '1111' && !this.firstLayout || !finished,
+                  this.pulseBeat !== '1111' && !this.oneNote || !finished,
                   stage < numStages - 1 && !finished);
                 let combinations = Rhythm.combinations(this.beatTicks, debug.requiredBeatTicks, debug.notes,
                   _.get(avoidBeatTicks, debug.notes, {}));
@@ -94,11 +96,11 @@
                 }
               }
               if (beatTicks) {
-                if (this.availableNotes.length === 1) {
-                  noteSequence = _.times(debug.notes, () => [Note.from(this.availableNotes[0])]);
+                if (this.oneNote) {
+                  noteSequence = _.times(debug.notes, () => this.noteCombos[0]);
                   _.set(avoidBeatTicks, [debug.notes, _.join(beatTicks)], true);
                 } else {
-                  let combos = Monotonic.combos(this.availableNotes, beatTicks.length) - 2 -
+                  let combos = Monotonic.combos(this.noteCombos, beatTicks.length) - 2 -
                     _.size(avoidSequences[beatTicks]);
                   if (combos) {
                     let noteSeed = _.random(1, combos);
@@ -109,8 +111,7 @@
                     if (debug.noteSeed !== noteSeed) {
                       avoidSequences[beatTicks][debug.noteSeed] = true;
                     }
-                    noteSequence = Monotonic.build(_.map(this.availableNotes, (note) => [Note.from(note)]),
-                        beatTicks.length, debug.noteSeed);
+                    noteSequence = Monotonic.build(this.noteCombos, beatTicks.length, debug.noteSeed);
                     avoidSequences[beatTicks][noteSeed] = _.defaultTo(avoidSequences[beatTicks][combos], combos);
                   } else {
                     _.set(avoidBeatTicks, [debug.notes, _.join(beatTicks)], true);
@@ -134,13 +135,12 @@
       setNotes(notes) {
         this.notes = notes;
         let requiredBeatTicks = this.requiredBeatTicks(
-            this.pulseBeat !== '1111' && !this.firstLayout || !this.finished, !this.finished);
+            this.pulseBeat !== '1111' && !this.oneNote || !this.finished, !this.finished);
         let rhythmCombinations = Rhythm.combinations(this.beatTicks, requiredBeatTicks, notes);
-        this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => _.map(
-            this.availableNotes.length === 1 ? [0] :
-            _.range(1, Monotonic.combos(this.availableNotes, beatTicks.length) - 1), noteSeed =>
-            _.assign(_.zipObject(beatTicks, Monotonic.build(_.map(this.availableNotes,
-                (note) => [Note.from(note)]), beatTicks.length, noteSeed)), { requiredBeatTicks, rhythmSeed, noteSeed })));
+        this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => _.map(this.oneNote ? [0] :
+            _.range(1, Monotonic.combos(this.noteCombos, beatTicks.length) - 1), noteSeed =>
+            _.assign(_.zipObject(beatTicks, Monotonic.build(this.noteCombos, beatTicks.length, noteSeed)),
+                { requiredBeatTicks, rhythmSeed, noteSeed })));
       },
       requiredBeatTicks(requireInitial, requireOffbeats) {
         let requiredBeatTicks = [];
@@ -176,10 +176,13 @@
     },
     computed: {
       notesRange() {
-        return _.range(3, this.beatTicks.length + !this.firstLayout);
+        return _.range(3, this.beatTicks.length + !this.oneNote);
       },
-      firstLayout() {
-        return this.availableNotes.length === 1 && this.availableNotes[0] === 'kick';
+      oneNote() {
+        return this.noteCombinations.length === 1;
+      },
+      noteCombos() {
+        return _.map(this.noteCombinations, notes => _.map(notes, note => Note.from(note)))
       },
       ...mapGetters({
         pulseBeat: 'player/pulseBeat',
@@ -187,7 +190,7 @@
         beatTicks: 'player/beatTicks',
         phraseProperties: 'player/phraseProperties',
         layout: 'player/layout',
-        availableNotes: 'player/availableNotes',
+        noteCombinations: 'player/noteCombinations',
         tempo: 'progress/tempo',
         paused: 'transport/paused'
       })

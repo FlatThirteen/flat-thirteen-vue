@@ -22,8 +22,9 @@ export const getters = {
   getNotes: state => (name, beatTick) => state.live[name][beatTick],
   asArray: state => name => _.chain(state.live[name]).toPairs().sortBy([0]).
       map((pair) => _.replace(_.toString(pair), ',', ': ')).value(),
-  asString: state => name => _.toString(_.toPairs(state.live[name])),
-  correct: (state, getters) => getters.asString('goal') === getters.asString('playback')
+  correct: state => _.size(state.live.goal) === _.size(state.live.playback) &&
+      _.every(state.live.goal, (notes, beatTick) => !_.xor(_.invokeMap(notes, 'toString'),
+          _.invokeMap(state.live.playback[beatTick], 'toString')).length)
 };
 
 export const mutations = {

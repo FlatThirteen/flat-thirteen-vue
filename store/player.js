@@ -30,6 +30,9 @@ export const getters = {
   layout: state => state.layout,
   noteByKey: state => _.map(state.layout, 'noteByKey'),
   surfaceIds: (state, getters) => _.map(getters.noteByKey, (noteByKey) => _.join(_.keys(noteByKey))),
+  noteCombinations: (state, getters) =>  _.reduce(_.map(getters.noteByKey, _.values),
+      (result, notes) => result.concat(_.map(notes, note => [note]),
+          _.flatMap(result, combo => _.map(notes, note => combo.concat(note)))), []),
   availableNotes: (state, getters) => _.flatMap(getters.noteByKey, _.values),
   phraseProperties: (state, getters) => ({
     unitHeight: getters.availableNotes.length,
