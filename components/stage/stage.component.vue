@@ -166,7 +166,7 @@
           } else if (this.scene === 'goal') {
             if (this.noteCount === this.goalNoteCount && this.changed) {
               scene = 'playback';
-            } else if (this.autoLoop && ++this.loopCount % (this.autoRepeat ? 4 : 2) === 0) {
+            } else if (this.autoLoop && ++this.loopCount % (this.autoRepeat ? 4 : 3) === 0) {
               this.addPenalty('goalPenalty', this.autoRepeat ? 2 : 5, { silent: this.autoRepeat });
             }
           } else if (this.scene === 'playback') {
