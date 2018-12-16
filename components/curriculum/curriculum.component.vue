@@ -6,12 +6,12 @@
           power-layout.power(ref="layout", @click="onNext('layout')")
           .layout-selected(ref="selected", :class="{off: level.layout < 0}")
           transition-group(name="layout", tag="div", ref="layouts", class="layouts")
-            layout-button(v-for="(layout, i) in layouts", :key="i", :layout="layout",
+            layout-button(v-for="(layout, i) in layouts", :key="String(i)", :layout="layout",
                 :selected="initialSelected || level.layout === i",
                 :weenie="weenie.layout === i && transition", @click="onLayout(i)")
       slot
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
-        .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="notes",
+        .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="String(notes)",
             v-if="displayPoints", :class="{transition, weenie: String(weenie.notes) === notes}")
           lesson-button(v-for="pulseBeat in lessonGroup", :key="pulseBeat",
               :class="{highlight: highlight[pulseBeat]}", :backing="backing",
