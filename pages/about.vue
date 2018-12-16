@@ -12,7 +12,7 @@
   }
 </script>
 
-<style scoped lang="Stylus" type="text/stylus">
+<style scoped lang="stylus" type="text/stylus">
   .content
     margin: 3vw content-side-margin;
 </style>

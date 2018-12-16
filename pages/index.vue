@@ -23,7 +23,7 @@
   }
 </script>
 
-<style scoped lang="Stylus" type="text/stylus">
+<style scoped lang="stylus" type="text/stylus">
   .content
     font-family: primary-font;
     position: relative;
