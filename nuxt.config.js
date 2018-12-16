@@ -44,7 +44,7 @@ module.exports = {
       'gameanalytics',
       'gsap',
       'pixi.js',
-      'Tone',
+      'tone',
       'vue-axios'
     ],
     plugins: [
