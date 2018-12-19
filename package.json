@@ -22,7 +22,7 @@
     "js-combinatorics": "^0.5.3",
     "nuxt": "^1.4.5",
     "pixi.js": "^4.8.0",
-    "tone": "0.11.11",
+    "tone": "13.3.10",
     "vue-axios": "^2.1.4",
     "vue-constants": "^1.0.3"
   },

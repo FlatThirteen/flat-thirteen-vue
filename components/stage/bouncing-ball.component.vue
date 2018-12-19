@@ -32,18 +32,18 @@
     constants: {
       animationTarget: 'ball',
       animationDefinitions: {
-        bounce: [[.1, {
+        bounce: [[.2, {
           bottom: 0,
-          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
-        }], [.2, {
-          transform: 'translateY(0.2vh) scale(0.9, 1.2)'
-        }], [.2, {
           transform: 'translateY(-7vh) scale(0.8, 1.1)'
         }], [.2, {
           transform: 'translateY(-10vh) scale(1, 0.9)'
         }], [.3, {
           transform: 'translateY(0.1vh) scale(0.8, 1.2)',
           ease: Circ.easeIn
+        }], [.1, {
+          transform: 'translateY(0.2vh) scale(1.2, 0.6)'
+        }], [.2, {
+          transform: 'translateY(0.2vh) scale(0.9, 1.2)'
         }]],
         enter: [[.2, {
           opacity: 1,
@@ -85,7 +85,7 @@
             if (this.ballIn && this.$refs.ball) {
               TweenMax.to(this.$refs.ball, .7 * this.duration, {
                 left: this.lefts[nextBeat],
-                delay: .3 * this.duration
+                delay: .1 * this.duration
               });
               this.animate('bounce', { duration: this.duration });
             }
@@ -107,19 +107,16 @@
       ballExit() {
         if (this.ballIn) {
           this.ballIn = false;
-          // Delay exit so that ball has a chance to bounce
-          setTimeout(() => {
-            TweenMax.killTweensOf(this.$refs.ball);
-            TweenMax.fromTo(this.$refs.ball, .7 * this.duration, {
-              transform: 'scale(.6, 1.2)'
-            }, {
-              bottom: inactiveBottom
-            });
-            TweenMax.to(this.$refs.ball, .5 * this.duration, {
-             left: inactiveLeft,
-             ease: Circ.easeInOut
-           });
-          }, 200 * this.duration);
+          TweenMax.killTweensOf(this.$refs.ball);
+          TweenMax.fromTo(this.$refs.ball, .7 * this.duration, {
+            transform: 'scale(.6, 1.2)'
+          }, {
+            bottom: inactiveBottom
+          });
+          TweenMax.to(this.$refs.ball, .5 * this.duration, {
+            left: inactiveLeft,
+            ease: Circ.easeInOut
+          });
         }
       }
     },
