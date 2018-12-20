@@ -13,6 +13,10 @@
       .auto.left
         .icon(@click="setAuto(false)") o
         span(@click="setAuto(next.auto)") :{{ power.auto }}
+      .middle
+        .pulses-input
+          input(type="text", v-model="pulseBeat", placeholder="# pulses", @keydown.stop="")
+
       .right
         .victory
           span(@click="onVictory()") V
@@ -89,7 +93,7 @@
       goal() {
         return !this.numBeats ? null : [{
           type: 'drums',
-          notes: _.join(_.times(this.numBeats - 1, () => 'K'), '|')
+          notes: _.join(_.times(this.numBeats - 1, i => i % 2 ? 'S' : 'K'), '|')
         }];
       },
       ...mapGetters({
@@ -134,21 +138,35 @@
       top: 0;
       margin: 20px;
 
+    .right
+      posit(absolute, x, 0, x, x);
+
   .bottom
     posit(fixed, x, 0, 0, 0)
-    height: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
 
     .left, .right
-      bottom: 0;
       background-color: white;
       box-shadow: 0 0 25px 15px white;
       margin: 5px 10px;
 
-  .left
-    posit(absolute, x, x, x, 0);
+    input
+      background: transparent;
+      border: none;
+      margin: 0;
+      text-align: center;
+
+      &::placeholder {
+        color: primary-red;
+        font-size: 14px;
+      }
+
+      &:focus
+        outline: none;
 
   .right
-    posit(absolute, x, 0, x, x);
     text-align: right;
 
   .auto, .backing, .victory
