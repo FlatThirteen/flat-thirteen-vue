@@ -63,7 +63,7 @@
         showFx: true,
         tracks: [
           { type: 'sawtooth6', notes: 'C2,C2| G1,G1| Bb1,Bb1| B1,B1| C2,C3| G1,G2| Bb1,Bb2| B1,B2' },
-          { type: 'triangle4', notes: 'G4.C5.Eb5,| ,G4.C5.Eb5| | G4.C5.F5| G4.C5.Eb5,| ,G4.C5.Eb5| | A4.C5.F5' },
+          { type: 'square2', notes: 'G4.C5.Eb5,| ,G4.C5.Eb5| | G4.C5.F5| G4.C5.Eb5,| ,G4.C5.Eb5| | A4.C5.F5' },
           { type: 'drums', notes: 'K| ,K| S,K| ,K| K| ,K| S,K| S,S,K,S' }
         ],
         more: {
