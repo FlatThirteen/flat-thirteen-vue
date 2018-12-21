@@ -88,9 +88,9 @@
           this.state += 1;
         }
       },
-      play(position) {
+      play(index) {
         if (this.ready) {
-          this.phrases.push(this.$refs.phrase[position]);
+          this.phrases.push(this.$refs.phrase[index]);
           if (this.paused) {
             this.start('+0');
           }

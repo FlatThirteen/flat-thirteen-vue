@@ -34,7 +34,7 @@ const parser = {
 const parseTracks = function(tracks) {
   let notes = {};
   _.forEach(tracks, track => {
-    if (!parser[track.type] && Sound.create(track.type)) {
+    if (!parser[track.type] && Sound.get(track.type)) {
       parser[track.type] = synthParser(track.type);
     }
     if (parser[track.type] && track.notes) {
