@@ -12,8 +12,6 @@
 </template>
 
 <script>
-  import { MAX_POINTS } from '~/store/progress';
-
   import Star from '~/components/star.component';
 
   export default {
@@ -57,7 +55,7 @@
       },
       updateScore() {
         this.playable = !!this.points;
-        this.stars = _.map(_.filter(_.take(this.points, 3), amount => amount.base === MAX_POINTS), 'backing');
+        this.stars = _.map(_.filter(_.take(this.points, 3), 'star'), 'backing');
         this.amount = !this.stars.length && this.points && this.points[0];
       }
     },

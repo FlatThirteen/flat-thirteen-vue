@@ -16,17 +16,11 @@
   import Sound from '~/common/sound/sound';
   import Tone from '~/common/tone';
 
-  import Phrase from '~/components/phrase.component';
-  import BouncingBall from '~/components/stage/bouncing-ball.component';
-  import PlayButton from '~/components/stage/play-button.component';
   import Transport from '~/components/stage/transport.component';
 
   export default {
     mixins: [AnimatedMixin],
     components: {
-      'phrase': Phrase,
-      'bouncing-ball': BouncingBall,
-      'play-button': PlayButton,
       'transport': Transport
     },
     props: {
@@ -87,12 +81,6 @@
       })
     },
     computed: {
-      bouncingBallProps() {
-        return {
-          showBall: this.lastBeat ? this.nextScene === 'goal' : this.scene === 'goal',
-          showCounter: this.scene !== 'goal' && this.nextScene === 'goal'
-        };
-      },
       transportProps() {
         return {
           beatsPerMeasure: this.beatsPerMeasure,

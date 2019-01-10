@@ -7,7 +7,7 @@
       curriculum(v-if="!pulseBeat", key="choose", :scrollTop="scrollTop", :hint="hint",
           @click="onLesson($event)")
         slot(name="curriculum")
-      finale.finale(v-else-if="lessonDone", key="finale", :stages="stages",
+      finale.finale(v-else-if="lessonDone", key="finale", :stages="stages", :bonusStage="bonus",
           :style="transformOrigin", @finish="clearLesson($event)")
       .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
@@ -45,6 +45,9 @@
       'lesson-builder': LessonBuilder,
       'quit-button': QuitButton,
       'stage': Stage,
+    },
+    props: {
+      bonus: Boolean
     },
     data() {
       return {
@@ -90,7 +93,7 @@
         }
         this.addPoints({
           pulseBeat: this.pulseBeat,
-          amount: { base: points }
+          amount: { base: points, star: points === (this.bonus ? 500 : 400) }
         });
         this.pulseBeat = null;
         this.stages = [];
@@ -108,7 +111,7 @@
         return this.totalPoints + _.sumBy(this.stages, 'points');
       },
       showNextAuto() {
-        return this.points >= Math.pow(2, this.next.auto) * 150 && this.points >= this.nextPoints &&
+        return this.totalStars >= Math.pow(2, this.next.auto) && this.points >= this.nextPoints &&
             this.next.auto === this.level.auto + 1;
       },
       ...mapGetters({

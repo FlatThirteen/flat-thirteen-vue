@@ -1,5 +1,5 @@
 <template lang="pug">
-  .faces(:class="facesClass")
+  .faces(:class="facesClass", :style="facesStyle")
     particle-fx(:type="particleType", :count="particleCount")
     .face(v-for="(pulses, beat) in pulsesByBeat", :class="faceClass[beat]")
       .eyes(:class="eyesClass[beat]")
@@ -46,6 +46,9 @@
         return [this.scene, this.disable ? 'disable' : {
           selected: this.selected || this.keyMode
         }];
+      },
+      facesStyle() {
+        return { 'max-width': (20 * this.numBeats) + 'vh' };
       },
       faceClass() {
         return _.times(this.numBeats, beat => ({
@@ -113,7 +116,6 @@
     margin: auto;
     background-color: back-blue;
     position: relative;
-    max-width: 80vh;
     width: 100%;
     transition: background-color 150ms ease-in-out;
 

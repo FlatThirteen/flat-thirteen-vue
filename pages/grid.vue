@@ -10,7 +10,7 @@
       tempo-control(:tempo="tempo", :min="60", :max="240", @tempo="tempo = $event",
           :toggle.sync="metronome")
     .content
-      bouncing-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
+      stage-ball.ball-container(:showBall="showBall", :showCounter="showCounter")
       .svg-grids(v-if="showSvgGrid")
         svg-grid(v-for="(surface, i) in layout", :key="i", :grid="surface",
             :showPosition="showPosition")
@@ -45,8 +45,8 @@
   import SvgGrid from '~/components/grid/svg-grid.component';
   import KeyHandler from '~/components/key-handler.component';
   import PlayControl from '~/components/play-control.component';
-  import BouncingBall from '~/components/stage/bouncing-ball.component';
   import Faces from '~/components/stage/faces.component';
+  import StageBall from '~/components/stage/stage-ball.component';
   import Transport from '~/components/stage/transport.component';
   import TempoControl from '~/components/tempo-control.component';
   import TransportPosition from '~/components/transport-position.component';
@@ -58,8 +58,8 @@
       'svg-grid': SvgGrid,
       'key-handler': KeyHandler,
       'play-control': PlayControl,
-      'bouncing-ball': BouncingBall,
       'faces': Faces,
+      'stage-ball': StageBall,
       'transport': Transport,
       'tempo-control': TempoControl,
       'transport-position': TransportPosition
@@ -173,9 +173,9 @@
     margin-bottom: 60px;
 
   .ball-container
+    position: relative;
     height: 15vh;
     width: 100%;
-    max-width: 80vh;
     margin: auto;
 
   .transport-container

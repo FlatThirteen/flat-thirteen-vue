@@ -14,7 +14,8 @@ let Sound = {
     tempo: 'cowbell:16t:A5,D6,F#6,D6,E6,A6',
     exceeded: 'cowbell:32n:,,E5,F4',
     penalty: 'cowbell:32n:F4,D4',
-    wrong: 'cowbell:32n:D4,D4'
+    wrong: 'cowbell:32n:D4,D4',
+    fail: 'cowbell: 16t:F4,D4,A3,D3'
   },
   resume() {
     // New versions of Chrome don't allow Audio until user takes action.

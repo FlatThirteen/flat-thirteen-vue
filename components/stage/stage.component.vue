@@ -3,7 +3,7 @@
     .stage(ref="stage")
       key-handler(:player="true")
       .top-container
-        bouncing-ball.whole(v-bind="bouncingBallProps")
+        stage-ball.whole(v-bind="stageBallProps")
         .controls.whole
           loop-button(ref="loop", @click="$store.dispatch('progress/auto')",
               :show="showLoop", :off="!autoLoop", :repeat="autoRepeat",
@@ -41,13 +41,13 @@
   import KeyHandler from '~/components/key-handler.component';
   import PenaltyFx from '~/components/penalty-fx.component';
   import PowerAuto from '~/components/power/power-auto.component';
-  import BouncingBall from '~/components/stage/bouncing-ball.component';
   import BouncingPoints from '~/components/stage/bouncing-points.component';
   import Faces from '~/components/stage/faces.component';
   import GoalButton from '~/components/stage/goal-button.component';
   import LoopButton from '~/components/stage/loop-button.component';
   import NoteCounter from '~/components/stage/note-counter.component';
   import PlayButton from '~/components/stage/play-button.component';
+  import StageBall from '~/components/stage/stage-ball.component';
   import Transport from '~/components/stage/transport.component';
 
   const MAX_POINTS = 100;
@@ -59,13 +59,13 @@
       'key-handler': KeyHandler,
       'penalty-fx': PenaltyFx,
       'power-auto': PowerAuto,
-      'bouncing-ball': BouncingBall,
       'bouncing-points': BouncingPoints,
       'faces': Faces,
       'goal-button': GoalButton,
       'loop-button': LoopButton,
       'note-counter': NoteCounter,
       'play-button': PlayButton,
+      'stage-ball': StageBall,
       'transport': Transport
     },
     props: {
@@ -328,7 +328,7 @@
       beatsWrong() {
         return _.zipWith(this.notesByBeat, this.goalNotesByBeat, _.negate(_.eq));
       },
-      bouncingBallProps() {
+      stageBallProps() {
         return {
           showBall: this.lastBeat ? this.nextScene === 'goal' : this.scene === 'goal',
           showCounter: this.scene !== 'goal' && this.nextScene === 'goal'

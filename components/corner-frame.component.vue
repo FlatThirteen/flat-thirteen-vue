@@ -37,8 +37,6 @@
   import Star from '~/components/star.component';
   import TempoControl from '~/components/tempo-control.component';
 
-  import { MAX_POINTS } from '~/store/progress';
-
   export default {
     components: {
       'backing-button': BackingButton,

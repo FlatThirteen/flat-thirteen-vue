@@ -80,6 +80,9 @@ export const actions = {
       commit('set', { name: 'goal', notes: goal });
     }
   },
+  clear({commit}, name){
+    commit('clear', {name});
+  },
   setVictory({commit, state}, number) {
     let notes = state.victory[_.clamp(number, 2, 10)];
     if (notes) {
@@ -113,6 +116,22 @@ export const actions = {
         })
       });
     });
+  },
+  setBonusStart({commit}, {layout, backing}) {
+    let tracks = [
+      { type: 'drums', notes: ['K,|K,K|, K|K', 'K,|K,S|, K|S', 'K,|K,K.S|, K|K.S'][layout]},
+      { type: 'cowbell', notes: 'A6,A7|A7,A6|A7,A7|A6,' },
+      { type: 'sawtooth6', notes: { bass: 'A2,G2|E2,G2|,G2|A2,' }[backing]}
+    ];
+    commit('set', { name: 'finale', notes: Parser.parseTracks(tracks) })
+  },
+  setBonusSuccess({commit}, {layout, backing}) {
+    let tracks = [
+      { type: 'drums', notes: ['K,,,K|K,,,K|K,,K,K|K', 'K,,S,K|K,,S,K|K,K,S,K|K', 'K,,K.S,K|S.K,,K.S,K|S.K,S,K.S,K|K.S'][layout]},
+      { type: 'cowbell', notes: 'A5,,A5,A5| E5,A5,E5,E5| A5,,,E6|A6' },
+      { type: 'sawtooth6', notes: { bass: 'F2,F1|G2,G1|A2,E2,G2,A2|A1,' }[backing]}
+    ];
+    commit('set', { name: 'finale', notes: Parser.parseTracks(tracks) })
   },
   setTracks({commit}, {name, tracks}) {
     commit('set', { name, notes: Parser.parseTracks(tracks)})

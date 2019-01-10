@@ -19,7 +19,8 @@
       phraseKey: String,
       pulsesByBeat: Array,
       phrase: Object, // phrase[beatTick] = [Note]
-      phraseProperties: Object // { unitHeight, xByBeatTick, yByNote }
+      phraseProperties: Object, // { unitHeight, xByBeatTick, yByNote }
+      noAnimation: Boolean
     },
     constants: {
       beatUnit: 100,
@@ -50,10 +51,12 @@
         let indices = this.indicesByBeatTick[beatTick];
         _.forEach(indices, index => {
           Note.from(this.notes[index].note.toString()).play(time);
-          Tone.Draw.schedule(() => {
-            this.animate('note', { element: this.$refs.note[index] });
-            this.animate('fx', { element: this.$refs.fx[index] });
-          }, time);
+          if (!this.noAnimation) {
+            Tone.Draw.schedule(() => {
+              this.animate('note', { element: this.$refs.note[index] });
+              this.animate('fx', { element: this.$refs.fx[index] });
+            }, time);
+          }
         });
       }
     },

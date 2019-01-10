@@ -56,6 +56,9 @@
           transform: 'translateY(0) scale(0)'
         }]]
       }
+    },
+    mounted() {
+      this.animate('appear');
     }
   }
 </script>

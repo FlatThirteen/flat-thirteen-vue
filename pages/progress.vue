@@ -1,14 +1,14 @@
 <template lang="pug">
   corner-frame(:totalPoints="totalPoints", :totalStars="totalStars",
       :hideTop="!!finaleStages.length", @hint="hint = $event")
-    curriculum(:hint="hint", :debug="true", @mousedown="onLesson($event)")
+    curriculum(:hint="hint", :debug="true", :scrollTop="scrollTop", @click="onLesson($event)")
     .points(v-if="!pulseBeat")
       .button(@click="max()") o
     transition(name="lesson-container")
-      .lesson-container(v-show="pulseBeat")
+      .lesson-container(v-show="pulseBeat", :style="transformOrigin")
         transition(name="finale", mode="out-in")
           .finale(v-if="finaleStages.length")
-            finale(:stages="finaleStages", @finish="finale($event)")
+            finale(:stages="finaleStages", :bonusStage="true", @finish="finale($event)")
             quit-button(@click="redoLesson()")
           .lesson(v-else)
             lesson-builder(ref="lessonBuilder", :debug="true")
@@ -52,7 +52,9 @@
         hint: null,
         pulseBeat: null,
         pointsByStage: _.times(4, _.constant(MAX_POINTS)),
-        finaleStages: []
+        finaleStages: [],
+        scrollTop: 0,
+        transformOrigin: {}
       };
     },
     methods: {
@@ -60,8 +62,12 @@
         this.$store.dispatch('progress/initialize', { max: !this.power.notes});
         this.$refs.auto.disappear();
       },
-      onLesson(pulseBeat) {
+      onLesson({pulseBeat, x, y, scrollTop}) {
         this.pulseBeat = pulseBeat;
+        this.scrollTop = scrollTop;
+        this.transformOrigin = {
+          transformOrigin: x + 'px ' + (y - scrollTop) + 'px'
+        };
         this.$store.dispatch('player/update', { pulseBeat,
           layout: this.layout,
           clear: true
@@ -96,7 +102,7 @@
       finale(points) {
         this.$store.dispatch('progress/addPoints', {
           pulseBeat: this.pulseBeat,
-          amount: { base: points }
+          amount: { base: points, star: points === 500 }
         });
         this.exitLesson();
       },

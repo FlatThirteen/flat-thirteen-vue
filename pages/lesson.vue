@@ -1,6 +1,6 @@
 <template lang="pug">
   .page
-    main-frame
+    main-frame(:bonus="true")
       .auto(slot="help")
         .icon(@click="initialize(power.auto === 0)") o
         | :{{ power.auto }}

@@ -1,32 +1,43 @@
 <template lang="pug">
   .finale-container
     .stages
-      .lesson(v-for="(stage, i) in stages", :class="{button: ready}", @click="play(i)")
-        phrase.lesson__phrase(ref="phrase", :class="{lesson__phrase__off: state + 4 < i}",
-            v-bind="{phrase: stage.phrase, play: String(i), pulsesByBeat, phraseProperties}")
-        bouncing-points(:show="state >= i", :points="stage.points", :class="{fade: ready}")
-        transition(name="play")
-          .lesson__play(v-show="ready"): play-button.play-button
-    .meter
+      .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)")
+        phrase.lesson__phrase(ref="phrase", :class="{lesson__phrase__off: state + numBeats < i}",
+            v-bind="{phrase: stage.phrase, phraseKey: keys[i], pulsesByBeat, phraseProperties, noAnimation}")
+        .lesson__key(v-if="ready", :class="{fade: playable}") {{ keys[i] }}
+        bouncing-points(v-else, :show="state >= i", :points="stage.points", :class="{fade: ready}")
+        transition(name="play"): .lesson__play(v-show="playable"): play-button.play-button
+    .bonus
+      .bonus__controls(v-if="bonus")
+        bouncing-ball.bonus__ball(ref="bouncingBall")
+        goal-button.bonus__goal(ref="goal", v-if="bonus !== 'start'",
+            @click="onGoal()", :weenie="bonus === 'ready'")
+      .bonus__target-container
+        .bonus__target(ref="target", v-for="(index, i) in target", :class="{cheer: bonusSuccess}")
+          .bonus__target__progress(ref="progress")
+          .bonus__target__contents(ref="contents") {{ playKeys[i] }}
+        particle-fx(:type="particleType", :count="particleCount")
+      .bonus__footer
+    .meter(:class="{'meter--hide': bonus}", :style="hideTransition")
       .meter__container(:class="backing")
         .meter__level(:style="{height: (ready ? totalPoints : highScores[0].base) / 5 + '%'}")
         star.meter__star
         .meter__bar
-    .high
+    .high(:class="{'high--hide': bonusActive}")
       .high__ranking
         transition-group(name="high__score")
           .high__score(v-for="(score, i) in highScores", :key="score.newScore ? 'new' : i",
-              ref="highScore", :style="{transitionDelay: (flash || score.newScore ? 0 : 100 * i) + 'ms'}",
-              :class="[score.backing, {new: score.newScore, flash: score.newScore && flash, dim: score.tempo < tempo}]") {{ score.base }}
+              ref="highScore", :style="{transitionDelay: (final || score.newScore ? 0 : 100 * i) + 'ms'}",
+              :class="[score.backing, {new: score.newScore, flash: score.newScore && final, dim: score.tempo < tempo}]") {{ score.base }}
             .high__tempo(:class="{hide: score.newScore ? !score.tempo || !power.tempo : score.tempo === tempo}")
               metronome(:mini="true")
               | {{ score.tempo }}
     .footer
       key-handler
       transition(name="finish")
-        .finish.weenie.button(v-if="state >= stages.length", @click="finish()")
+        .finish.button(v-if="exitable", :class="{weenie: final && paused}", @click="finish()")
           play-button.play-button(:disable="true")
-      arrangement.arrangement(:phrases="phrases", :tempo="tempo", :count="!ready", :play="arrangement",
+      arrangement.arrangement(:phrases="phrases", :tempo="tempo", :count="!ready", play="finale",
           @position="onPosition($event)")
 </template>
 
@@ -35,17 +46,23 @@
   import { mapActions, mapGetters } from 'vuex';
 
   import AnimatedMixin from '~/mixins/animated.mixin';
-  import { MAX_POINTS } from '~/store/progress';
 
   import BeatTick from '~/common/core/beat-tick.model';
+  import Sound from '~/common/sound/sound';
+  import Tone from '~/common/tone';
 
   import Arrangement from '~/components/arrangement.component';
   import KeyHandler from '~/components/key-handler.component';
   import Metronome from '~/components/metronome.component';
+  import ParticleFx from '~/components/particle-fx.component';
   import Phrase from '~/components/phrase.component';
   import BouncingPoints from '~/components/stage/bouncing-points.component';
+  import GoalButton from '~/components/stage/goal-button.component';
   import PlayButton from '~/components/stage/play-button.component';
   import Star from '~/components/star.component';
+  import BouncingBall from '~/components/widget/bouncing-ball.component';
+
+  const PERFECT_LESSON = 400;
 
   export default {
     mixins: [AnimatedMixin],
@@ -53,91 +70,243 @@
       'arrangement': Arrangement,
       'key-handler': KeyHandler,
       'metronome': Metronome,
+      'particle-fx': ParticleFx,
       'phrase': Phrase,
       'bouncing-points': BouncingPoints,
+      'goal-button': GoalButton,
       'play-button': PlayButton,
-      'star': Star
+      'star': Star,
+      'bouncing-ball': BouncingBall
     },
     props: {
-      stages: Array // [{ phrase, points }]
+      stages: Array, // [{ phrase, points }]
+      bonusStage: Boolean
+    },
+    constants: {
+      keys: ['A', 'B', 'C', 'D'],
+      animationDefinitions: {
+        appear: [[.5, {
+          transform: 'scale(1.1)'
+        }], [.2, {
+          transform: 'scale(1)'
+        }]],
+        squish: [[.2, {
+          transform: 'scale(1.05, 0.95)'
+        }], [.2, {
+          transform: 'scale(0.95, 1.05)'
+        }], [.2, {
+          transform: 'scale(1, 1)'
+        }]],
+        cheer: [[.3, {
+          transform: 'translateY(1vh) scale(1.05, 0.95)'
+        }], [.2, {
+          transform: 'translateY(-2vh) scale(0.95, 1.05)'
+        }], [.1, {
+          transform: 'translateY(0) scale(1, 1)'
+        }]],
+        disappear: [[.2, {
+          transform: 'scale(1.1)'
+        }], [.5, {
+          transform: 'scale(0)'
+        }]]
+      }
     },
     data() {
       return {
         phrases: [],
         show: [],
         state: -1 - this.stages.length,
-        hi: true,
+        bonus: '',
+        target: _.times(4, () => _.random(0, 3)),
+        position: null,
+        star: false,
         highScores: [{ newScore: true, base: undefined }]
       };
     },
     mounted() {
       this.phrases = this.$refs.phrase;
+      if (this.bonusStage && this.totalPoints === PERFECT_LESSON) {
+        this.addEmptyPhrase();
+      }
       setTimeout(() => {
         this.highScores[0].base = 0;
         this.highScores[0].backing = this.backing;
         this.start('+0');
       }, 500);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
+      this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
+
     },
     destroyed() {
       this.$bus.$off(BeatTick.BEAT, this.beatHandler);
+      this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
     methods: {
-      beatHandler() {
+      beatHandler({time, beat, lastBeat}) {
         if (this.state < -1) {
           this.state += 1;
+        } else if (this.bonusSuccess) {
+          _.forEach(this.$refs.target, element => {
+            this.animate('cheer', { element });
+          });
+        } else if (this.bonus === 'goal' || this.bonus === 'play') {
+          Tone.Draw.schedule(() => {
+            this.animate('squish', { element: this.$refs.target[this.position] });
+            if (this.bonus === 'goal') {
+              this.$refs.bouncingBall.to(this.targetPositions[this.position + lastBeat]);
+            }
+          }, time);
         }
       },
-      play(position) {
-        if (this.ready) {
-          this.phrases.push(this.$refs.phrase[position]);
-          if (this.paused) {
-            this.start('+0');
+      beatTickHandler({time, beatTick}) {
+        if (this.bonus === 'start') {
+          let index = _.indexOf(['01:096', '02:000', '02:096', '03:000'], beatTick);
+          if (index >= 0) {
+            Tone.Draw.schedule(() => {
+              this.animate('appear', { element: this.$refs.target[index] });
+            }, time);
+          }
+        }
+      },
+      addEmptyPhrase() {
+        this.phrases.push({ onBeatTick: _.noop });
+      },
+      play(index) {
+        if (this.playable) {
+          if (this.bonus === 'ready') {
+            this.bonus = 'play';
+          }
+          if (this.bonus !== 'goal') {
+            this.animate('squish', { element: this.$refs.contents[this.phrases.length] });
+            this.phrases.push(this.$refs.phrase[index]);
+            if (this.paused) {
+              if (this.bonusActive && this.$refs.goal) {
+                this.$refs.goal.animate('disappear');
+              }
+              this.start('+0');
+            } else if (this.playKeys === this.targetKeys) {
+              // Correct, so add empty phrase for success finale
+              this.addEmptyPhrase();
+            }
           }
         }
       },
       onPosition(position) {
-        if (position >= 0 && this.state < position && !this.ready) {
+        this.position = position;
+        if (this.ready) {
+          if (this.bonus === 'play' && this.$refs.progress[position]) {
+            TweenMax.fromTo(this.$refs.progress[position], this.numBeats * this.duration, {
+              opacity: .5,
+              transform: 'scaleX(0)'
+            }, {
+              opacity: 1,
+              transform: 'scaleX(1)',
+              ease: Linear.easeNone
+            });
+          }
+          if (this.bonusSuccess) {
+            this.setBonusSuccess({ layout: this.level.layout, backing: this.backing });
+          }
+        } else if (position === this.stages.length) {
+          this.setBonusStart({ layout: this.level.layout, backing: this.backing });
+          this.bonus = 'start';
+        } else if (position >= 0 && this.state < position) {
           this.state = position;
           let total = _.sumBy(_.take(this.stages, position + 1), 'points');
-
           TweenMax.to(this.$data.highScores[0], 3.9 * this.duration, {
             base: total,
             ease: Linear.easeNone,
             roundProps: 'base'
           });
-          let number = Math.floor(this.stages[position].points * .12 + 4);
-          this.setFinale({ part: position, number,
+          this.setFinale({
+            part: position,
+            number: Math.floor(this.stages[position].points * .12 + 4),
             backing: this.backing,
-            alternate: total === MAX_POINTS
+            alternate: total === PERFECT_LESSON
           });
         }
+      },
+      onGoal() {
+        if (this.paused) {
+          this.bonus = 'goal';
+          this.phrases = _.map(this.target, index => this.$refs.phrase[index]);
+          this.$refs.goal.animate('launch');
+          this.$refs.bouncingBall.to(this.targetPositions[0]);
+          this.start();
+        }
+      },
+      showHighScores() {
+        let [layout, pulseBeat] = _.split(this.lessonName, '-');
+        this.highScores = this.ranking(layout, pulseBeat, this.totalPoints);
+        setTimeout(() => {
+          this.$refs.highScore[_.findIndex(this.highScores, 'newScore')].scrollIntoView({behavior: 'smooth'});
+        }, 90 * this.highScores.length);
+        setTimeout(() => {
+          this.state++;
+        }, 110 * this.highScores.length);
       },
       finish() {
         this.$emit('finish', this.totalPoints);
       },
       ...mapActions({
         start: 'transport/start',
-        setFinale: 'phrase/setFinale'
+        clear: 'phrase/clear',
+        setFinale: 'phrase/setFinale',
+        setBonusStart: 'phrase/setBonusStart',
+        setBonusSuccess: 'phrase/setBonusSuccess'
       })
     },
     computed: {
       ready() {
         return this.state >= this.stages.length;
       },
-      flash() {
+      final() {
         return this.state > this.stages.length;
       },
-      arrangement() {
-        return this.ready ? undefined : 'finale';
+      bonusActive() {
+        return this.bonus && this.bonus !== 'done';
+      },
+      bonusSuccess() {
+        return this.bonus === 'play' && this.position === this.playKeys.length;
+      },
+      playable() {
+        return this.ready && (!this.bonusActive || this.phrases.length < this.target.length);
+      },
+      exitable() {
+        return this.ready && !this.bonusActive;
+      },
+      playKeys() {
+        return this.bonus !== 'play' ? '' : _.join(_.map(this.phrases, 'phraseKey'), '');
+      },
+      targetKeys() {
+        return _.join(_.map(this.target, index => this.keys[index]), '');
+      },
+      targetPositions() {
+        return _.times(this.target.length, index => {
+          return ((100 * index + 50) / this.target.length) + '%'
+        });
       },
       totalPoints() {
-        return _.sumBy(this.stages, 'points');
+        return _.sumBy(this.stages, 'points') + this.star * 100;
+      },
+      particleType() {
+        return this.bonus === 'play' && this.position === this.playKeys.length ? 'confetti' : null;
+      },
+      particleCount() {
+        return this.particleType ? 100 : null;
+      },
+      noAnimation() {
+        return this.bonus === 'goal' && !!this.level.auto;
+      },
+      hideTransition() {
+        return { 'transition-duration': 2 * this.duration + 's' };
       },
       ...mapGetters({
         keyDown: 'keyDown',
+        numBeats: 'player/numBeats',
         pulsesByBeat: 'player/pulsesByBeat',
         phraseProperties: 'player/phraseProperties',
+        level: 'progress/level',
         power: 'progress/power',
         backing: 'progress/backing',
         tempo: 'progress/tempo',
@@ -150,27 +319,56 @@
     watch: {
       keyDown(key) {
         if (key === 'Enter') {
-          this.finish();
+          if (this.exitable) {
+            this.finish();
+          } else if (this.bonus === 'ready') {
+            this.onGoal();
+          }
+        } else {
+          let index = _.indexOf(this.keys, _.toUpper(key));
+          if (index !== -1) {
+            this.play(index);
+          }
         }
       },
       paused(paused) {
         if (paused) {
+          this.clear('finale');
+          if (this.bonusActive) {
+            if (this.playKeys.length === this.targetKeys.length) {
+              if (this.playKeys === this.targetKeys) {
+                this.star = true;
+                this.highScores[0].base = this.totalPoints;
+              } else {
+                Sound.effect('fail');
+              }
+              this.bonus = 'done';
+              _.forEach(this.$refs.target, element => {
+                this.animate('disappear', { element });
+              });
+            } else {
+              this.bonus = 'ready';
+              if (this.$refs.goal) {
+                this.$refs.goal.animate(this.bonus === 'goal' ? 'land' : 'appear');
+              }
+              _.forEach(this.$refs.progress, el => {
+                TweenMax.to(el, this.duration, {
+                  opacity: 0
+                });
+              });
+            }
+          }
           this.phrases = [];
           if (this.state < this.stages.length) {
             this.state = this.stages.length;
           }
         }
       },
-      ready(ready) {
-        if (ready) {
-          let [layout, pulseBeat] = _.split(this.lessonName, '-');
-          this.highScores = this.ranking(layout, pulseBeat, this.totalPoints);
+      exitable(exitable) {
+        if (exitable) {
           setTimeout(() => {
-            this.$refs.highScore[_.findIndex(this.highScores, 'newScore')].scrollIntoView({behavior: 'smooth'});
-          }, 90 * this.highScores.length);
-          setTimeout(() => {
-            this.state++;
-          }, 110 * this.highScores.length);
+            this.showHighScores();
+          }, 1500);
         }
       }
     }
@@ -200,13 +398,21 @@
     font-size: calc(35px + 2vh);
     margin: 1vh 1vw;
     line-height: 0;
+    text-align: center;
 
     &:hover .lesson__play
       opacity: 1;
 
+    &:hover .fade
+      opacity: .1;
+
     &:active .lesson__play
       transition: opacity 50ms;
-      opacity: 0.1
+      opacity: .1
+
+    &:active .lesson__key.fade
+      transition: opacity 50ms;
+      opacity: 1;
 
     &__phrase
       display: inline-block;
@@ -218,19 +424,23 @@
         transform: translateX(-100vw);
         opacity: 0;
 
+    &__key
+      posit(absolute);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.5s;
+
     &__play
       posit(absolute);
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.3;
+      opacity: 0.5;
       transition: opacity 1.5s;
 
       & .play-button
         max-height: calc(1vh + 3vw);
-
-    &:hover .fade
-      opacity: 0.1;
 
   .fade
     transition: opacity 1.5s;
@@ -239,12 +449,19 @@
   .play-enter-active
     transition: opacity 500ms;
 
-  .play-enter
+  .play-leave-active
+    transition: opacity 250ms;
+
+  .play-enter, play-leave-to
     opacity: 0;
 
   .meter
     position: relative;
+    grid-area: meter;
     place-self: center;
+
+    &--hide
+      transform: scaleY(0);
 
     &__container
       height: 50vh;
@@ -273,10 +490,16 @@
 
   .high
     min-width: 40vw;
+    grid-area: high;
     place-self: stretch start;
     overflow-y: scroll;
     display: flex;
     align-items: center;
+    transform-origin: 20% center;
+    transition-duration: 200ms;
+
+    &--hide
+      transform: scale(0);
 
     &__ranking
       margin: auto 0;
@@ -318,13 +541,67 @@
       font-size: 20px;
       opacity: .3;
       margin-left: 1vw;
+      transform-origin: bottom left;
+      transition: all 250ms;
 
       &.hide
-        visibility: hidden;
+        opacity: 0;
+        transform: scale(0);
 
   .dim
     opacity: .3;
     text-decoration: line-through;
+
+  .bonus
+    grid-area: 1 / 2 / 2 / 4;
+    place-self: stretch start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    &__controls
+      position: relative;
+      height: 20vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+
+    &__ball
+      margin-bottom: -1vw;
+
+    &__goal
+      margin-bottom: 10px;
+
+    &__target-container
+      position: relative;
+
+    &__target
+      background-color: primary-blue;
+      display: inline-block;
+      position: relative;
+      width: 12vw;
+      height: 6vw;
+      font-size: 5vw;
+      line-height: 6vw;
+      margin: 1vw;
+      text-align: center;
+      transform: scale(0);
+      vertical-align: top;
+
+      &__progress
+        posit(absolute);
+        background-color: primary-green;
+        opacity: 0.7;
+        transform-origin: left;
+        transform: scaleX(0);
+
+      &__contents
+        posit(absolute);
+        color: white;
+
+    &__footer
+      height: 20vh;
+      margin-top: 10px;
 
   .footer
     grid-area: footer;

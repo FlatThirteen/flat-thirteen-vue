@@ -3,8 +3,6 @@ import Combinatorics from 'js-combinatorics';
 
 import GameAnalytics from '~/common/game-analytics';
 
-export const MAX_POINTS = 400;
-
 const TEMPO = 120;
 const INCREMENT = 10;
 
@@ -121,21 +119,21 @@ export const getters = {
               let amount = _.assign({ backing: readBacking }, nextPoints);
               if (!bestPoints.length) {
                 bestPoints.push(amount);
-              } else if (nextPoints.base === MAX_POINTS) {
-                if (!pointIndex && bestPoints[0].base !== MAX_POINTS) {
+              } else if (nextPoints.star) {
+                if (!pointIndex && !bestPoints[0].star) {
                   // Replacing previous best points with stars, look at all backing
                   let betterPoints = _.find(fasterPoints,
-                      bestPoints => bestPoints[0] && bestPoints[0].base === MAX_POINTS);
+                      bestPoints => bestPoints[0] && bestPoints[0].star);
                   if (betterPoints) {
                     bestPoints = pointsByTempo[tempo][writeBackingLevel] = _.cloneDeep(betterPoints);
                   }
                 }
-                if (bestPoints[0].base === MAX_POINTS || readBackingLevel === writeBackingLevel) {
+                if (bestPoints[0].star || readBackingLevel === writeBackingLevel) {
                   let insertion = _.sortedLastIndexBy(bestPoints, amount, sortAmount);
-                  bestPoints.splice(insertion, bestPoints[0].base < MAX_POINTS ? 1 : 0, amount);
+                  bestPoints.splice(insertion, bestPoints[0].star ? 0 : 1, amount);
                 }
               } else if (!pointIndex && readBackingLevel === writeBackingLevel &&
-                  _.every(bestPoints, amount => amount.backing !== writeBacking || amount.base < MAX_POINTS)) {
+                  _.every(bestPoints, amount => amount.backing !== writeBacking || !amount.star)) {
                 bestPoints.splice(0, 1, amount);
               }
             });
@@ -200,7 +198,7 @@ export const getters = {
       _.forEach(_.filter(pointsByTempo, (value, tempo) => tempo >= TEMPO), pointsByBacking => {
         _.forEach(pointsByBacking, (points, backingIndex) => {
           _.forEach(_.take(points, 3), amount => {
-            if (amount.base === MAX_POINTS && BACKINGS[backingIndex] === amount.backing) {
+            if (amount.star && BACKINGS[backingIndex] === amount.backing) {
               result += 1;
             }
           })
@@ -211,7 +209,7 @@ export const getters = {
   }, 0),
   groupsWithoutStars: (state, getters) => _.filter(getters.pulseBeatGroups,
       pulseBeatGroup => !_.some(pulseBeatGroup, pulseBeat =>
-          _.some(getters.pointsByPulseBeat[pulseBeat], amount => amount.base === MAX_POINTS))),
+          _.some(getters.pointsByPulseBeat[pulseBeat], amount => amount.star))),
   rowsWithStars: (state, getters) =>
       _.size(getters.pulseBeatGroups) - getters.groupsWithoutStars.length,
 };
@@ -325,9 +323,6 @@ export const mutations = {
     if (!amount.base) {
       return;
     }
-    if (amount.base > 400) {
-      throw new Error('Invalid base points:', amount);
-    }
     let layoutPoints = state.points[state.mode.layout] ||
         Vue.set(state.points, state.mode.layout, {});
     let pulseBeatPoints = layoutPoints[pulseBeat] ||
@@ -397,5 +392,5 @@ function splice(string, startIndex, length, insertString) {
 
 function sortAmount(amount) {
   return -amount.base * Math.pow(2, (amount.heavy || 0) + (amount.light || 0)) -
-      amount.tempo / 1000 - _.indexOf(BACKINGS, amount.backing) / 10000 - (amount.newScore || 0) / 100000;
+      amount.tempo / 1000 - _.indexOf(BACKINGS, amount.backing) / 10000 + (amount.newScore || 0) / 100000;
 }
