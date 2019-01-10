@@ -148,9 +148,6 @@ export const getters = {
   ranking: (state, getters) => base => {
     let newAmount = { backing: getters.backing, tempo: getters.tempo, base, newScore: true };
     let ranking = getters.rankingForDisplay[getters.lessonName];
-    if (ranking === undefined) {
-      console.warn('Getting ranking for lesson', getters.lessonName, state.lesson);
-    }
     let insertion = _.sortedLastIndexBy(ranking, newAmount, sortAmount);
     return _.take(ranking, insertion).concat(newAmount, _.takeRight(ranking, ranking.length - insertion),
         getters.rankingFiltered[getters.lessonName]);

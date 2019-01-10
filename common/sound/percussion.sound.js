@@ -63,7 +63,7 @@ export class ClickSound {
       octaves: 6,
       oscillator: {type: 'square4'},
       envelope: {
-        attack: 0.001,
+        attack: 0.005,
         decay: 0.1,
         sustain: 0
       },
