@@ -120,7 +120,8 @@
         target: _.times(4, () => _.random(0, 3)),
         position: null,
         star: false,
-        highScores: [{ newScore: true, base: undefined }]
+        highScores: [{ newScore: true, base: undefined }],
+        timeouts: []
       };
     },
     mounted() {
@@ -236,16 +237,18 @@
         }
       },
       showHighScores() {
-        let [layout, pulseBeat] = _.split(this.lessonName, '-');
-        this.highScores = this.ranking(layout, pulseBeat, this.totalPoints);
-        setTimeout(() => {
+        this.highScores = this.ranking(this.totalPoints);
+        this.timeouts.push(setTimeout(() => {
           this.$refs.highScore[_.findIndex(this.highScores, 'newScore')].scrollIntoView({behavior: 'smooth'});
-        }, 90 * this.highScores.length);
-        setTimeout(() => {
+        }, 90 * this.highScores.length));
+        this.timeouts.push(setTimeout(() => {
           this.state++;
-        }, 110 * this.highScores.length);
+        }, 110 * this.highScores.length));
       },
       finish() {
+        _.forEach(this.timeouts, timeout => {
+          clearTimeout(timeout);
+        });
         this.$emit('finish', this.totalPoints);
       },
       ...mapActions({
@@ -312,7 +315,6 @@
         tempo: 'progress/tempo',
         lessonName: 'progress/lessonName',
         ranking: 'progress/ranking',
-        rankingFiltered: 'progress/rankingFiltered',
         paused: 'transport/paused'
       }),
     },
@@ -366,9 +368,9 @@
       },
       exitable(exitable) {
         if (exitable) {
-          setTimeout(() => {
+          this.timeouts.push(setTimeout(() => {
             this.showHighScores();
-          }, 1500);
+          }, 1500));
         }
       }
     }

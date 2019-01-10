@@ -43,11 +43,11 @@
       beatHandler({time, beat, nextBeat}) {
         this.beat = beat;
         this.nextBeat = nextBeat;
-        if (this.showBall) {
-          Tone.Draw.schedule(() => {
+        Tone.Draw.schedule(() => {
+          if (this.showBall) {
             this.$refs.bouncingBall.to(this.lefts[nextBeat]);
-          }, time);
-        }
+          }
+        }, time);
       }
     },
     computed: {
@@ -68,8 +68,10 @@
     },
     watch: {
       active(active) {
-        this.$refs.bouncingBall.to(this.showBall && active && this.lefts[0]);
-        this.nextBeat = 0;
+        if (active) {
+          this.$refs.bouncingBall.to(active && this.showBall && this.lefts[0], true);
+          this.nextBeat = 0;
+        }
       },
       showBall(showBall) {
         this.$refs.bouncingBall.to(showBall && this.active && this.lefts[this.nextBeat]);

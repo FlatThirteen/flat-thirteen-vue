@@ -145,13 +145,15 @@ export const getters = {
       return pointsByPulseBeat;
     }, {});
   }),
-  ranking: (state, getters) => (layout, pulseBeat, base) => {
+  ranking: (state, getters) => base => {
     let newAmount = { backing: getters.backing, tempo: getters.tempo, base, newScore: true };
-    let lessonName = layout + '-' + pulseBeat;
-    let ranking = getters.rankingForDisplay[lessonName];
+    let ranking = getters.rankingForDisplay[getters.lessonName];
+    if (ranking === undefined) {
+      console.warn('Getting ranking for lesson', getters.lessonName, state.lesson);
+    }
     let insertion = _.sortedLastIndexBy(ranking, newAmount, sortAmount);
     return _.take(ranking, insertion).concat(newAmount, _.takeRight(ranking, ranking.length - insertion),
-        getters.rankingFiltered[lessonName]);
+        getters.rankingFiltered[getters.lessonName]);
   },
   rankingByLesson: (state, getters) => {
     let ranking = {};

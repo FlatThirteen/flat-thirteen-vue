@@ -29,16 +29,13 @@ let Sound = {
       return Promise.resolve();
     }
   },
-  create(soundName) {
+  get(soundName) {
     try {
-      return Sound[soundName] = new SynthSound({ type: soundName });
+      return Sound[soundName] || (Sound[soundName] = new SynthSound({ type: soundName }));
     } catch (e) {}
   },
   playSequence(soundName, pitches, duration, velocity) {
-    let sound = Sound[soundName];
-    if (!sound) {
-      sound = Sound.create(soundName);
-    }
+    let sound = Sound.get(soundName);
     _.forEach(pitches, (pitch, index) => {
       if (pitch) {
         let time = new Tone.Time(duration) * index;
