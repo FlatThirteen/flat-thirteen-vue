@@ -391,5 +391,6 @@ function splice(string, startIndex, length, insertString) {
 
 function sortAmount(amount) {
   return -amount.base * Math.pow(2, (amount.heavy || 0) + (amount.light || 0)) -
-      amount.tempo / 1000 - _.indexOf(BACKINGS, amount.backing) / 10000 + (amount.newScore || 0) / 100000;
+      (amount.tempo || 0) / 1000 - _.indexOf(BACKINGS, amount.backing || 'none') / 10000 +
+      (amount.newScore || 0) / 100000;
 }
