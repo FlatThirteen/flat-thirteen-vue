@@ -19,11 +19,8 @@
 </template>
 
 <script>
-  import { TweenMax } from 'gsap';
   import { mapActions, mapGetters } from 'vuex';
 
-  import Monotonic from '~/common/composer/monotonic';
-  import Note from '~/common/core/note.model';
   import GameAnalytics from '~/common/game-analytics';
 
   import Backing from '~/components/backing.component';
