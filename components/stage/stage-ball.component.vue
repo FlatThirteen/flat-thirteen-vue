@@ -68,10 +68,8 @@
     },
     watch: {
       active(active) {
-        if (active) {
-          this.$refs.bouncingBall.to(active && this.showBall && this.lefts[0], true);
-          this.nextBeat = 0;
-        }
+        this.$refs.bouncingBall.to(active && this.showBall && this.lefts[0], true);
+        this.nextBeat = 0;
       },
       showBall(showBall) {
         this.$refs.bouncingBall.to(showBall && this.active && this.lefts[this.nextBeat]);
