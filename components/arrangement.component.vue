@@ -13,7 +13,6 @@
   import AnimatedMixin from '~/mixins/animated.mixin';
 
   import BeatTick from '~/common/core/beat-tick.model';
-  import Sound from '~/common/sound/sound';
 
   import Transport from '~/components/stage/transport.component';
 
@@ -37,13 +36,11 @@
     mounted() {
       this.$bus.$on(BeatTick.TOP, this.topHandler);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
-      this.$bus.$on(BeatTick.BEAT, this.beatHandler);
     },
     destroyed() {
       this.stop();
       this.$bus.$off(BeatTick.TOP, this.topHandler);
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
-      this.$bus.$off(BeatTick.BEAT, this.beatHandler);
     },
     methods: {
       topHandler({first}) {
@@ -69,11 +66,6 @@
           }
         }
       },
-      beatHandler({time, beat}) {
-        if (this.position < 0) {
-          Sound.click.play(time, { variation: beat ? 'normal' : 'heavy'});
-        }
-      },
       ...mapActions({
         start: 'transport/start',
         stop: 'transport/stop'
@@ -84,7 +76,7 @@
         return {
           beatsPerMeasure: this.beatsPerMeasure,
           tempo: this.tempo,
-          metronome: false
+          metronome: this.position < 0
         };
       },
       ...mapGetters({
