@@ -65,7 +65,7 @@
 
   .hint
     fill: transparent;
-    stroke: #DDD;
+    stroke: #CCC;
     stroke-dasharray: 6px;
     stroke-width: 2px;
 

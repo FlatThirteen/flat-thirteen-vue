@@ -20,7 +20,7 @@
       .left: slot(name="bottom-left")
       .right
         transition(name="slide"): .stars(v-if="totalStars")
-          star
+          star.star(:class="{highlight: activeHint === 'backing'}")
           span {{ totalStars }}
         transition(name="slide"): .points(v-if="showPoints") {{ showPoints | floor }}
 </template>
@@ -52,24 +52,26 @@
     },
     data() {
       return {
-        showPoints: 0
+        showPoints: 0,
+        activeHint: null
       }
     },
     methods: {
       onHint(type) {
+        this.activeHint = type;
         this.$emit('hint', type && this.hint[type] ? type : null);
       }
     },
     computed: {
       hint() {
-        return !this.lessonName && this.power.notes >= 8 && {
+        return !this.lessonName && {
           backing: !this.showBacking && this.level.auto > 1,
-          tempo: this.minTempo === this.maxTempo && _.every(this.playable)
+          tempo: this.minTempo === this.maxTempo && this.power.notes >= 8
         };
       },
       showNextBacking() {
         return !this.lessonName && !!this.next.backing && this.level.auto > 1 &&
-            _.every(this.playable) && this.totalPoints >= this.nextPoints;
+            this.totalPoints >= this.nextPoints && this.totalStars >= 6;
       },
       showNextTempo() {
         return !this.lessonName && !!this.next.tempo && this.tempo === this.maxTempo &&
@@ -87,7 +89,6 @@
         tempo: 'progress/tempo',
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
-        playable: 'progress/playable',
         rowsWithStars: 'progress/rowsWithStars',
         nextPoints: 'progress/nextPoints',
         paused: 'transport/paused'
@@ -170,6 +171,12 @@
     color: active-blue;
     font-size: 40px;
     font-weight: 600;
+
+  .star
+    transition: all 250ms ease-in-out;
+
+  .highlight
+    shadow(primary-blue, 8px);
 
   .boing-enter-active
     transition: transform 300ms cubic-bezier(0,.5,.5,1.5);

@@ -19,6 +19,7 @@
               input(v-for="(points, i) in pointsByStage", type="number",
                   v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}",
                   @mouseover="i > 1 && showNextAuto()")
+              star.button(@click.native="finale(500)")
             quit-button(@click="exitLesson()")
 </template>
 
@@ -31,6 +32,7 @@
   import LessonBuilder from '~/components/lesson-builder.component';
   import PowerAuto from '~/components/power/power-auto.component';
   import QuitButton from '~/components/quit-button.component';
+  import Star from '~/components/star.component';
 
   const MAX_POINTS = 100;
 
@@ -41,7 +43,8 @@
       'finale': Finale,
       'lesson-builder': LessonBuilder,
       'power-auto': PowerAuto,
-      'quit-button': QuitButton
+      'quit-button': QuitButton,
+      'star': Star
     },
     head: {
       title: 'Flat Thirteen | Progress'

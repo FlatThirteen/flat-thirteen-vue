@@ -199,7 +199,7 @@
     },
     watch: {
       hint(hint) {
-        if (hint === 'backing') {
+        if (hint === 'TODO') { // TODO: Use for power needing all playable
           this.highlight = _.mapValues(this.displayPoints, value => !value);
         } else if (hint === 'tempo') {
           let pulseBeats = _.flatten(this.groupsWithoutStars);
