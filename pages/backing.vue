@@ -5,7 +5,6 @@
       transport-controls(:playTime="'+0.1'", :beatsPerMeasure="bpm")
         .beats-input
           input.beats(type="text", v-model="bpm", placeholder="# beats", @keydown.stop="")
-
     .content(:class="{solo: anySolo}")
       .track(v-for="(track, i) in tracks", :class="{solo: track.solo, mute: track.mute}")
         input(type="checkbox", v-model="track.solo")
@@ -14,28 +13,23 @@
         input.notes(type="text", v-model="track.notes")
         .close.mini-button(@click="onRemove(i)") x
       .add.mini-button(@click="onAdd()") +
-
     .footer
       .line(v-for="beat of debugPhrase")
         .debug(:class="{selected: selected === beat, now: isNow(beat)}",
             @click="onBeat(beat)") {{ beat }}
-
     .right
       h3 More
       div(v-for="(phrases, sound) of more")
         h3 {{ sound }}
         .mini-button(v-for="phrase of phrases", @click="onAdd($event, sound.toLowerCase())") {{ phrase }}
-
     .fx-controls
       .enable(@click="showFx = !showFx", :class="showFx ? 'on' : showFx === false ? 'off' : ''")
-
 </template>
 
 <script>
   import { mapActions, mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
-  import Note from '~/common/core/note.model';
   import Sound from '~/common/sound/sound';
 
   import Backing from '~/components/backing.component';
@@ -160,7 +154,6 @@
       }
     }
   }
-
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
