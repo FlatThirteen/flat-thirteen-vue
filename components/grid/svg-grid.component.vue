@@ -64,7 +64,6 @@
               @mouseenter="select(cursor)", @click="onNote(note, cursor)")
       rect#glass(:height="backgroundHeight", width="0")
     slot
-
 </template>
 
 <script>
@@ -74,8 +73,6 @@
 
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
-  import Sound from '~/common/sound/sound';
-  import Tone from '~/common/tone';
 
   export default {
     mixins: [AnimatedMixin],

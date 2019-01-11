@@ -14,7 +14,6 @@
 
   import BeatTick from '~/common/core/beat-tick.model';
   import Sound from '~/common/sound/sound';
-  import Tone from '~/common/tone';
 
   import Transport from '~/components/stage/transport.component';
 
