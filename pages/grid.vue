@@ -43,13 +43,13 @@
   import LayoutButton from '~/components/curriculum/layout-button.component';
   import HtmlGrid from '~/components/grid/html-grid.component';
   import SvgGrid from '~/components/grid/svg-grid.component';
+  import TransportPosition from '~/components/grid/transport-position.component';
   import KeyHandler from '~/components/key-handler.component';
   import PlayControl from '~/components/play-control.component';
   import Faces from '~/components/stage/faces.component';
   import StageBall from '~/components/stage/stage-ball.component';
   import Transport from '~/components/stage/transport.component';
   import TempoControl from '~/components/tempo-control.component';
-  import TransportPosition from '~/components/transport-position.component';
 
   export default {
     components: {
