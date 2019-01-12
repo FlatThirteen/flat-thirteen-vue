@@ -88,7 +88,6 @@
     constants: {
       keys: ['A', 'B', 'C', 'D'],
       pass: PASSING_LESSON,
-      animationTarget: 'finale',
       animationDefinitions: {
         appear: [[.5, {
           transform: 'scale(1.1)'
