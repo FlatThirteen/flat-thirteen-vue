@@ -1,5 +1,11 @@
 <template lang="pug">
   .finale-container
+    .meter
+      .meter__container(:class="[backing, {'meter--hide': bonus}]", :style="hideTransition")
+        .meter__level(:style="{height: (ready ? totalPoints : highScores[0].base) / 5 + '%'}")
+        .meter__bar
+      .meter__star(ref="star")
+        star
     .stages
       .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)")
         phrase.lesson__phrase(ref="phrase", :class="{lesson__phrase__off: state + numBeats < i}",
@@ -16,20 +22,17 @@
         .bonus__target(ref="target", v-for="(index, i) in target", :class="{cheer: bonusSuccess}")
           .bonus__target__progress(ref="progress")
           .bonus__target__contents(ref="contents") {{ playKeys[i] }}
+        bouncing-points(:show="bonusSuccess", :points="particleCount")
         particle-fx(:type="particleType", :count="particleCount")
       .bonus__footer
-    .meter(:class="{'meter--hide': bonus}", :style="hideTransition")
-      .meter__container(:class="backing")
-        .meter__level(:style="{height: (ready ? totalPoints : highScores[0].base) / 5 + '%'}")
-        star.meter__star
-        .meter__bar
     .high(:class="{'high--hide': bonusActive}")
       .high__ranking
         transition-group(name="high__score")
-          .high__score(v-for="(score, i) in highScores", :key="score.newScore ? 'new' : i",
-              ref="highScore", :style="{transitionDelay: (final || score.newScore ? 0 : 100 * i) + 'ms'}",
-              :class="[score.backing, {new: score.newScore, flash: score.newScore && final, dim: score.tempo < tempo}]") {{ score.base }}
-            .high__tempo(:class="{hide: score.newScore ? !score.tempo || !power.tempo : score.tempo === tempo}")
+          .high__score(v-for="(score, i) in highScores", :key="score.isNew ? 'new' : i",
+              ref="highScore", :style="{transitionDelay: (final || score.isNew ? 0 : 100 * i) + 'ms'}",
+              :class="[score.backing, {new: score.isNew, flash: score.isNew && final}]")
+            .high__value(:class="{fail: ready && score.base < pass, dim: score.tempo < tempo}") {{ score.base }}
+            .high__tempo(:class="{hide: score.isNew ? !score.tempo || !power.tempo : score.tempo === tempo}")
               metronome(:mini="true")
               | {{ score.tempo }}
     .footer
@@ -62,7 +65,7 @@
   import Star from '~/components/star.component';
   import BouncingBall from '~/components/widget/bouncing-ball.component';
 
-  const PERFECT_LESSON = 400;
+  import { PASSING_LESSON, PERFECT_LESSON } from "~/store/progress";
 
   export default {
     mixins: [AnimatedMixin],
@@ -84,6 +87,8 @@
     },
     constants: {
       keys: ['A', 'B', 'C', 'D'],
+      pass: PASSING_LESSON,
+      animationTarget: 'finale',
       animationDefinitions: {
         appear: [[.5, {
           transform: 'scale(1.1)'
@@ -108,6 +113,38 @@
           transform: 'scale(1.1)'
         }], [.5, {
           transform: 'scale(0)'
+        }]],
+        fill: [[.3, {
+          transform: 'scale(5)',
+          opacity: .8
+        }], [.7, {
+          transform: 'scale(100)',
+          opacity: 0
+        }]],
+        drop: [[.3, {
+          transform: 'scale(1)',
+          opacity: 1
+        }], [.3, {
+          transform: 'translateY(10vh) rotate(180deg)'
+        }], [.4, {
+          transform: 'translateY(100vh)',
+          opacity: 0
+        }]],
+        success: [[.3, {
+          transform: 'scale(1)',
+          opacity: .4
+        }], [.1, {
+          transform: 'scaleX(0)',
+          opacity: 1
+        }], [.1, {
+          transform: 'scaleX(1)'
+        }], [.1, {
+          transform: 'scaleX(0)',
+        }], [.1, {
+          transform: 'scaleX(1)'
+        }], [.3, {
+          transform: 'translateY(-10vh) scale(2)',
+          opacity: 0
         }]]
       }
     },
@@ -120,7 +157,7 @@
         target: _.times(4, () => _.random(0, 3)),
         position: null,
         star: false,
-        highScores: [{ newScore: true, base: undefined }],
+        highScores: [{ isNew: true, base: undefined }],
         timeouts: []
       };
     },
@@ -207,10 +244,12 @@
           }
           if (this.bonusSuccess) {
             this.setBonusSuccess({ layout: this.level.layout, backing: this.backing });
+            this.animate('success', { element: this.$refs.star, duration: 4 * this.duration });
           }
         } else if (position === this.stages.length) {
           this.setBonusStart({ layout: this.level.layout, backing: this.backing });
           this.bonus = 'start';
+          this.animate('fill', { element: this.$refs.star, duration: 4 * this.duration });
         } else if (position >= 0 && this.state < position) {
           this.state = position;
           let total = _.sumBy(_.take(this.stages, position + 1), 'points');
@@ -239,7 +278,7 @@
       showHighScores() {
         this.highScores = this.ranking(this.totalPoints);
         this.timeouts.push(setTimeout(() => {
-          this.$refs.highScore[_.findIndex(this.highScores, 'newScore')].scrollIntoView({behavior: 'smooth'});
+          this.$refs.highScore[_.findIndex(this.highScores, 'isNew')].scrollIntoView({behavior: 'smooth'});
         }, 90 * this.highScores.length));
         this.timeouts.push(setTimeout(() => {
           this.state++;
@@ -343,6 +382,7 @@
                 this.highScores[0].base = this.totalPoints;
               } else {
                 Sound.effect('fail');
+                this.animate('drop', { element: this.$refs.star, duration: 2 * this.duration });
               }
               this.bonus = 'done';
               _.forEach(this.$refs.target, element => {
@@ -386,6 +426,7 @@
     grid-template: "stages meter high" auto "footer footer footer" auto / auto 50px auto;
     grid-gap: 10px 5px;
     margin: 10px;
+    overflow: hidden;
 
   .stages
     display: flex;
@@ -463,13 +504,15 @@
     place-self: center;
 
     &--hide
-      transform: scaleY(0);
+      opacity: 0;
+      transform: scaleY(0.05);
 
     &__container
       height: 50vh;
       border: solid 5px primary-blue;
       width: 40px;
       text-align: center;
+      transform-origin: top;
 
       &.bass
         border-color: bass-color;
@@ -481,9 +524,8 @@
       posit(absolute, x, 0, 0);
       background-color: primary-blue;
 
-
     &__star
-      margin-top: calc(5vh - 17px);
+      posit(absolute, calc(5vh - 18px), x, x, 10px);
 
     &__bar
       posit(absolute, calc(10vh - 3px), 0, x, 0);
@@ -511,7 +553,7 @@
       color: primary-blue;
       font-weight: 600;
       font-size: calc(25px + 4vh);
-      line-height: 4vh;
+      line-height: calc(5px + 4vh);
       min-height: 25px;
       padding-right: 10px;
       text-align: right;
@@ -531,11 +573,17 @@
         transform: translateX(25vw);
         opacity: 0;
 
-        &.dim
-          transform: translateY(50vh);
-
       &-enter-active, &-move
         transition: all 500ms;
+
+    &__value
+      display: inline-block;
+      transition: all 500ms;
+
+      &.fail
+        animation: shake 1s;
+        opacity: 0.6;
+        shadow(#555, 5px);
 
     &__tempo
       display: inline-block;
@@ -544,7 +592,7 @@
       opacity: .3;
       margin-left: 1vw;
       transform-origin: bottom left;
-      transition: all 250ms;
+      transition: all 500ms;
 
       &.hide
         opacity: 0;
@@ -576,6 +624,8 @@
 
     &__target-container
       position: relative;
+      color: primary-blue;
+      font-size: 7vw;
 
     &__target
       background-color: primary-blue;
@@ -632,4 +682,12 @@
     50%
       opacity: 0.8;
       transform: scale(1.1);
+
+  @keyframes shake
+    0%, 100%
+      transform: translateX(0);
+    20%, 60%
+      transform: translateX(1vh);
+    40%, 80%
+      transform: translateX(-1vh);
 </style>

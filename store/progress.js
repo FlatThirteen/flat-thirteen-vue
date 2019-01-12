@@ -3,6 +3,9 @@ import Combinatorics from 'js-combinatorics';
 
 import GameAnalytics from '~/common/game-analytics';
 
+export const PASSING_LESSON = 360;
+export const PERFECT_LESSON = 400;
+
 const TEMPO = 120;
 const INCREMENT = 10;
 
@@ -146,7 +149,7 @@ export const getters = {
     }, {});
   }),
   ranking: (state, getters) => base => {
-    let newAmount = { backing: getters.backing, tempo: getters.tempo, base, newScore: true };
+    let newAmount = { backing: getters.backing, tempo: getters.tempo, base, isNew: true };
     let ranking = getters.rankingForDisplay[getters.lessonName];
     let insertion = _.sortedLastIndexBy(ranking, newAmount, sortAmount);
     return _.take(ranking, insertion).concat(newAmount, _.takeRight(ranking, ranking.length - insertion),
@@ -392,5 +395,5 @@ function splice(string, startIndex, length, insertString) {
 function sortAmount(amount) {
   return -amount.base * Math.pow(2, (amount.heavy || 0) + (amount.light || 0)) -
       (amount.tempo || 0) / 1000 - _.indexOf(BACKINGS, amount.backing || 'none') / 10000 +
-      (amount.newScore || 0) / 100000;
+      (amount.isNew || 0) / 100000;
 }

@@ -36,6 +36,8 @@
   import PowerLayout from '~/components/power/power-layout.component';
   import PowerNotes from '~/components/power/power-notes.component';
 
+  import { PASSING_LESSON, PERFECT_LESSON } from "~/store/progress";
+
   export default {
     mixins: [AnimatedMixin],
     components: {
@@ -67,8 +69,9 @@
         }]]
       },
       nextLayoutConditions: [
-        { '1111': 300 },
-        { '1111': 400, '2221': 400, '2212': 400, '2122': 400, '1222': 400, '2222': 400 }
+        { '1111': PASSING_LESSON },
+        { '1111': PERFECT_LESSON, '2221': PERFECT_LESSON, '2212': PERFECT_LESSON,
+          '2122': PERFECT_LESSON, '1222': PERFECT_LESSON, '2222': PERFECT_LESSON }
       ],
     },
     data() {
@@ -179,8 +182,9 @@
       showNextNotes() {
         return !this.clicked && this.next.notes &&  this.totalPoints >= this.nextPoints &&
             this.totalPoints >= (this.next.notes - 4) * 600 &&
+            (this.next.notes < 9 || this.level.layout > 1) &&
             _.some(_.last(_.values(this.pulseBeatGroups)),
-                pulseBeat => !_.isEmpty(this.displayPoints[pulseBeat]));
+                pulseBeat => _.some(this.displayPoints[pulseBeat], amount => amount.base >= PASSING_LESSON));
       },
       ...mapGetters({
         power: 'progress/power',
@@ -285,13 +289,6 @@
 
     &.weenie:not(:hover) .button
       animation: weenie 1s infinite 500ms;
-
-    .highlight:not(:hover)
-      shadow(primary-blue, 3px);
-
-      &.button
-        shadow(primary-blue, 8px);
-        animation: none;
 
   .lesson-group-enter-active.transition
     transform-origin: top;

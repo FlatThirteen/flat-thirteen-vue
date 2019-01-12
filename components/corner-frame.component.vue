@@ -7,14 +7,14 @@
           backing-button.left(v-if="showBacking || hint.backing", :backing="backing", :throttle="500",
               :penalty="penalty.backing > 0 && level.backing === penalty.backing", :hint="hint.backing",
               :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')",
-              @mouseenter.native="onHint('backing')", @mouseleave.native="onHint()")
+              @mouseenter.native="!showBacking && onHint('backing')", @mouseleave.native="onHint()")
         power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
         transition(name="boing")
           tempo-control.right(v-if="minTempo < maxTempo || hint.tempo", :tempo="tempo",
               :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
               :penalty="level.tempo === penalty.tempo", :hint="hint.tempo",
               @tempo="$store.dispatch('progress/tempo', $event)",
-              @mouseenter.native="onHint('tempo')", @mouseleave.native="onHint()")
+              @mouseenter.native="minTempo === maxTempo && onHint('tempo')", @mouseleave.native="onHint()")
         power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
       .left: slot(name="bottom-left")
@@ -174,9 +174,6 @@
 
   .star
     transition: all 250ms ease-in-out;
-
-  .highlight
-    shadow(primary-blue, 8px);
 
   .boing-enter-active
     transition: transform 300ms cubic-bezier(0,.5,.5,1.5);

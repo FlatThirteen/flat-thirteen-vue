@@ -19,7 +19,7 @@
               input(v-for="(points, i) in pointsByStage", type="number",
                   v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}",
                   @mouseover="i > 1 && showNextAuto()")
-              star.button(@click.native="finale(500)")
+              star.button(:hollow="hollow", @click.native="onStar()")
             quit-button(@click="exitLesson()")
 </template>
 
@@ -64,6 +64,13 @@
       max() {
         this.$store.dispatch('progress/initialize', { max: !this.power.notes});
         this.$refs.auto.disappear();
+      },
+      onStar() {
+        if (this.hollow) {
+          this.pointsByStage = _.times(4, _.constant(MAX_POINTS));
+        } else {
+          this.finale(500);
+        }
       },
       onLesson({pulseBeat, x, y, scrollTop}) {
         this.pulseBeat = pulseBeat;
@@ -110,7 +117,7 @@
         this.exitLesson();
       },
       showNextAuto() {
-        if (this.next.auto && this.pointsByStage[0] === 100 && this.pointsByStage[1] === 100) {
+        if (this.next.auto && !this.hollow) {
           this.$refs.auto.appear(this.next.auto);
         }
       }
@@ -118,6 +125,9 @@
     computed: {
       invalidPoints() {
         return _.map(this.pointsByStage, points => points < 5 || points > MAX_POINTS);
+      },
+      hollow() {
+        return !_.every(this.pointsByStage, points => points === MAX_POINTS);
       },
       ...mapGetters({
         power: 'progress/power',
@@ -128,6 +138,13 @@
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })
+    },
+    watch: {
+      hollow(hollow) {
+        if (hollow) {
+          this.$refs.auto.disappear();
+        }
+      }
     }
   }
 

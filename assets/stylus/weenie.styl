@@ -3,6 +3,9 @@
   animation: weenie 1s infinite 500ms, outline 5s linear infinite, grow 30s 10s;
   animation-fill-mode: forwards;
 
+.highlight:not(:hover)
+  animation: highlight 1s infinite;
+
 @keyframes weenie
   0%, 100%
     opacity: 1;
@@ -29,3 +32,9 @@
     outline-width: 0;
   100%
     outline-width: 6px;
+
+@keyframes highlight
+  0%, 100%
+    shadow(primary-blue, 2px);
+  50%
+    shadow(primary-blue, 8px);

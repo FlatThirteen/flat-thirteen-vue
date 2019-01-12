@@ -256,7 +256,15 @@
 
           if (!this.onTopId) {
             this.onTopId = Tone.Transport.schedule(() => {
-              this.$bus.$emit(BeatTick.TOP, { first: this.starting });
+              if (this.starting || this.beat > this.beats - 3) {
+                this.$bus.$emit(BeatTick.TOP, { first: this.starting });
+                if (!this.starting && this.beat < this.beats - 1) {
+                  console.warn(Tone.rightNow(), 'Top on beat', this.beat);
+                }
+              } else {
+                console.warn(Tone.rightNow(), 'Skipping top because beat', this.beat);
+              }
+
               if (this.starting) {
                 this.$store.commit('transport/play');
               }

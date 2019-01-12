@@ -1,5 +1,5 @@
 <template lang="pug">
-  .lesson(ref="lesson", :class="{transition, done, button: playable, flip: tempoFlip}",
+  .lesson(ref="lesson", :class="{transition, done, fail, button: playable, flip: tempoFlip}",
       @transitionend="unflip($event)", @mousedown="emit($event)", @click="emit($event)")
     .score(ref="score", v-show="done")
       .score-contents(:class="{flip: backingFlip}")
@@ -13,6 +13,7 @@
 
 <script>
   import Star from '~/components/star.component';
+  import { PASSING_LESSON } from "~/store/progress";
 
   export default {
     components: {
@@ -64,7 +65,10 @@
         return _.map(_.split(this.pulseBeat, ''), pulses => _.times(pulses, () => pulses));
       },
       done() {
-        return this.stars.length || this.amount;
+        return !!(this.stars.length || this.amount);
+      },
+      fail() {
+        return this.amount && this.amount.base < PASSING_LESSON;
       }
     },
     watch: {
@@ -127,6 +131,13 @@
         .score
           transform: scaleY(0);
           transform-origin: top;
+
+      &.fail .score
+        border: solid 5px primary-blue;
+
+        .score-contents
+          opacity: 0.7;
+          shadow(black, 5px);
 
     &.flip
       transform: scaleY(0.04);
