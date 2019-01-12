@@ -4,7 +4,7 @@
       .splash(v-if="!ready")
         img.logo(src="~/assets/logo.png")
     transition(name="main")
-      main-frame(v-if="ready")
+      main-frame(v-if="ready", :bonus="true")
 </template>
 
 <script>
