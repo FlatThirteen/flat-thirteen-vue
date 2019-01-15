@@ -1,6 +1,6 @@
 <template lang="pug">
   svg(height="30", width="30", viewBox="0 0 30 30")
-    path.star(:d="path", stroke-width="2px", stroke-linejoin="miter", :class="[backing, { hollow }]")
+    path.star(:d="path", stroke-width="2px", stroke-linejoin="miter", :class="[backing, { white, hollow }]")
 </template>
 
 <script>
@@ -14,6 +14,7 @@
         type: String,
         default: 'default'
       },
+      white: Boolean,
       hollow: Boolean
     },
     constants: {
@@ -30,6 +31,10 @@
   .none
     fill: white;
     stroke: @fill;
+
+    &.white
+      fill: primary-blue;
+      stroke: @fill;
 
   .bass
     fill: bass-color;

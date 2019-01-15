@@ -5,7 +5,7 @@
         .meter__level(:style="{height: (ready ? totalPoints : highScores[0].base) / 5 + '%'}")
         .meter__bar
       .meter__star(ref="star")
-        star
+        star(:backing="backing", :white="true")
     .stages
       .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)")
         phrase.lesson__phrase(ref="phrase", :class="{lesson__phrase__off: state + numBeats < i}",
@@ -378,7 +378,11 @@
             if (this.playKeys.length === this.targetKeys.length) {
               if (this.playKeys === this.targetKeys) {
                 this.star = true;
-                this.highScores[0].base = this.totalPoints;
+                TweenMax.to(this.$data.highScores[0], 2 * this.duration, {
+                  base: this.totalPoints,
+                  ease: Linear.easeNone,
+                  roundProps: 'base'
+                });
               } else {
                 Sound.effect('fail');
                 this.animate('drop', { element: this.$refs.star, duration: 2 * this.duration });
