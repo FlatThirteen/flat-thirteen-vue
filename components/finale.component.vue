@@ -171,11 +171,8 @@
       if (this.bonusStage && this.totalPoints === PERFECT_LESSON) {
         this.addEmptyPhrase();
       }
-      // this.highScores[0].backing = this.backing;
-
       setTimeout(() => {
         this.highScores = [{ isNew: true, base: 0, backing: this.backing }];
-        // this.highScores[0].base = 0;
         this.start('+0');
       }, 500);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
