@@ -2,7 +2,6 @@
   .composer(v-if="show")
     .beat(v-for="(beat, index) in notes.split('|')")
       span(v-if="index") |
-      span(v-else) =
       span(@click="updateRhythm(index)") {{ beat }}
 </template>
 
@@ -22,10 +21,6 @@
         type: String,
         default: 'sawtooth6'
       },
-      rootNote: {
-        type: String,
-        default: 'C2'
-      },
       defaultRhythm: {
         type: String,
         default: '%1|%2|%3|%4'
@@ -37,9 +32,10 @@
     },
     data() {
       return {
-        pitches: [],
+        rootNote: 'C2',
         shape: [],
-        rhythm: this.defaultRhythm
+        rhythm: this.defaultRhythm,
+        notes: '',
       };
     },
     mounted() {
@@ -52,6 +48,11 @@
       reset(shape) {
         this.shape = shape || Shaper.shape([-7, -5, -2], 2, [-2, -1, 1, 2, 3], 1);
         this.rhythm = this.defaultRhythm;
+        this.updateTrack();
+      },
+      updateRootNote(rootNote) {
+        this.rootNote = rootNote;
+        this.updateTrack();
       },
       updateRhythm(beat = _.random(0, this.numBeats - 1)) {
         let rhythm = _.split(this.rhythm, '|');
@@ -68,36 +69,22 @@
           }
         }
         this.rhythm = rhythm.join('|');
+        this.updateTrack();
+      },
+      updateTrack() {
+        let pitches = _.map(this.shape, interval =>
+          new Tone.Frequency(this.rootNote).transpose(interval).toNote());
+        this.notes = _.reduceRight(pitches, (template, pitch, index) =>
+            _.replace(template, new RegExp('%' + (index + 1), 'g'), pitch),
+          this.rhythm);
+        let tracks = [{ type: this.type, notes: this.notes }];
+        this.$store.dispatch('phrase/setTracks', { name: this.name, tracks });
       }
     },
     computed: {
-      notes() {
-        return _.reduceRight(this.pitches, (template, pitch, index) =>
-            _.replace(template, new RegExp('%' + (index + 1), 'g'), pitch),
-            this.rhythm);
-      },
-      tracks() {
-        return [{ type: this.type, notes: this.notes }];
-      },
       ...mapGetters({
-        paused: 'transport/paused',
         numBeats: 'player/numBeats'
       })
-    },
-    watch: {
-      shape: {
-        deep: true,
-        handler(shape) {
-          this.pitches = _.map(shape, interval =>
-              new Tone.Frequency(this.rootNote).transpose(interval).toNote());
-        }
-      },
-      tracks: {
-        deep: true,
-        handler(tracks) {
-          this.$store.dispatch('phrase/setTracks', { name: this.name, tracks });
-        }
-      }
     }
   }
 </script>

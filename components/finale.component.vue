@@ -1,8 +1,9 @@
 <template lang="pug">
   .finale-container
+    backing
     .meter
       .meter__container(:class="[backing, {'meter--hide': bonus}]", :style="hideTransition")
-        .meter__level(:style="{height: (ready ? totalPoints : highScores[0].base) / 5 + '%'}")
+        .meter__level(:style="meterStyle")
         .meter__bar
       .meter__star(ref="star")
         star(:backing="backing", :white="true")
@@ -37,6 +38,7 @@
               | {{ score.tempo }}
     .footer
       key-handler
+      composer(ref="composer", defaultRhythm="%1,%1|%2,%2|%3,%3|%1,%1")
       transition(name="finish")
         .finish.button(v-if="exitable", :class="{weenie: final && paused}", @click="finish()")
           play-button.play-button(:disable="true")
@@ -55,6 +57,8 @@
   import Tone from '~/common/tone';
 
   import Arrangement from '~/components/arrangement.component';
+  import Backing from '~/components/backing.component';
+  import Composer from '~/components/composer.component';
   import KeyHandler from '~/components/key-handler.component';
   import Metronome from '~/components/metronome.component';
   import ParticleFx from '~/components/particle-fx.component';
@@ -71,6 +75,8 @@
     mixins: [AnimatedMixin],
     components: {
       'arrangement': Arrangement,
+      'backing': Backing,
+      'composer': Composer,
       'key-handler': KeyHandler,
       'metronome': Metronome,
       'particle-fx': ParticleFx,
@@ -156,7 +162,7 @@
         target: _.times(4, () => _.random(0, 3)),
         position: null,
         star: false,
-        highScores: [{ isNew: true, base: undefined }],
+        highScores: [],
         timeouts: []
       };
     },
@@ -165,9 +171,11 @@
       if (this.bonusStage && this.totalPoints === PERFECT_LESSON) {
         this.addEmptyPhrase();
       }
+      // this.highScores[0].backing = this.backing;
+
       setTimeout(() => {
-        this.highScores[0].base = 0;
-        this.highScores[0].backing = this.backing;
+        this.highScores = [{ isNew: true, base: 0, backing: this.backing }];
+        // this.highScores[0].base = 0;
         this.start('+0');
       }, 500);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
@@ -242,8 +250,11 @@
             });
           }
           if (this.bonusSuccess) {
+            this.$refs.composer.clear();
             this.setBonusSuccess({ layout: this.level.layout, backing: this.backing });
             this.animate('success', { element: this.$refs.star, duration: 4 * this.duration });
+          } else {
+            this.$refs.composer.updateRootNote(this.position % 2 ? 'G2' : 'A2');
           }
         } else if (position === this.stages.length) {
           this.setBonusStart({ layout: this.level.layout, backing: this.backing });
@@ -342,6 +353,10 @@
       hideTransition() {
         return { 'transition-duration': 2 * this.duration + 's' };
       },
+      meterStyle() {
+        return { height: (this.ready ? this.totalPoints :
+            this.highScores[0] && this.highScores[0].base) / 5 + '%'};
+      },
       ...mapGetters({
         keyDown: 'keyDown',
         numBeats: 'player/numBeats',
@@ -392,6 +407,9 @@
                 this.animate('disappear', { element });
               });
             } else {
+              if (this.bonus === 'start' && this.level.backing) {
+                this.$refs.composer.reset([0, -8, -5]);
+              }
               this.bonus = 'ready';
               if (this.$refs.goal) {
                 this.$refs.goal.animate(this.bonus === 'goal' ? 'land' : 'appear');
