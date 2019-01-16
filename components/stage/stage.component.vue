@@ -149,7 +149,8 @@
       },
       onVisiblityChange() {
         if (document.hidden) {
-          this.onAction('standby');
+          console.log('Going hidden');
+          //this.onAction('standby');
         }
       },
       topHandler({first}) {

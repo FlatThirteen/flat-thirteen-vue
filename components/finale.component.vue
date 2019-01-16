@@ -22,7 +22,7 @@
       .bonus__target-container
         .bonus__target(ref="target", v-for="(index, i) in target", :class="{cheer: bonusSuccess}")
           .bonus__target__progress(ref="progress")
-          .bonus__target__contents(ref="contents") {{ playKeys[i] }}
+          .bonus__target__contents(ref="contents", v-show="bonus === 'play'") {{ playKeys[i] }}
         bouncing-points(:show="bonusSuccess", :points="particleCount")
         particle-fx(:type="particleType", :count="particleCount")
       .bonus__footer
@@ -36,6 +36,8 @@
             .high__tempo(:class="{hide: score.isNew ? !score.tempo || !power.tempo : score.tempo === tempo}")
               metronome(:mini="true")
               | {{ score.tempo }}
+    .stages-footer
+      goal-button.stages-footer__goal(ref="fail", v-if="bonusFail", @click="onGoal()")
     .footer
       key-handler
       composer(ref="composer", defaultRhythm="%1,%1|%2,%2|%3,%3|%1,%1")
@@ -218,7 +220,10 @@
           if (this.bonus === 'ready') {
             this.bonus = 'play';
           }
-          if (this.bonus !== 'goal') {
+          if (this.bonusFail && this.paused) {
+            this.$refs.fail.animate('disappear');
+          }
+          if (this.bonus !== 'goal' && this.bonus !== 'failGoal') {
             this.animate('squish', { element: this.$refs.contents[this.phrases.length] });
             this.phrases.push(this.$refs.phrase[index]);
             if (this.paused) {
@@ -226,7 +231,7 @@
                 this.$refs.goal.animate('disappear');
               }
               this.start('+0');
-            } else if (this.playKeys === this.targetKeys) {
+            } else if (this.bonus === 'play' && this.playKeys === this.targetKeys) {
               // Correct, so add empty phrase for success finale
               this.addEmptyPhrase();
             }
@@ -275,10 +280,15 @@
       },
       onGoal() {
         if (this.paused) {
-          this.bonus = 'goal';
           this.phrases = _.map(this.target, index => this.$refs.phrase[index]);
-          this.$refs.goal.animate('launch');
-          this.$refs.bouncingBall.to(this.targetPositions[0]);
+          if (this.bonusFail) {
+            this.bonus = 'failGoal';
+            this.$refs.fail.animate('disappear');
+          } else {
+            this.bonus = 'goal';
+            this.$refs.goal.animate('launch');
+            this.$refs.bouncingBall.to(this.targetPositions[0]);
+          }
           this.start();
         }
       },
@@ -313,19 +323,22 @@
         return this.state > this.stages.length;
       },
       bonusActive() {
-        return this.bonus && this.bonus !== 'done';
+        return this.bonus && this.bonus !== 'done' && !this.bonusFail;
       },
       bonusSuccess() {
         return this.bonus === 'play' && this.position === this.playKeys.length;
       },
+      bonusFail() {
+        return this.bonus === 'fail' || this.bonus === 'failGoal';
+      },
       playable() {
-        return this.ready && (!this.bonusActive || this.phrases.length < this.target.length);
+        return this.ready && (!this.bonus || this.bonus === 'done' || this.phrases.length < this.target.length);
       },
       exitable() {
         return this.ready && !this.bonusActive;
       },
       playKeys() {
-        return this.bonus !== 'play' ? '' : _.join(_.map(this.phrases, 'phraseKey'), '');
+        return _.join(_.map(this.phrases, 'phraseKey'), '');
       },
       targetKeys() {
         return _.join(_.map(this.target, index => this.keys[index]), '');
@@ -339,7 +352,7 @@
         return _.sumBy(this.stages, 'points') + this.star * 100;
       },
       particleType() {
-        return this.bonus === 'play' && this.position === this.playKeys.length ? 'confetti' : null;
+        return this.bonusSuccess || this.star ? 'confetti' : null;
       },
       particleCount() {
         return this.particleType ? 100 : null;
@@ -387,8 +400,9 @@
         if (paused) {
           this.clear('finale');
           if (this.bonusActive) {
-            if (this.playKeys.length === this.targetKeys.length) {
+            if (this.bonus === 'play' && this.playKeys.length === this.targetKeys.length) {
               if (this.playKeys === this.targetKeys) {
+                this.bonus = 'done';
                 this.star = true;
                 TweenMax.to(this.$data.highScores[0], 2 * this.duration, {
                   base: this.totalPoints,
@@ -396,10 +410,13 @@
                   roundProps: 'base'
                 });
               } else {
+                this.bonus = 'fail';
                 Sound.effect('fail');
-                this.animate('drop', { element: this.$refs.star, duration: 2 * this.duration });
+                this.animate('drop', {
+                  element: this.$refs.star,
+                  duration: 2 * this.duration
+                });
               }
-              this.bonus = 'done';
               _.forEach(this.$refs.target, element => {
                 this.animate('disappear', { element });
               });
@@ -416,6 +433,17 @@
                   opacity: 0
                 });
               });
+            }
+          } else if (this.bonusFail) {
+            if (this.bonus === 'fail' && this.playKeys === this.targetKeys) {
+              Sound.effect('done');
+              this.bonus = 'done';
+            } else {
+              if (this.bonus === 'fail' && this.playKeys.length === this.targetKeys.length) {
+                Sound.effect('wrong');
+              }
+              this.$refs.fail.animate('appear');
+              this.bonus = 'fail';
             }
           }
           this.phrases = [];
@@ -672,6 +700,10 @@
     &__footer
       height: 20vh;
       margin-top: 10px;
+
+  .stages-footer
+    grid-area: 2/1/3/2;
+    margin: auto;
 
   .footer
     grid-area: footer;

@@ -81,7 +81,7 @@
               beatTicks = debug.notes === this.beatTicks.length ? this.beatTicks : null;
               if (!beatTicks) {
                 debug.requiredBeatTicks = this.requiredBeatTicks(
-                  this.pulseBeat !== '1111' && !this.oneNote || !finished,
+                  this.pulseBeat !== '1111' || !this.oneNote || !finished,
                   stage < numStages - 1 && !finished);
                 let combinations = Rhythm.combinations(this.beatTicks, debug.requiredBeatTicks, debug.notes,
                   _.get(avoidBeatTicks, debug.notes, {}));
@@ -135,7 +135,7 @@
       setNotes(notes) {
         this.notes = notes;
         let requiredBeatTicks = this.requiredBeatTicks(
-            this.pulseBeat !== '1111' && !this.oneNote || !this.finished, !this.finished);
+            this.pulseBeat !== '1111' || !this.oneNote || !this.finished, !this.finished);
         let rhythmCombinations = Rhythm.combinations(this.beatTicks, requiredBeatTicks, notes);
         this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => _.map(this.oneNote ? [0] :
             _.range(1, Monotonic.combos(this.noteCombos, beatTicks.length) - 1), noteSeed =>

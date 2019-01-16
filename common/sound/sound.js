@@ -15,7 +15,8 @@ let Sound = {
     exceeded: 'cowbell:32n:,,E5,F4',
     penalty: 'cowbell:32n:F4,D4',
     wrong: 'cowbell:32n:D4,D4',
-    fail: 'cowbell: 16t:F4,D4,A3,D3'
+    fail: 'cowbell:16t:F4,D4,A3,D3',
+    done: 'cowbell:8n:,E5,A5'
   },
   resume() {
     // New versions of Chrome don't allow Audio until user takes action.
