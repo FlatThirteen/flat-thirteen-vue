@@ -155,12 +155,10 @@
             requiredBeatTicks.push(requiredOffbeats);
           }
         }
-        let halfwayBeat = this.pulsesByBeat.length / 2;
-        requiredBeatTicks.push(_.filter(this.beatTicks,
-          beatTick => Parser.beatFromBeatTick(beatTick) >= halfwayBeat));
-        if (!requireInitial) {
+        for (let start = requireInitial ? 1 : 0; start + 2 <= this.pulsesByBeat.length; start++) {
+          let inRange = beat => beat >= start && beat < start + 2;
           requiredBeatTicks.push(_.filter(this.beatTicks,
-            beatTick => Parser.beatFromBeatTick(beatTick) < halfwayBeat));
+              beatTick => inRange(Parser.beatFromBeatTick(beatTick))));
         }
         return requiredBeatTicks;
       },
