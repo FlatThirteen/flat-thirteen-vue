@@ -1,7 +1,8 @@
 <template lang="pug">
   .power-container(v-if="show", ref="auto")
     .power.button(@click="onClick()", :class="{active}",
-        @mouseenter="onMouseEnter()", @mouseleave="onMouseLeave()") o
+        @mouseenter="onMouseEnter()", @mouseleave="onMouseLeave()")
+      .o
 </template>
 
 <script>
@@ -111,9 +112,8 @@
     posit(absolute, x, x, -100%);
     margin-right: -20px;
 
-  .power
-    font-size: 40px;
-    line-height: 35px;
-    color: white;
-    font-weight: bold;
+  .o
+    posit(absolute, 9px);
+    border: solid 5px white;
+    border-radius: 50%;
 </style>
