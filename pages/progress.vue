@@ -198,6 +198,9 @@
       &:focus
         outline: none;
 
+    .button
+      vertical-align: baseline;
+
   .power
     posit(fixed, x, 100px, 0, 250px);
     height: 100px;
