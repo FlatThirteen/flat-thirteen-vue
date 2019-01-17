@@ -44,7 +44,8 @@
         this.beat = beat;
         this.nextBeat = nextBeat;
         Tone.Draw.schedule(() => {
-          if (this.showBall) {
+          // Make sure still active and not destroyed
+          if (this.showBall && this.$refs.bouncingBall) {
             this.$refs.bouncingBall.to(this.lefts[nextBeat]);
           }
         }, time);
