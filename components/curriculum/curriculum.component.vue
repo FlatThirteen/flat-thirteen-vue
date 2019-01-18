@@ -1,5 +1,5 @@
 <template lang="pug">
-  .curriculum-container(ref="container")
+  .curriculum-container(ref="container", @click="onTouch()")
     .main-content(:class="scaleClass")
       .settings(:class="{space: power.tempo}")
         .layouts
@@ -16,7 +16,7 @@
           lesson-button(v-for="pulseBeat in lessonGroup", ref="lessonButton", :key="pulseBeat",
               :class="{highlight: highlight[pulseBeat]}", :backing="backing",
               :pulseBeat="pulseBeat", :points="displayPoints[pulseBeat]", :transition="transition",
-              :backingChange="backingChange", :tempoChange="tempoChange",
+              :backingChange="backingChange", :tempoChange="tempoChange", @onTouch="onTouch(pulseBeat)",
               @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
               @mouseenter="onMouseOver(pulseBeat)", @mouseleave="onMouseOver()")
       .end
@@ -85,8 +85,6 @@
       };
     },
     mounted() {
-      this.$refs.container.addEventListener('touchstart', this.onTouch);
-      this.$refs.container.addEventListener('mousedown', this.onTouch);
       this.$refs.container.scrollTop = this.scrollTop;
       if (this.showNextLayout) {
         this.$refs.layout.appear(this.next.layout);
@@ -102,10 +100,6 @@
           });
         }
       });
-    },
-    beforeDestroy() {
-      this.$refs.container.removeEventListener('touchstart', this.onTouch);
-      this.$refs.container.removeEventListener('mousedown', this.onTouch);
     },
     methods: {
       onLayout(layout) {
@@ -150,9 +144,13 @@
           });
         }
       },
-      onTouch() {
+      onTouch(pulseBeat) {
         _.forEach(this.$refs.lessonButton, lessonButton => {
-          lessonButton.touchOff();
+          if (lessonButton.pulseBeat !== pulseBeat) {
+            lessonButton.touchOff();
+          } else {
+            this.onMouseOver(pulseBeat);
+          }
         });
       },
       onMouseOver(pulseBeat) {

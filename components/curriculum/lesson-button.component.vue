@@ -48,14 +48,17 @@
       this.$refs.lesson.removeEventListener('touchend', this.onTouchEnd);
     },
     methods: {
-      onTouchStart(event) {
-        if (!this.touched) {
-          event.preventDefault();
-          this.$emit('mouseenter');
+      onTouchStart() {
+        if (this.playable) {
+          this.touched = !this.touched;
         }
       },
-      onTouchEnd() {
-        this.touched = !this.touched;
+      onTouchEnd(event) {
+        if (this.touched) {
+          event.preventDefault();
+          this.$emit('onTouch');
+        }
+
       },
       touchOff() {
         this.touched = false;
