@@ -58,7 +58,6 @@
           event.preventDefault();
           this.$emit('onTouch');
         }
-
       },
       touchOff() {
         this.touched = false;
