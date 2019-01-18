@@ -13,12 +13,12 @@
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
         .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="String(notes)",
             v-if="displayPoints", :class="{transition, weenie: String(weenie.notes) === notes}")
-          lesson-button(v-for="pulseBeat in lessonGroup", :key="pulseBeat",
+          lesson-button(v-for="pulseBeat in lessonGroup", ref="lessonButton", :key="pulseBeat",
               :class="{highlight: highlight[pulseBeat]}", :backing="backing",
               :pulseBeat="pulseBeat", :points="displayPoints[pulseBeat]", :transition="transition",
               :backingChange="backingChange", :tempoChange="tempoChange",
               @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
-              @mouseenter.native="onMouseOver(pulseBeat)", @mouseleave.native="onMouseOver()")
+              @mouseenter="onMouseOver(pulseBeat)", @mouseleave="onMouseOver()")
       .end
     .bottom(:class="scaleClass")
       note-count(:notes="power.notes")
@@ -85,6 +85,8 @@
       };
     },
     mounted() {
+      this.$refs.container.addEventListener('touchstart', this.onTouch);
+      this.$refs.container.addEventListener('mousedown', this.onTouch);
       this.$refs.container.scrollTop = this.scrollTop;
       if (this.showNextLayout) {
         this.$refs.layout.appear(this.next.layout);
@@ -99,8 +101,11 @@
             left: this.getLayoutLeft()
           });
         }
-      })
-
+      });
+    },
+    beforeDestroy() {
+      this.$refs.container.removeEventListener('touchstart', this.onTouch);
+      this.$refs.container.removeEventListener('mousedown', this.onTouch);
     },
     methods: {
       onLayout(layout) {
@@ -144,6 +149,11 @@
             }
           });
         }
+      },
+      onTouch() {
+        _.forEach(this.$refs.lessonButton, lessonButton => {
+          lessonButton.touchOff();
+        });
       },
       onMouseOver(pulseBeat) {
         this.highlight = !pulseBeat || this.displayPoints[pulseBeat] ? {} : _.reduce(
@@ -326,6 +336,9 @@
   .first
     transform: scale(2);
     transition-delay: 0;
+
+    @media (max-height: 600px)
+      transform: scale(1.6);
 
   .second
     margin: 0 15%;

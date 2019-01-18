@@ -1,6 +1,7 @@
 <template lang="pug">
-  .lesson(ref="lesson", :class="{transition, done, fail, button: playable, flip: tempoFlip}",
-      @transitionend="unflip($event)", @mousedown="emit($event)", @click="emit($event)")
+  .lesson(ref="lesson", :class="{transition, touched, done, fail, button: playable, flip: tempoFlip}",
+      @transitionend="unflip($event)", @mousedown="emit($event)",
+      @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')", @click="emit($event)")
     .score(ref="score", v-show="done")
       .score-contents(:class="{flip: backingFlip}")
         star(v-for="(star, i) in stars", :backing="star", :key="i")
@@ -30,6 +31,7 @@
     data() {
       return {
         move: '',
+        touched: false,
         backingFlip: false,
         tempoFlip: false,
         playable: false,
@@ -37,7 +39,27 @@
         stars: []
       }
     },
+    mounted() {
+      this.$refs.lesson.addEventListener('touchstart', this.onTouchStart);
+      this.$refs.lesson.addEventListener('touchend', this.onTouchEnd);
+    },
+    beforeDestroy() {
+      this.$refs.lesson.removeEventListener('touchstart', this.onTouchStart);
+      this.$refs.lesson.removeEventListener('touchend', this.onTouchEnd);
+    },
     methods: {
+      onTouchStart(event) {
+        if (!this.touched) {
+          event.preventDefault();
+          this.$emit('mouseenter');
+        }
+      },
+      onTouchEnd() {
+        this.touched = !this.touched;
+      },
+      touchOff() {
+        this.touched = false;
+      },
       unflip(event) {
         if (event.propertyName === 'transform' && _.includes(event.target.className, 'flip')) {
           this.updateScore();
@@ -46,6 +68,7 @@
         }
       },
       emit(event) {
+        this.touched = false;
         if (!event.button && this.playable) {
           let el = this.$refs.lesson;
           this.$emit(event.type, {
@@ -107,7 +130,14 @@
     &.button
       color: primary-blue;
 
-      &:hover
+      &.touched
+        transform: scale(1.2);
+        background-color: back-blue;
+        outline: solid 3px back-blue;
+        box-shadow: 0 0 15px 5px white;
+        z-index: 1;
+
+      &:hover, &.touched
         .pulse-beat
           background-color: primary-blue;
 
@@ -124,7 +154,7 @@
         transform: scaleY(0);
         transform-origin: bottom;
 
-      &:hover:not(:active)
+      &:hover:not(:active), &.touched
         .pulse-beat
           transform: scaleY(1);
 
