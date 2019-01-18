@@ -98,7 +98,7 @@
   .lesson
     background-color: white;
     display: inline-block;
-    margin: 1px 10px;
+    margin: .5vh .5vw;
     font-size: 40px;
     line-height: 60px;
     overflow: hidden;

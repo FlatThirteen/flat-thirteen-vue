@@ -152,8 +152,8 @@
       onLesson(pulseBeat, {x, y}) {
         this.$store.dispatch('progress/weenie', { power: 'notes' });
         this.$emit('click', { pulseBeat,
-          x: x * (this.scaleClass === 'second' ? 1.5 : 1),
-          y: y * (this.scaleClass === 'first' ? 2 : this.scaleClass === 'second' ? 1.5 : 1),
+          x: x * (this.scaleClass === 'second' ? 1.4 : 1),
+          y: y * (this.scaleClass === 'first' ? 2 : this.scaleClass === 'second' ? 1.4 : 1),
           scrollTop: this.$refs.container.scrollTop
         });
       },
@@ -256,6 +256,9 @@
     justify-content: center;
     align-items: flex-end;
 
+    @media (max-width: 650px)
+      padding-top: 120px;
+
   .layouts
     display: inline-flex;
     position: relative;
@@ -284,7 +287,7 @@
     width: 100px;
 
   .lesson-group
-    margin: 20px;
+    margin: 20px 2px;
     text-align: center;
 
     &.weenie:not(:hover) .button
@@ -323,5 +326,5 @@
 
   .second
     margin: 0 15%;
-    transform: scale(1.5);
+    transform: scale(1.4);
 </style>
