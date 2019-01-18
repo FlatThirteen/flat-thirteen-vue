@@ -1,7 +1,7 @@
 <template lang="pug">
   .curriculum-container(ref="container")
     .main-content(:class="scaleClass")
-      .settings
+      .settings(:class="{space: power.tempo}")
         .layouts
           power-layout.power(ref="layout", @click="onNext('layout')")
           .layout-selected(ref="selected", :class="{off: level.layout < 0}")
@@ -256,8 +256,11 @@
     justify-content: center;
     align-items: flex-end;
 
-    @media (max-width: 650px)
-      padding-top: 120px;
+    &.space
+      transition: padding-top 250ms;
+
+      @media (max-width: 650px)
+        padding-top: 120px;
 
   .layouts
     display: inline-flex;

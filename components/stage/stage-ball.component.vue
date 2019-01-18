@@ -45,7 +45,7 @@
         this.nextBeat = nextBeat;
         Tone.Draw.schedule(() => {
           // Make sure still active and not destroyed
-          if (this.showBall && this.$refs.bouncingBall) {
+          if (this.showBall && this.active && this.$refs.bouncingBall) {
             this.$refs.bouncingBall.to(this.lefts[nextBeat]);
           }
         }, time);
@@ -90,9 +90,10 @@
     font-size: @height;
     font-weight: 800;
     line-height: @height;
-    margin-left: calc(-2.5vmin - 6px);
+    margin-left: -3vmin;
     width: @height;
-    border: solid 6px primary-blue;
+    border: solid .5vmin primary-blue;
+    padding-top: .5vmin;
     bottom: -6vmin;
     color: primary-blue;
     opacity: 0;

@@ -11,8 +11,9 @@
       .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)")
         phrase.lesson__phrase(ref="phrase", :class="{lesson__phrase__off: state + numBeats < i}",
             v-bind="{phrase: stage.phrase, phraseKey: keys[i], pulsesByBeat, phraseProperties, noAnimation}")
-        .lesson__key(v-if="ready", :class="{fade: playable}") {{ keys[i] }}
-        bouncing-points(v-else, :show="state >= i", :points="stage.points", :class="{fade: ready}")
+        transition(name="label")
+          .lesson__key(v-if="ready", :class="{fade: playable}") {{ keys[i] }}
+          bouncing-points(v-else, :show="state >= i", :points="stage.points")
         transition(name="play"): .lesson__play(v-show="playable"): play-button.play-button
     .bonus
       .bonus__controls(v-if="bonus")
@@ -489,6 +490,9 @@
     line-height: 0;
     text-align: center;
 
+    @media (max-width: 650px)
+      font-size: calc(19px + 6vw);
+
     &:hover .lesson__play
       opacity: 1;
 
@@ -534,6 +538,12 @@
   .fade
     transition: opacity 1.5s;
     opacity: 0.7;
+
+  .label-enter-active, .label-leave-active
+    transition: transform 500ms;
+
+  .label-enter, .label-leave-to
+    transform: scale(0);
 
   .play-enter-active
     transition: opacity 500ms;

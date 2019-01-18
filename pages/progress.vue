@@ -2,7 +2,7 @@
   corner-frame(:totalPoints="totalPoints", :totalStars="totalStars",
       :hideTop="!!finaleStages.length", @hint="hint = $event")
     curriculum(:hint="hint", :debug="true", :scrollTop="scrollTop", @click="onLesson($event)")
-    .points(v-if="!pulseBeat")
+    .config(v-if="!pulseBeat")
       .button(@click="max()") o
     transition(name="lesson-container")
       .lesson-container(v-show="pulseBeat", :style="transformOrigin")
@@ -12,14 +12,14 @@
             quit-button(@click="redoLesson()")
           .lesson(v-else)
             lesson-builder(ref="lessonBuilder", :debug="true")
-            .power
-              power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
             .points
               .button(@click="finishLesson()") +
               input(v-for="(points, i) in pointsByStage", type="number",
                   v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}",
                   @mouseover="i > 1 && showNextAuto()")
               star.button(:hollow="hollow", @click.native="onStar()")
+              .power
+                power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
             quit-button(@click="exitLesson()")
 </template>
 
@@ -155,6 +155,12 @@
     position: absolute;
     user-select: none;
 
+  .config
+    posit(fixed, x, x, 0, 5px);
+    font-size: 40px;
+    font-weight: 600;
+    color: primary-blue;
+
   .lesson-container-enter-active, .lesson-container-leave-active, .finale-enter-active, .finale-leave-active
     transition: all 500ms;
 
@@ -176,10 +182,12 @@
     overflow: scroll;
 
   .points
-    posit(fixed, x, x, 0, 0);
+    posit(fixed, x, 100px, 0, 5px);
     font-size: 40px;
     font-weight: 600;
-    margin-left: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
 
     input
       background-color: transparent;
@@ -202,6 +210,6 @@
       vertical-align: baseline;
 
   .power
-    posit(fixed, x, 100px, 0, 250px);
-    height: 100px;
+    height: 0px;
+    flex-grow: 1;
 </style>

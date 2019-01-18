@@ -156,6 +156,9 @@
       bottom: 0;
       margin: 5px 10px;
 
+    .right
+      pointer-events: none;
+
   .left, .right
     filter: drop-shadow(0 0 4px white);
     text-shadow: 0 0 5px white;
