@@ -356,7 +356,6 @@
   .grid
     margin: 0 auto;
     position: relative;
-    padding-left: 4px;
 
     &.disable
       opacity: 0.6;
