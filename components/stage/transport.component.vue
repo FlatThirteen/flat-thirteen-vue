@@ -261,7 +261,7 @@
                 if (!this.starting && this.beat < this.beats - 1) {
                   console.warn(Tone.rightNow(), 'Top on beat', this.beat);
                 }
-              } else {
+              } else if (this.playing) {
                 console.warn(Tone.rightNow(), 'Skipping top because beat', this.beat);
               }
 
