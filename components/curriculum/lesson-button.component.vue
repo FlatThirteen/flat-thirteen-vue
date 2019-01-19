@@ -1,8 +1,7 @@
 <template lang="pug">
   .lesson(ref="lesson", :class="{transition, touched, done, fail, button: playable, flip: tempoFlip}",
-      @transitionend="unflip($event)", @touchstart="onTouchStart()", @touchend="onTouchEnd($event)",
-      @mousedown="emit($event)", @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')",
-      @click="emit($event)")
+      @transitionend="unflip($event)", @touchend="onTouch($event)", @mousedown="emit($event)",
+      @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')", @click="emit($event)")
     .score(ref="score", v-show="done")
       .score-contents(:class="{flip: backingFlip}")
         star(v-for="(star, i) in stars", :backing="star", :key="i")
@@ -41,12 +40,10 @@
       }
     },
     methods: {
-      onTouchStart() {
+      onTouch(event) {
         if (this.playable) {
           this.touched = !this.touched;
         }
-      },
-      onTouchEnd(event) {
         if (this.touched) {
           event.preventDefault();
           this.$emit('onTouch');
