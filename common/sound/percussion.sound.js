@@ -8,7 +8,7 @@ export class KickSound {
       oscillator: {type: 'sine'},
       envelope: {
         attack: 0.001,
-        decay: 0.1,
+        decay: 0.3,
         sustain: 0.1,
         release: 0.1
       },
