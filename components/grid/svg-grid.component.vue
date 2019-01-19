@@ -61,6 +61,7 @@
               :cy="beatCenter", :cx="((2 * i) + 1) * beatSize / 2 / pulses",
               :r="beatSize / 2 / pulses - 4 * beatBorder / pulses",
               :transform-origin="((2 * i) + 1) * beatSize / 2 / pulses + ' ' + beatCenter",
+              @touchend="onTouch($event, note, cursor)",
               @mouseenter="select(cursor)", @click="onNote(note, cursor)")
       rect#glass(:height="backgroundHeight", width="0")
     slot
@@ -69,7 +70,7 @@
 <script>
   import AnimatedMixin from '~/mixins/animated.mixin';
   import { TweenMax, Linear } from 'gsap'
-  import { mapGetters } from 'vuex';
+  import { mapActions, mapGetters } from 'vuex';
 
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
@@ -154,8 +155,10 @@
           this.$store.dispatch('player/select', { cursor, surfaceId: this.surfaceId });
         }
       },
-      unselect() {
-        this.$store.dispatch('player/unselect');
+      onTouch(event, note, cursor) {
+        this.onNote(note, cursor);
+        event.preventDefault();
+        this.unselect();
       },
       onNote(note, cursor) {
         if (this.disable) {
@@ -185,7 +188,10 @@
               to(fx, .1, { opacity: 0, transform: 'scale(1)'}).
               duration(.25).play(0);
         }
-      }
+      },
+      ...mapActions({
+        unselect: 'player/unselect'
+      })
     },
     computed: {
       svgStyle() {
@@ -417,9 +423,6 @@
 
     .grid:not(.disable) &
       cursor: pointer;
-
-    .goal &.on
-      opacity: 0.3;
 
     .selected &.cursor:not(.on)
       opacity: 0.1;
