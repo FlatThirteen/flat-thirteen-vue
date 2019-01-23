@@ -8,7 +8,8 @@
       .meter__star(ref="star")
         star(:backing="backing", :white="true")
     .stages
-      .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)")
+      .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)",
+          @touchstart="play(i), $event.preventDefault()")
         phrase.lesson__phrase(ref="phrase", :class="{lesson__phrase__off: state + numBeats < i}",
             v-bind="{phrase: stage.phrase, phraseKey: keys[i], pulsesByBeat, phraseProperties, noAnimation}")
         transition(name="label")
@@ -100,6 +101,13 @@
       animationDefinitions: {
         appear: [[.5, {
           transform: 'scale(1.1)'
+        }], [.2, {
+          transform: 'scale(1)'
+        }]],
+        queue: [[.3, {
+          transform: 'scale(.85)'
+        }], [.5, {
+          transform: 'scale(1.05)'
         }], [.2, {
           transform: 'scale(1)'
         }]],
@@ -226,6 +234,7 @@
           }
           if (this.bonus !== 'goal' && this.bonus !== 'failGoal') {
             this.animate('squish', { element: this.$refs.contents[this.phrases.length] });
+            this.animate('queue', { element: this.$refs.phrase[index].$el });
             this.phrases.push(this.$refs.phrase[index]);
             if (this.paused) {
               if (this.bonusActive && this.$refs.goal) {

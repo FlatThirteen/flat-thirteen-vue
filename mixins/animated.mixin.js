@@ -32,7 +32,7 @@ export default {
         this.animatedLast = name;
         this.animateDebug(name, 'skipped because last', this.animatedLast);
       } else {
-        this.animateDebug(name, '{-- was', this.animatedLast);
+        this.animateDebug(name, '{-- ', options.element || 'was', this.animatedLast);
         let onRepeat = options.onRepeat || _.noop;
         options.onRepeat = () => {
           this.animateDebug(name, ' --');
@@ -42,14 +42,14 @@ export default {
         options.onComplete = () => {
           onComplete();
           this.animatedSkip = false;
-          this.animateDebug(name, ' --}');
+          this.animateDebug(name, ' --}', options.element);
           this.animated = null;
         };
         if (!options.element) {
           this.animatePause();
+          this.animatedLast = name;
+          this.animatedSkip = true;
         }
-        this.animatedLast = name;
-        this.animatedSkip = true;
         this.$nextTick(() => {
           this.animated = _.reduce(this.animationDefinitions[name],
               (timeline, [time, style]) => timeline.to(element, time, style),
