@@ -7,14 +7,19 @@
           @click="setNotes(numNotes)") {{ numNotes }}
       .finished.toggle(:class="{active: finished}",
           @click="finished = !finished; notes ? setNotes(notes) : build(finished)") Finished
+    .pages(v-if="pages.length > 1")
+      .page.toggle(v-for="p in pages.length", :class="{active: page === p - 1}",
+          @click="page = p - 1") {{ p }}
     .stages
-      .stage.button(v-for="(stage, i) in stages", @click="onPhrase(i)")
-        .debug(v-if="stage.rhythmSeed !== undefined || stage.noteSeed !== undefined", :class="{top: oneNote}")
+      .stage.button(v-for="(stage, i) in pages[page]", @click="onPhrase(i)")
+        phrase.phrase(ref="phrase", :class="{forbidden: stage.forbidden}",
+            v-bind="{phrase: stage, phraseKey: String(i), pulsesByBeat, phraseProperties}")
+        .debug(v-if="stage.rhythmSeed !== undefined || stage.noteSeed !== undefined",
+            :class="{top: oneNote}")
           .overlay
             span(v-if="stage.minNotes") {{ stage.notes }} ({{ stage.minNotes }} {{ stage.maxNotes }})
             span  {{ stage.rhythmSeed }}
             span(v-if="!oneNote") :{{ stage.noteSeed }}
-        phrase.phrase(ref="phrase", v-bind="{phrase: stage, phraseKey: String(i), pulsesByBeat, phraseProperties}")
 </template>
 
 <script>
@@ -41,12 +46,24 @@
       return {
         phrases: [],
         stages: [],
+        page: 0,
         notes: null,
         finished: false
       };
     },
     methods: {
+      isForbidden(noteSequence) {
+        let sequence = _.map(noteSequence, chosen => _.join(chosen, '+'));
+        if (this.level.layout === 1) {
+          return _.uniq(sequence).length < 2;
+        } else if (this.level.layout === 2) {
+          return _.indexOf(sequence, 'snare+kick') === -1;
+        } else {
+          return false;
+        }
+      },
       build(finished) {
+        this.page = 0;
         this.notes = null;
         if (this.oneNote && this.noteCombinations[0][0] === 'kick' &&
             this.pulseBeat === '1111' && !finished) {
@@ -100,10 +117,10 @@
                   noteSequence = _.times(debug.notes, () => this.noteCombos[0]);
                   _.set(avoidBeatTicks, [debug.notes, _.join(beatTicks)], true);
                 } else {
-                  let combos = Monotonic.combos(this.noteCombos, beatTicks.length) - 2 -
+                  let combos = Monotonic.combos(this.noteCombos, beatTicks.length) -
                     _.size(avoidSequences[beatTicks]);
                   if (combos) {
-                    let noteSeed = _.random(1, combos);
+                    let noteSeed = _.random(0, combos);
                     if (!avoidSequences[beatTicks]) {
                       avoidSequences[beatTicks] = {};
                     }
@@ -112,6 +129,9 @@
                       avoidSequences[beatTicks][debug.noteSeed] = true;
                     }
                     noteSequence = Monotonic.build(this.noteCombos, beatTicks.length, debug.noteSeed);
+                    if (this.isForbidden(noteSequence)) {
+                      noteSequence = undefined;
+                    }
                     avoidSequences[beatTicks][noteSeed] = _.defaultTo(avoidSequences[beatTicks][combos], combos);
                   } else {
                     _.set(avoidBeatTicks, [debug.notes, _.join(beatTicks)], true);
@@ -133,14 +153,19 @@
         return this.stages;
       },
       setNotes(notes) {
+        this.page = 0;
         this.notes = notes;
         let requiredBeatTicks = this.requiredBeatTicks(
             this.pulseBeat !== '1111' || !this.oneNote || !this.finished, !this.finished);
         let rhythmCombinations = Rhythm.combinations(this.beatTicks, requiredBeatTicks, notes);
-        this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => _.map(this.oneNote ? [0] :
-            _.range(1, Monotonic.combos(this.noteCombos, beatTicks.length) - 1), noteSeed =>
-            _.assign(_.zipObject(beatTicks, Monotonic.build(this.noteCombos, beatTicks.length, noteSeed)),
-                { requiredBeatTicks, rhythmSeed, noteSeed })));
+        this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => {
+          let seedRange = this.oneNote ? [0] : _.range(0, Monotonic.combos(this.noteCombos, beatTicks.length));
+          return _.map(seedRange, noteSeed => {
+            let noteSequence = Monotonic.build(this.noteCombos, beatTicks.length, noteSeed);
+            return _.assign(_.zipObject(beatTicks, noteSequence), { requiredBeatTicks,
+              rhythmSeed, noteSeed, forbidden: this.isForbidden(noteSequence) });
+          })
+        });
       },
       requiredBeatTicks(requireInitial, requireOffbeats) {
         let requiredBeatTicks = [];
@@ -173,6 +198,9 @@
       })
     },
     computed: {
+      pages() {
+        return _.chunk(this.stages, 100);
+      },
       notesRange() {
         return _.range(3, this.beatTicks.length + !this.oneNote);
       },
@@ -189,6 +217,7 @@
         phraseProperties: 'player/phraseProperties',
         layout: 'player/layout',
         noteCombinations: 'player/noteCombinations',
+        level: 'progress/level',
         tempo: 'progress/tempo',
         paused: 'transport/paused'
       })
@@ -204,7 +233,6 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
-
   .builder
     margin: 90px 10px 10px;
     position: relative;
@@ -212,7 +240,7 @@
   .arrangement
     posit(absolute, x, 0, 100%);
 
-  .notes
+  .notes, .pages
     text-align: center;
 
   .note
@@ -232,12 +260,20 @@
   toggle-color('.note', primary-blue);
   toggle-color('.finished', primary-blue);
 
+  .page
+    display: inline-block;
+    margin: 5px;
+    font-size: 2vw;
+    border-radius: 5px;
+
+  toggle-color('.page', black);
+
   .stages
     display: flex;
     flex-flow: row wrap;
     align-items: center;
     justify-content: center;
-    margin-bottom: 35px;
+    margin-bottom: 80px;
 
   .stage
     position: relative;
@@ -265,4 +301,7 @@
     min-height: 40px;
     max-height: calc((100vh - 180px) / 6 - 2vh - 4px);
     margin: 1vh 1vw;
+
+  .forbidden
+    filter: grayscale(1);
 </style>
