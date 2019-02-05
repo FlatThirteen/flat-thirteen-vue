@@ -2,7 +2,7 @@ import Tone from '../tone';
 
 export class SynthSound {
   constructor(oscillator = {type: 'fatsawtooth'}, envelope = {
-    attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.4, attackCurve: 'exponential'
+    attack: 0.01, decay: 0.1, sustain: 0.07, release: 0.4, attackCurve: 'exponential'
   }) {
     this.synth = new Tone.PolySynth(9, Tone.Synth, { oscillator, envelope }).toMaster();
   }

@@ -57,7 +57,7 @@
         showFx: true,
         tracks: [
           { type: 'sawtooth6', notes: 'C2:0,0|-5,-5|-2,-2|-1,-1|0,12|-5,7|-2,10|-1,11' },
-          { type: 'square2', notes: 'C5:i^3,| ,i| |isus4| i,| ,i| | IV' },
+          { type: 'fatsquare5', notes: 'C5:i^3,| ,i| |isus4| i,| ,i| | IV' },
           { type: 'drums', notes: 'K| ,K| S,K| ,K| K| ,K| S,K| S,S,K,S' }
         ],
         more: {
