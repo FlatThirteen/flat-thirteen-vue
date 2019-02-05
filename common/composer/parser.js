@@ -48,7 +48,8 @@ function parseChord(pulseNote) {
         let top = inversions[match[5]];
         intervals = _.map(intervals, interval => interval > top ? interval - 12 : interval);
       }
-      let pitches = numSort(_.map(intervals, interval => interval + _.toNumber(rootInterval)));
+      let pitches = numSort(_.map(_.map(intervals, interval => interval + _.toNumber(rootInterval)),
+          pitch => pitch > 14 ? pitch - 12 : pitch));
       if (!match[5] && lastChord) {
         let inversions = _.times(pitches.length + 1, inversion => numSort(_.map(pitches,
             (interval, index) => pitches.length - index > inversion ? interval : interval - 12)));
