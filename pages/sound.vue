@@ -1,9 +1,15 @@
 <template lang="pug">
-  .content(@keyup="key(event)")
+  .content
     .sounds
       .sound(v-for="soundName in soundNames")
         .button(@mousedown="onSound(soundName)", v-html="soundButtonLabels[soundName]")
         .name {{ soundName }}
+      .sound
+        .button(@mousedown="onSound(customSound)", v-html="customButtonLabel",
+            :class="{disabled: !customValid}")
+        input.custom(v-model="customSound", @keydown.stop="",
+            @keydown.enter="onSound(customSound)", @keydown.esc="$event.target.blur()",
+            :class="{invalid: !customValid}")
       .active(v-if="active.length") {{ active.join(',') }}
     .sequences
       .sequence(v-for="(name, i) in fx")
@@ -13,6 +19,11 @@
 
 <script>
   import Sound from '~/common/sound/sound';
+  import Tone from '~/common/tone';
+
+  const keyArray = ['q', '2', 'w', '3', 'e', 'r', '5', 't', '6', 'y', '7',
+    'u', 'i', '9', 'o', '0', 'p', '[', '=', ']', 'a', 'z', 's', 'x', 'c', 'f',
+    'v', 'g', 'b', 'n', 'j', 'm', 'k', ',', 'l', '.', '/'];
 
   export default {
     head: {
@@ -20,15 +31,19 @@
     },
     layout: 'debug',
     constants: {
-      soundNames: ['kick', 'snare', 'click', 'cowbell', 'synth']
+      soundNames: ['kick', 'snare', 'click', 'cowbell', 'synth'],
+      keyLookup: _.zipObject(keyArray, _.range(keyArray.length))
     },
     data() {
       return {
+        customSound: 'fatsquare2',
+        customValid: true,
         lastSound: null,
         lastSoundName: null,
         activeSounds: {},
         active: [],
-        octaveShift: 0
+        octaveShift: 0,
+        trySound: _.debounce(this._trySound, 500)
       };
     },
     mounted() {
@@ -57,7 +72,7 @@
             this.onSound('cowbell', false);
           }
         } else {
-          let pitch = getPitch(event.key, this.octaveShift);
+          let pitch = this.getPitch(event.key);
           if (pitch && !this.activeSounds[pitch]) {
             this.activeSounds[pitch] = true;
             this.active = _.keys(this.activeSounds);
@@ -71,10 +86,16 @@
               this.octaveShift++;
             }
           }
-          if (event.key === 'ArrowDown' && this.lastSoundName === 'cowbell') {
-            this.onSound('synth', false);
+          if (event.key === 'ArrowDown') {
+            if (this.lastSoundName === 'cowbell') {
+              this.onSound('synth', false);
+            } else if (this.lastSoundName === 'synth') {
+              this.onSound(this.customSound, false);
+            }
           } else if (event.key === 'ArrowUp') {
-            if (this.lastSoundName === 'synth') {
+            if (this.lastSoundName === this.customSound) {
+              this.onSound('synth', false);
+            } else if (this.lastSoundName === 'synth') {
               this.onSound('cowbell', false);
             } else {
               this.onSound('snare', false);
@@ -83,12 +104,19 @@
         }
       },
       onKeyUp(event) {
-        let pitch = getPitch(event.key, this.octaveShift);
+        let pitch = this.getPitch(event.key);
         if (this.lastSound && this.lastSound.release && pitch) {
           delete this.activeSounds[pitch];
           this.active = _.keys(this.activeSounds);
           this.lastSound.release({ pitch });
         }
+      },
+      getPitch(key) {
+        return Tone.pitch('C' + (3 + this.octaveShift), this.keyLookup[key]);
+      },
+      _trySound(soundName) {
+        Sound.get(soundName);
+        this.customValid = Sound[soundName];
       },
       onSound(soundName, play = true) {
         Sound.resume().then(() => {
@@ -97,7 +125,7 @@
             this.releaseAll();
             this.octaveShift = 0;
           }
-          this.lastSound = Sound[soundName];
+          this.lastSound = Sound.get(soundName);
           if (play) {
             if (this.lastSound) {
               this.lastSound.play();
@@ -113,9 +141,9 @@
           _.forEach(this.active, (pitch) => {
             this.lastSound.release({pitch});
             if (shift) {
-              let shiftedPitch = shiftPitch(pitch, shift);
-              activeSounds[shiftedPitch] = true;
-              this.lastSound.attack({ pitch: shiftedPitch });
+              pitch = Tone.pitch(pitch, 12 * shift);
+              activeSounds[pitch] = true;
+              this.lastSound.attack({ pitch });
             }
           });
         }
@@ -142,62 +170,18 @@
           click: this.percussionMode ? 'z' : '&nbsp;',
           cowbell: this.lastSoundName === 'cowbell' ? this.octaveShift : '&nbsp;',
           synth: this.lastSoundName === 'synth' ? this.octaveShift : '&nbsp;'
-        }
+        };
+      },
+      customButtonLabel() {
+        return this.lastSoundName === this.customSound && this.customValid ? this.octaveShift : '&nbsp;';
+      }
+    },
+    watch: {
+      customSound(customSound) {
+        this.trySound(customSound);
+        this.customValid = Sound[customSound];
       }
     }
-  }
-
-  const keymap = {
-    'q': 'C3',
-    '2': 'C#3',
-    'w': 'D3',
-    '3': 'D#3',
-    'e': 'E3',
-    'r': 'F3',
-    '5': 'F#3',
-    't': 'G3',
-    '6': 'G#3',
-    'y': 'A3',
-    '7': 'A#3',
-    'u': 'B3',
-    'i': 'C4',
-    '9': 'C#4',
-    'o': 'D4',
-    '0': 'D#4',
-    'p': 'E4',
-    '[': 'F4',
-    '=': 'F#4',
-    ']': 'G4',
-    'a': 'G#4',
-    'z': 'A4',
-    's': 'A#4',
-    'x': 'B4',
-    'c': 'C5',
-    'f': 'C#5',
-    'v': 'D5',
-    'g': 'D#5',
-    'b': 'E5',
-    'n': 'F5',
-    'j': 'F#5',
-    'm': 'G5',
-    'k': 'G#5',
-    ',': 'A5',
-    'l': 'A#5',
-    '.': 'B5',
-    '/': 'C6'
-  };
-
-  function getPitch(key, octaveShift) {
-    return shiftPitch(keymap[key], octaveShift);
-  }
-
-  function shiftPitch(pitch, octaveShift) {
-    if (!pitch) {
-      return;
-    }
-    return pitch.replace(/[0-9]/, (match) => {
-      return _.toNumber(match) + octaveShift;
-    });
   }
 </script>
 
@@ -216,6 +200,17 @@
     display: inline-block;
     font-size: 5vw;
     margin-right: 4vw;
+
+  .custom
+    font-size: 5vw;
+    width: 30vw;
+    border: none;
+
+    &.invalid
+      opacity: 0.5;
+
+    &:focus
+      outline: none;
 
   .button
     background-color: main-blue;

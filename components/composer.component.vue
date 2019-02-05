@@ -72,8 +72,7 @@
         this.updateTrack();
       },
       updateTrack() {
-        let pitches = _.map(this.shape, interval =>
-          new Tone.Frequency(this.rootNote).transpose(interval).toNote());
+        let pitches = _.map(this.shape, interval => Tone.pitch(this.rootNote, interval));
         this.notes = _.reduceRight(pitches, (template, pitch, index) =>
             _.replace(template, new RegExp('%' + (index + 1), 'g'), pitch),
           this.rhythm);

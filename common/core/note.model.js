@@ -16,6 +16,10 @@ export class Note {
     return time.toSeconds();
   }
 
+  extendDuration(duration) {
+    this.params.duration = new Tone.TimeBase(this.params.duration) + new Tone.TimeBase(duration);
+  }
+
   play(time) {
     Sound[this.soundName].play(time, this.params);
   }
