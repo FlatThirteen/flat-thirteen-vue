@@ -97,20 +97,19 @@
         let backingNote = this.notes[id];
         let frequency = note.frequency;
         backingNote.on = true;
-        let soundClass = note.soundName.match(/(fm|am|fat|)(\D+)(\d*)/)[2];
-        backingNote.fxClass = soundClass + (frequency ?
+        backingNote.fxClass = note.type + (frequency ?
             ' rotate' + (frequency.toMidi() % 12) :
             ' rotate' + _.random(11) + ' offset' + _.random(24));
         backingNote.tiltTransform = frequency ? 'rotateX(40deg)' : 'rotateX(10deg)';
         backingNote.scaleTransform = !frequency ? '' : 'scale(' +
             (-.009375 * frequency.toMidi() + 1.225) + ',' +
             (frequency.toMidi() / -160 + 1.15) + ')';
-        backingNote.transitionName = note.soundName === 'cowbell' ? 'cowbell' :
+        backingNote.transitionName = note.type === 'cowbell' ? 'cowbell' :
             frequency ? 'pitched' : 'unpitched';
         backingNote.noteClass = [backingNote.transitionName];
-        if (note.soundName === 'cowbell') {
+        if (note.type === 'cowbell') {
           backingNote.noteClass.push('delay' + _.random(4));
-        } else if (note.soundName === 'snare') {
+        } else if (note.type === 'snare') {
           backingNote.noteClass.push('before' + _.random(11));
           backingNote.noteClass.push('after' + _.random(11));
         }

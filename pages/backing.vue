@@ -56,9 +56,9 @@
         fixedBeat: '',
         showFx: true,
         tracks: [
+          { type: 'drums', notes: 'K| ,K| S,K| ,K| K| ,K| S,K| S,S,K,S' },
           { type: 'sawtooth6', notes: 'C2:0,0|-5,-5|-2,-2|-1,-1|0,12|-5,7|-2,10|-1,11' },
-          { type: 'fatsquare5', notes: 'C5:i^3,| ,i| |isus4| i,| ,i| | IV' },
-          { type: 'drums', notes: 'K| ,K| S,K| ,K| K| ,K| S,K| S,S,K,S' }
+          { type: 'fatsquare5', notes: 'C5:i^3,| ,i| |isus4| i,| ,i| | IV' }
         ],
         more: {
           Cowbell: [
@@ -66,8 +66,10 @@
             'C1,C2,C3,C4| C2,C3,C4,C5| C3,C4,C5,C6| C4,C5,C6,C7',
             'C1,C2,C3,C4| C5,C6,C7,C8| F#8,F#7,F#6,F#5| F#4,F#3,F#2,F#1'
           ],
-          Synth: [
+          Sawtooth6: [
             'C2,B1,Bb1,A1| G#1,G1,F#1,F1| E1,Eb1,D1,C#1| C1,E1,G1,B1',
+          ],
+          Fatsine: [
             'C1.C2.C3.C4.C5.C6.C7.C8.C9| C4.E4.G4.Bb4| Db6.F6.Ab6.Cb7| D8.F#8.A8.C9'
           ]
         },
@@ -118,7 +120,9 @@
         return _.split(_.split(beatDebug, ': ')[1], ',')
       },
       _parseTracks(tracks) {
-        let activeTracks = _.filter(tracks, track => track.solo && !track.mute);
+        let activeTracks = _.filter(_.map(tracks,
+            (track, index) => _.set(track, 'name', 'track' + index)),
+            track => track.solo && !track.mute);
         this.anySolo = !!activeTracks.length;
         if (!activeTracks.length) {
           activeTracks = _.filter(tracks, track => !track.mute);

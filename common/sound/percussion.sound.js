@@ -12,20 +12,20 @@ export class KickSound {
         sustain: 0.1,
         release: 0.1
       },
-      volume: 10
+      volume: 5
     });
     this.kick.chain(Tone.Master);
   }
 
   play(time) {
-    this.kick.triggerAttackRelease('A0', '16n', time, 1);
+    this.kick.triggerAttackRelease('A0', '16n', time, .9);
   }
 }
 
 export class SnareSound {
   constructor() {
     this.hit = new Tone.PolySynth(6, Tone.Synth, {
-      volume: 5,
+      volume: 0,
       oscillator: {
         partials: [0, 2, 3, 4]
       },
@@ -67,7 +67,7 @@ export class ClickSound {
         decay: 0.1,
         sustain: 0
       },
-      volume: -20
+      volume: -30
     });
     this.click.connect(Tone.Master);
   }
@@ -75,10 +75,10 @@ export class ClickSound {
   play(time, params = {variation: 'normal'}) {
     switch (params.variation) {
       case 'heavy':
-        this.click.triggerAttackRelease('A6', '16n', time);
+        this.click.triggerAttackRelease('A6', '16n', time, .7);
         break;
       case 'light':
-        this.click.triggerAttackRelease('A5', '16n', time, 0.5);
+        this.click.triggerAttackRelease('A5', '16n', time, .5);
         break;
       default:
         this.click.triggerAttackRelease('A5', '16n', time);

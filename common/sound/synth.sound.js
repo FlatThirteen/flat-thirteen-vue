@@ -1,13 +1,21 @@
 import Tone from '../tone';
 
 export class SynthSound {
-  constructor(oscillator = {type: 'fatsawtooth'}, envelope = {
+  constructor(oscillator = {type: 'fatsawtooth'}, polyphony = 5, envelope = {
     attack: 0.01, decay: 0.1, sustain: 0.07, release: 0.4, attackCurve: 'exponential'
   }) {
-    this.synth = new Tone.PolySynth(9, Tone.Synth, { oscillator, envelope }).toMaster();
+    this.synth = new Tone.PolySynth(polyphony, Tone.Synth, { oscillator, envelope }).toMaster();
   }
 
-  play(time, {pitch = 'A4', duration = '4n', velocity = 1} = {}) {
+  get(...properties) {
+    return this.synth.get(...properties);
+  }
+
+  set(...properties) {
+    return this.synth.set(...properties);
+  }
+
+  play(time, {pitch = 'A4', duration = '4n', velocity = .9} = {}) {
     this.synth.triggerAttackRelease(pitch, duration, time, velocity);
   }
 
@@ -17,6 +25,10 @@ export class SynthSound {
 
   release({pitch = 'A4', time} = {}) {
     this.synth.triggerRelease(pitch, time);
+  }
+
+  releaseAll(time) {
+    this.synth.releaseAll(time);
   }
 }
 

@@ -5,10 +5,10 @@
         .button(@mousedown="onSound(soundName)", v-html="soundButtonLabels[soundName]")
         .name {{ soundName }}
       .sound
-        .button(@mousedown="onSound(customSound)", v-html="customButtonLabel",
+        .button(@mousedown="onSound('custom')", v-html="customButtonLabel",
             :class="{disabled: !customValid}")
         input.custom(v-model="customSound", @keydown.stop="",
-            @keydown.enter="onSound(customSound)", @keydown.esc="$event.target.blur()",
+            @keydown.enter="onSound('custom')", @keydown.esc="$event.target.blur()",
             :class="{invalid: !customValid}")
       .active(v-if="active.length") {{ active.join(',') }}
     .sequences
@@ -36,8 +36,8 @@
     },
     data() {
       return {
-        customSound: 'fatsquare2',
-        customValid: true,
+        customSound: 'fatsquare5',
+        customState: 'valid',
         lastSound: null,
         lastSoundName: null,
         activeSounds: {},
@@ -90,10 +90,10 @@
             if (this.lastSoundName === 'cowbell') {
               this.onSound('synth', false);
             } else if (this.lastSoundName === 'synth') {
-              this.onSound(this.customSound, false);
+              this.onSound('custom', false);
             }
           } else if (event.key === 'ArrowUp') {
-            if (this.lastSoundName === this.customSound) {
+            if (this.lastSoundName === 'custom') {
               this.onSound('synth', false);
             } else if (this.lastSoundName === 'synth') {
               this.onSound('cowbell', false);
@@ -115,8 +115,11 @@
         return Tone.pitch('C' + (3 + this.octaveShift), this.keyLookup[key]);
       },
       _trySound(soundName) {
-        Sound.get(soundName);
-        this.customValid = Sound[soundName];
+        let play = this.customState === 'play';
+        this.customState = Sound.set('custom', soundName) ? 'valid' : 'invalid';
+        if (play) {
+          this.onSound('custom');
+        }
       },
       onSound(soundName, play = true) {
         Sound.resume().then(() => {
@@ -127,7 +130,13 @@
           }
           this.lastSound = Sound.get(soundName);
           if (play) {
-            if (this.lastSound) {
+            if (soundName === 'custom' && !this.customValid) {
+              if (this.customState === 'invalid') {
+                this.active = ['Invalid custom sound'];
+              } else {
+                this.customState = 'play';
+              }
+            } else if (this.lastSound) {
               this.lastSound.play();
             } else {
               console.log('Play ' + soundName + ' not supported');
@@ -173,13 +182,19 @@
         };
       },
       customButtonLabel() {
-        return this.lastSoundName === this.customSound && this.customValid ? this.octaveShift : '&nbsp;';
+        return this.lastSoundName === 'custom' && this.customValid ? this.octaveShift : '&nbsp;';
+      },
+      customValid() {
+        return this.customState === 'valid';
       }
     },
     watch: {
-      customSound(customSound) {
-        this.trySound(customSound);
-        this.customValid = Sound[customSound];
+      customSound: {
+        immediate: true,
+        handler(customSound) {
+          this.customState = '';
+          this.trySound(customSound);
+        }
       }
     }
   }

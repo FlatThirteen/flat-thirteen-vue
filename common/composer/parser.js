@@ -65,11 +65,28 @@ function parseChord(pulseNote) {
   return pulseNote.split('.');
 }
 
-function synthParser(type) {
+function drumsParser(data) {
+  let sound = data.match(/[kK]/) ? 'kick' :
+    data.match(/[sS]/) ? 'snare' : null;
+  if (sound) {
+    return new Note(sound);
+  }
+}
+
+function cowbellParser(soundName = 'cowbell') {
+  return (data) => {
+    let frequency = Note.pitch(data);
+    if (frequency) {
+      return new Note(soundName, { type: 'cowbell', pitch: frequency.toNote() });
+    }
+  }
+}
+
+function synthParser(soundName, type) {
   return (data, duration) => {
     let frequency = Note.pitch(data);
     if (frequency) {
-      return new Note(type, {
+      return new Note(soundName, { type,
         pitch: frequency.toNote(),
         duration: duration
       });
@@ -77,30 +94,15 @@ function synthParser(type) {
   };
 }
 
-const parser = {
-  synth: synthParser('synth'),
-  drums: (data) => {
-    let sound = data.match(/[kK]/) ? 'kick' :
-      data.match(/[sS]/) ? 'snare' : null;
-    if (sound) {
-      return new Note(sound);
-    }
-  },
-  cowbell: (data) => {
-    let frequency = Note.pitch(data);
-    if (frequency) {
-      return new Note('cowbell', { pitch: frequency.toNote() });
-    }
-  }
-};
-
 const parseTracks = function(tracks) {
   let notes = {};
   _.forEach(tracks, track => {
-    if (!parser[track.type] && Sound.get(track.type)) {
-      parser[track.type] = synthParser(track.type);
-    }
-    if (parser[track.type] && track.notes) {
+    let soundName = track.name || track.type;
+    let parser = track.type === 'drums' ? drumsParser : track.type === 'cowbell' ?
+        Sound.get(soundName, true) && cowbellParser(soundName) :
+        Sound.set(soundName, track.type) ?
+            synthParser(soundName, track.type.match(/(fm|am|fat|)(\D+)(\d*)/)[2]) : null;
+    if (parser && track.notes) {
       let lastNotes = [];
       let parts = track.notes.split(':');
       let repeat = !_.last(parts);
@@ -123,7 +125,7 @@ const parseTracks = function(tracks) {
             _.forEach(parseChord(_.trim(pulseNotes)), chordNote => {
               try {
                 let noteValue = rootNote ? Tone.pitch(rootNote, chordNote) : chordNote;
-                let note = parser[track.type](noteValue, BeatTick.duration(pulses));
+                let note = parser(noteValue, BeatTick.duration(pulses));
                 if (note) {
                   lastNotes.push(note);
                   (notes[beatTick] || (notes[beatTick] = [])).push(note);

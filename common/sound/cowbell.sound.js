@@ -11,13 +11,13 @@ export class CowbellSound {
         decay: 0.05,
         sustain: 0.01
       },
-      volume: 0
+      volume: -10
     });
     this.bell.chain(Tone.Master);
   }
 
   play(time, {pitch = 'A5', variation = 'normal', velocity = 1} = {}) {
-    let multiplier = variation === 'heavy' ? 1 : variation === 'light' ? .7 : .8;
+    let multiplier = variation === 'heavy' ? .9 : variation === 'light' ? .5 : .7;
     this.bell.triggerAttackRelease(pitch, '16n', time, multiplier * velocity);
   }
 

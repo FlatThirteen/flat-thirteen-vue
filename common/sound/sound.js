@@ -30,10 +30,37 @@ let Sound = {
       return Promise.resolve();
     }
   },
-  get(soundName) {
+  get(soundName, isCowbell) {
     try {
-      return Sound[soundName] || (Sound[soundName] = new SynthSound({ type: soundName }));
-    } catch (e) {}
+      if (isCowbell) {
+        if (!Sound[soundName] || !(Sound[soundName] instanceof CowbellSound)) {
+          Sound[soundName] = new CowbellSound();
+        }
+      } else if (!Sound[soundName]){
+        Sound[soundName] = new SynthSound({ type: soundName });
+      }
+      return Sound[soundName];
+    } catch (e) {
+      console.log('Get fail', e);
+    }
+  },
+  set(soundName, setting) {
+    if (!process.browser) {
+      return;
+    }
+    try {
+      if (!Sound[soundName] || Sound[soundName] instanceof CowbellSound) {
+        Sound[soundName] = new SynthSound();
+      }
+      if (_.isString(setting)) {
+        Sound[soundName].set('oscillator.type', setting);
+      } else {
+        Sound[soundName].set(setting);
+      }
+      return Sound[soundName];
+    } catch (e) {
+      console.log('Set fail', e);
+    }
   },
   playSequence(soundName, pitches, duration, velocity) {
     let sound = Sound.get(soundName);
