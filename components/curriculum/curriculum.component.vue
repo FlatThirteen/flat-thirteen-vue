@@ -339,6 +339,8 @@
       transform: scale(1.6);
 
   .second
-    margin: 0 15%;
     transform: scale(1.4);
+
+    .lessons
+      margin: 0 15%;
 </style>
