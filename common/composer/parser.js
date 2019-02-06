@@ -94,7 +94,7 @@ function synthParser(soundName, type) {
   };
 }
 
-const parseTracks = function(tracks) {
+const parseTracks = function(tracks, numBeats) {
   let notes = {};
   _.forEach(tracks, track => {
     let soundName = track.name || track.type;
@@ -109,13 +109,17 @@ const parseTracks = function(tracks) {
       let rootNote = parts.length - repeat === 2 ? parts[0] : null;
       lastChord = null;
       let trackNotes = rootNote ? parts[1] : parts[0];
-      _.forEach(trackNotes.split('|'), (beatNote, beatIndex) => {
+      let beats = trackNotes.split('|');
+      let repeats = repeat ? Math.ceil(numBeats / beats.length) : 1;
+      _.forEach(beats, (beatNote, beatIndex) => {
         _.forEach(beatNote.split(','), (pulseNotes, pulseIndex, array) => {
           if (pulseIndex > 3) {
             return;
           }
           let pulses = Math.min(array.length, 4);
-          let beatTick = BeatTick.from(beatIndex, pulseIndex, pulses);
+          let beatTicks = _.map(_.filter(_.times(repeats,
+              i => beatIndex + beats.length * i), b => b < numBeats),
+              beat => BeatTick.from(beat, pulseIndex, pulses));
           if (_.trim(pulseNotes) === '-') {
             _.forEach(lastNotes, lastNote => {
               lastNote.extendDuration(BeatTick.duration(pulses));
@@ -128,7 +132,9 @@ const parseTracks = function(tracks) {
                 let note = parser(noteValue, BeatTick.duration(pulses));
                 if (note) {
                   lastNotes.push(note);
-                  (notes[beatTick] || (notes[beatTick] = [])).push(note);
+                  _.forEach(beatTicks, beatTick => {
+                    (notes[beatTick] || (notes[beatTick] = [])).push(note);
+                  });
                 }
               } catch (error) {
                 console.log('Parse error:', error);

@@ -94,7 +94,7 @@
         if (type) {
           this.tracks.push({ type, notes: $event.target.innerText });
         } else {
-          this.tracks.push({ type: 'synth', notes: ''});
+          this.tracks.push({ type: '', notes: ''});
         }
       },
       onRemove(index) {
@@ -119,16 +119,16 @@
       _getFixed(beatDebug) {
         return _.split(_.split(beatDebug, ': ')[1], ',')
       },
-      _parseTracks(tracks) {
-        let activeTracks = _.filter(_.map(tracks,
+      _parseTracks() {
+        let activeTracks = _.filter(_.map(this.tracks,
             (track, index) => _.set(track, 'name', 'track' + index)),
             track => track.solo && !track.mute);
         this.anySolo = !!activeTracks.length;
         if (!activeTracks.length) {
-          activeTracks = _.filter(tracks, track => !track.mute);
+          activeTracks = _.filter(this.tracks, track => !track.mute);
         }
 
-        this.setTracks({ name: 'backing', tracks: activeTracks });
+        this.setTracks({ name: 'backing', tracks: activeTracks, numBeats: this.numBeats });
         this.debugPhrase = this.asArray('backing');
         if (this.selected) {
           let selectedBeatTick = _.split(this.selected, ': ')[0];
@@ -142,6 +142,9 @@
       })
     },
     computed: {
+      numBeats() {
+        return _.sum(_.map(this.bpm.split(','), _.toNumber))
+      },
       ...mapGetters({
         asArray: 'phrase/asArray'
       })
@@ -150,11 +153,14 @@
       tracks: {
         deep: true,
         immediate: true,
-        handler(tracks) {
+        handler() {
           if (process.browser) {
-            this.parseTracks(tracks);
+            this.parseTracks();
           }
         }
+      },
+      numBeats() {
+        this.parseTracks();
       }
     }
   }

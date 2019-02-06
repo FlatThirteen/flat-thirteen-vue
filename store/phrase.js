@@ -133,7 +133,7 @@ export const actions = {
     ];
     commit('set', { name: 'finale', notes: Parser.parseTracks(tracks) })
   },
-  setTracks({commit}, {name, tracks}) {
-    commit('set', { name, notes: Parser.parseTracks(tracks)})
+  setTracks({commit}, {name, tracks, numBeats}) {
+    commit('set', { name, notes: Parser.parseTracks(tracks, numBeats)})
   }
 };

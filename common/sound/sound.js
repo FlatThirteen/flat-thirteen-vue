@@ -58,9 +58,7 @@ let Sound = {
         Sound[soundName].set(setting);
       }
       return Sound[soundName];
-    } catch (e) {
-      console.log('Set fail', e);
-    }
+    } catch (e) {}
   },
   playSequence(soundName, pitches, duration, velocity) {
     let sound = Sound.get(soundName);
