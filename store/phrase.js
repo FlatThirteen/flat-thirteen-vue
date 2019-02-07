@@ -92,13 +92,12 @@ export const actions = {
   setFinale({commit}, {part, number, backing, alternate}) {
     if (backing !== 'none') {
       let rootNote = ['D2', 'E2', 'F2', 'G2'][part];
-      let pitches = _.map([0, -5, -2, 3, 4], interval =>
-        new Tone.Frequency(rootNote).transpose(interval).toNote());
+      let intervals = [0, -5, -2, 3, 4];
       let rhythm = '%1,%2|%3,%1|,%2|' + (part < 3 ? '%3,%1' : '%4,%5,%1,');
       let notes = Parser.parseTracks([{
         type: 'sawtooth6',
-        notes: _.reduceRight(pitches, (template, pitch, index) =>
-            _.replace(template, new RegExp('%' + (index + 1), 'g'), pitch), rhythm)
+        notes: rootNote + ':' + _.reduceRight(intervals, (template, interval, index) =>
+            _.replace(template, new RegExp('%' + (index + 1), 'g'), interval), rhythm)
       }]);
       commit('set', { name: 'finale', notes });
     } else {
@@ -112,7 +111,7 @@ export const actions = {
         name: 'finale',
         beatTick: BeatTick.from(index >> 2, index % 4, 4),
         note: new Note('cowbell', {
-          pitch: new Tone.Frequency(rootNote).transpose(sequence[index]).toNote()
+          pitch: Tone.pitch(rootNote, sequence[index])
         })
       });
     });

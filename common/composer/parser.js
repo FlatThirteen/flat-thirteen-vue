@@ -118,7 +118,7 @@ const parseTracks = function(tracks, numBeats) {
           }
           let pulses = Math.min(array.length, 4);
           let beatTicks = _.map(_.filter(_.times(repeats,
-              i => beatIndex + beats.length * i), b => b < numBeats),
+              i => beatIndex + beats.length * i), b => !numBeats || b < numBeats),
               beat => BeatTick.from(beat, pulseIndex, pulses));
           if (_.trim(pulseNotes) === '-') {
             _.forEach(lastNotes, lastNote => {

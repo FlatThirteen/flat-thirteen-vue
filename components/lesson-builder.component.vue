@@ -72,7 +72,7 @@
             [{ type: 'drums', notes: 'K|K|K' }],
             [{ type: 'drums', notes: 'K||K|K' }],
             [{ type: 'drums', notes: 'K|K||K' }]
-          ], Parser.parseTracks);
+          ], _.ary(Parser.parseTracks, 1));
         } else {
           let numStages = this.debug ? 24 : 4;
           let pickedPhrases = {};
