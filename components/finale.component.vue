@@ -47,7 +47,8 @@
         .finish.button(v-if="exitable", :class="{weenie: final && paused}", @click="finish()")
           play-button.play-button(:disable="true")
       arrangement.arrangement(:phrases="phrases", :tempo="tempo", :count="!ready",
-          play="finale", :progression="progression", @position="onPosition($event)")
+          play="finale", :loop="final ? 4 : undefined", :progression="progression",
+          @position="onPosition($event)")
 </template>
 
 <script>
@@ -282,7 +283,7 @@
             this.setBonusSuccess({ layout: this.level.layout, backing: this.backing });
             this.animate('success', { element: this.$refs.star, duration: 4 * this.duration });
           } else {
-            this.$refs.composer.updateRootNote(['C2', 'F2', 'G2', 'Bb2'][this.position]);
+            this.$refs.composer.updateRootNote(['C2', 'F2', 'G2', 'Bb2'][this.position % 4]);
           }
         } else if (position === this.stages.length) {
           this.setBonusStart({ layout: this.level.layout, backing: this.backing });
@@ -483,6 +484,9 @@
           this.phrases = [];
           if (this.state < this.stages.length) {
             this.state = this.stages.length;
+            if (this.level.backing) {
+              this.$refs.composer.reset([0, -8, -5]);
+            }
           }
         }
       },

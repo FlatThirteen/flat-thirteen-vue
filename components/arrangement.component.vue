@@ -27,7 +27,8 @@
       show: Boolean,
       count: Boolean,
       play: String,
-      progression: Boolean
+      progression: Boolean,
+      loop: Number
     },
     data() {
       return {
@@ -61,7 +62,8 @@
         if (phrase) {
           phrase.onBeatTick(beatTick, time);
           if (this.play) {
-            let progressionBeatTick = BeatTick.from((this.position * this.beatsPerMeasure) + beat, tick);
+            let measure = this.loop ? this.position % this.loop : this.position;
+            let progressionBeatTick = BeatTick.from((measure * this.beatsPerMeasure) + beat, tick);
             _.forEach(this.getNotes('progression', progressionBeatTick), note => {
               note.play(time);
             });
