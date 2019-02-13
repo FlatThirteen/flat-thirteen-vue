@@ -196,6 +196,7 @@
           tracks: [{
             type: 'fatsquare5',
             notes: 'C5:II^3|-|-|-|III^3|-|-|-|IV^3|-|-|-|V^3|-|-|-|VI^3|-,V|-,bVI|VI',
+            velocity: .2
           }],
           numBeats: 20
         });

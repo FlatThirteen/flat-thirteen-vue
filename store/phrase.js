@@ -106,6 +106,7 @@ export const actions = {
         tracks: [{
           type: 'fatsquare5',
           notes: 'C5:I^3|-|-|-|IV|-|-|-|V|-|-|-|bVII|-|-|-|IV|V|VI|',
+          velocity: .2
         }],
         numBeats: 20
       });
