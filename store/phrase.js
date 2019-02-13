@@ -10,7 +10,9 @@ export const state = () => ({
     backing: {},
     finale: {},
     goal: {},
+    metronome: {},
     playback: {},
+    progression: {},
     victory: {}
   },
   victory: {}
@@ -87,6 +89,29 @@ export const actions = {
     let notes = state.victory[_.clamp(number, 2, 10)];
     if (notes) {
       commit('set', { name: 'victory', notes });
+    }
+  },
+  setProgression({commit, dispatch}, {enable}) {
+    if (enable) {
+      dispatch('setTracks', {
+        name: 'metronome',
+        tracks: [{
+          type: 'cowbell',
+          notes: 'C5:7|5|4|5|7|5|4|7|7|5|4|5|7|5|5|4',
+        }],
+        numBeats: 16
+      });
+      dispatch('setTracks', {
+        name: 'progression',
+        tracks: [{
+          type: 'fatsquare5',
+          notes: 'C5:I^3|-|-|-|IV|-|-|-|V|-|-|-|bVII|-|-|-|IV|V|VI|',
+        }],
+        numBeats: 20
+      });
+    } else {
+      dispatch('clear', 'metronome');
+      dispatch('clear', 'progression');
     }
   },
   setFinale({commit}, {part, number, backing, alternate}) {

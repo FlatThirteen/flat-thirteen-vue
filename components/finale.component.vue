@@ -46,8 +46,8 @@
       transition(name="finish")
         .finish.button(v-if="exitable", :class="{weenie: final && paused}", @click="finish()")
           play-button.play-button(:disable="true")
-      arrangement.arrangement(:phrases="phrases", :tempo="tempo", :count="!ready", play="finale",
-          @position="onPosition($event)")
+      arrangement.arrangement(:phrases="phrases", :tempo="tempo", :count="!ready",
+          play="finale", :progression="progression", @position="onPosition($event)")
 </template>
 
 <script>
@@ -182,13 +182,29 @@
       if (this.bonusStage && this.totalPoints === PERFECT_LESSON) {
         this.addEmptyPhrase();
       }
+      if (this.progression) {
+        this.$store.dispatch('phrase/setTracks', {
+          name: 'metronome',
+          tracks: [{
+            type: 'cowbell',
+            notes: 'C5:7|6|4|7',
+          }]
+        });
+        this.$store.dispatch('phrase/setTracks', {
+          name: 'progression',
+          tracks: [{
+            type: 'fatsquare5',
+            notes: 'C5:II^3|-|-|-|III^3|-|-|-|IV^3|-|-|-|V^3|-|-|-|VI^3|-,V|-,bVI|VI',
+          }],
+          numBeats: 20
+        });
+      }
       setTimeout(() => {
         this.highScores = [{ isNew: true, base: 0, backing: this.backing }];
         this.start('+0');
       }, 500);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
-
     },
     destroyed() {
       this.$bus.$off(BeatTick.BEAT, this.beatHandler);
@@ -266,7 +282,7 @@
             this.setBonusSuccess({ layout: this.level.layout, backing: this.backing });
             this.animate('success', { element: this.$refs.star, duration: 4 * this.duration });
           } else {
-            this.$refs.composer.updateRootNote(this.position % 2 ? 'G2' : 'A2');
+            this.$refs.composer.updateRootNote(['C2', 'F2', 'G2', 'Bb2'][this.position]);
           }
         } else if (position === this.stages.length) {
           this.setBonusStart({ layout: this.level.layout, backing: this.backing });
@@ -278,7 +294,13 @@
           TweenMax.to(this.$data.highScores[0], 3.9 * this.duration, {
             base: total,
             ease: Linear.easeNone,
-            roundProps: 'base'
+            roundProps: 'base',
+            onUpdate: (self) => {
+              if (total - this.highScores[0].base > 100) {
+                console.warn('Update:', this.highScores[0].base, total, self);
+              }
+            },
+            onUpdateParams: ['{self}'],
           });
           this.setFinale({
             part: position,
@@ -385,6 +407,7 @@
         level: 'progress/level',
         power: 'progress/power',
         backing: 'progress/backing',
+        progression: 'progress/progression',
         tempo: 'progress/tempo',
         lessonName: 'progress/lessonName',
         ranking: 'progress/ranking',
@@ -409,6 +432,7 @@
       paused(paused) {
         if (paused) {
           this.clear('finale');
+          this.$store.dispatch('phrase/setProgression', { enable: this.progression });
           if (this.bonusActive) {
             if (this.bonus === 'play' && this.playKeys.length === this.targetKeys.length) {
               if (this.playKeys === this.targetKeys) {

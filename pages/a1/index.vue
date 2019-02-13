@@ -22,6 +22,9 @@
     head: {
       title: 'Flat Thirteen | A1'
     },
+    mounted() {
+      this.$store.commit('progress/disableProgression');
+    },
     watch: {
       ready(ready) {
         if (ready) {

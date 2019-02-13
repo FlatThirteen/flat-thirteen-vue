@@ -106,6 +106,7 @@
         showGoal: false,
         goalCount: 0,
         loopCount: 0,
+        measure: 0,
         points: MAX_POINTS,
         goalKeys: [],
         goalNotesByBeat: null,
@@ -146,6 +147,7 @@
         this.goalCount = 0;
         GameAnalytics.start(this.lessonName, this.level.backing, this.tempo,
             this.stageIndex, this.autoLevel);
+        this.$store.dispatch('phrase/setProgression', { enable: this.progression});
       },
       onVisiblityChange() {
         if (document.hidden) {
@@ -156,6 +158,11 @@
       topHandler({first}) {
         if (!first && this.playing) {
           this.showGoal = false;
+          if (this.autoRepeat && this.scene !== 'count') {
+            this.measure++;
+          } else {
+            this.measure = 0;
+          }
           let scene = this.nextScene;
           if (this.scene === 'victory') {
             this.loopCount = 0;
@@ -182,6 +189,7 @@
           if (scene === 'standby') {
             this.$store.dispatch('transport/stop');
           } else if (scene === 'count') {
+            this.measure = 0;
             this.$store.dispatch('transport/start', this.tempo >= 120 ? '+2n' : '+1s');
           } else if (scene === 'playback') {
             this.$store.commit('phrase/clear', { name: 'playback' });
@@ -195,6 +203,12 @@
         this.lastBeat = false;
       },
       beatTickHandler({time, beat, tick, beatTick, lastBeat}) {
+        let progression = this.scene === 'count' ? 'metronome' : 'progression';
+        let measure = (Math.max(0, this.stageIndex) + this.measure) % 4 * this.beatsPerMeasure;
+        let progressionBeatTick = BeatTick.from(measure + beat, tick);
+        _.forEach(this.getNotes(progression, progressionBeatTick), note => {
+          note.play(time);
+        });
         switch(this.scene) {
           case 'victory':
             _.forEach(this.getNotes('victory', beatTick), note => {
@@ -356,7 +370,8 @@
         return {
           beatsPerMeasure: this.beatsPerMeasure,
           tempo: this.tempo,
-          metronome: this.lastBeat ? this.nextScene === 'count' : this.scene === 'count'
+          metronome: !this.progression &&
+              (this.lastBeat ? this.nextScene === 'count' : this.scene === 'count')
         };
       },
       ...mapGetters({
@@ -377,6 +392,7 @@
         weenie: 'progress/weenie',
         penalty: 'progress/penalty',
         autoLevel: 'progress/autoLevel',
+        progression: 'progress/progression',
         showLoop: 'progress/showLoop',
         stageIndex: 'progress/stageIndex',
         lessonName: 'progress/lessonName',
@@ -411,6 +427,9 @@
       stageIndex() {
         this.start();
         this.animate('next');
+      },
+      progression(progression) {
+        this.$store.dispatch('phrase/setProgression', { enable: progression });
       },
       paused(paused) {
         if (paused) {

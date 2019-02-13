@@ -1,5 +1,9 @@
 <template lang="pug">
   .transport(v-if="show")
+    .performance(v-if="beatTickHistogram.length") {{ beatTickHistogram.join(',') }}
+      .performance__warning(v-if="beatTickHistogram.length > 5") !
+      .performance__slow-top(v-if="topCount") {{ Math.floor(topTotal / topCount) }}!
+      .performance__average  {{ Math.floor(beatTickTotal / beatTickCount) }}
     .latency(v-if="latencyHistogram.length") {{ latencyHistogram.join(',') }}
     .playing(v-if="playing") {{ measure }} : {{ count }} / {{ countBeats }}
     .starting(v-else-if="starting") ...
@@ -53,6 +57,11 @@
         quarterLoop: null,
         pulsesPart: null,
         latencyHistogram: [],
+        beatTickHistogram: [],
+        beatTickTotal: 0,
+        beatTickCount: 0,
+        topTotal: 0,
+        topCount: 0,
         measure: 0,
         beat: -1
       };
@@ -114,11 +123,13 @@
         return Tone.Transport && Tone.Transport.position.replace(/\:[.\d]+$/, '');
       },
       emitBeatTick(time, tick = 0) {
+        let start = Tone.rightNow();
+        let beatTick = BeatTick.from(this.beat, tick);
         this.$bus.$emit(BeatTick.EVENT, {
           time: time,
           beat: this.beat,
           tick: tick,
-          beatTick: BeatTick.from(this.beat, tick),
+          beatTick,
           lastBeat: this.lastBeat
         });
         if (!tick) {
@@ -132,6 +143,16 @@
               count: this.count
             });
           });
+        }
+        let elapsedTime = _.floor(1000 * (Tone.rightNow() - start));
+        if (elapsedTime > 100) {
+          console.warn('BeatTick', beatTick, 'took', elapsedTime, '!');
+        }
+        if (elapsedTime && this.show) {
+          this.beatTickTotal += elapsedTime;
+          this.beatTickCount++;
+          let bucket = _.floor(elapsedTime / 10);
+          this.beatTickHistogram[bucket] = (this.beatTickHistogram[bucket] || 0) + 1;
         }
       },
       logIfLate(time) {
@@ -256,6 +277,7 @@
 
           if (!this.onTopId) {
             this.onTopId = Tone.Transport.schedule(() => {
+              let start = Tone.rightNow();
               if (this.starting || this.beat > this.beats - 3) {
                 this.$bus.$emit(BeatTick.TOP, { first: this.starting });
                 if (!this.starting && this.beat < this.beats - 1) {
@@ -270,6 +292,11 @@
               }
               this.measure = -1;
               this.beat = -1;
+              let elapsedTime = _.floor(1000 * (Tone.rightNow() - start));
+              if (elapsedTime > 10 && this.show) {
+                this.topTotal += elapsedTime;
+                this.topCount++;
+              }
             }, 0);
           }
           this.$store.commit('transport/setup', {
@@ -304,9 +331,28 @@
     background-color: faint-grey;
     padding: 5px;
     text-align: left;
+    z-index: 1;
 
     .latency
+      text-align: right;
       color: primary-red;
+
+    .performance
+      text-align: right;
+      color: primary-green;
+
+      &__warning
+        display: inline;
+        background-color: primary-red;
+
+      &__slow-top
+        display: inline;
+        color: black;
+        background-color: yellow;
+
+      &__average
+        display: inline;
+        color: black;
 
     .playing, .starting, .paused, .elapsed
       display: inline-block;

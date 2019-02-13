@@ -61,7 +61,8 @@ export const state = () => ({
     playable: false
   },
   points: [], // [layout][pulseBeat][tempo][backing] = [{base, heavy, light}]
-  nextPoints: 0
+  nextPoints: 0,
+  disableProgression: false
 });
 
 export const getters = {
@@ -96,6 +97,7 @@ export const getters = {
       !state.power.notes && power !== 'auto' || value === MAX_POWER[power] ? 0 : value + 1),
   autoLevel: state => state.mode.auto,
   showLoop: state => state.power.auto > 1,
+  progression: state => !state.disableProgression && state.mode.auto > 0,
   nextPoints: state => state.nextPoints,
   totalPoints: state => _.reduce(state.points, (result, pointsByLayout) => {
     _.forEach(pointsByLayout, pointsByPulseBeat => {
@@ -320,6 +322,9 @@ export const mutations = {
       GameAnalytics.power('Weenie', power, state.weenie[power]);
     }
     state.weenie[power] = level;
+  },
+  disableProgression(state) {
+    state.disableProgression = true;
   },
   points(state, {pulseBeat, tempo, amount}) {
     if (!amount.base) {

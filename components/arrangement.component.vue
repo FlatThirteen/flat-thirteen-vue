@@ -4,7 +4,7 @@
       .phrase(v-for="(phrase, i) in phrases")
         .key(:class="{active: position === i}") {{ phrase.phraseKey }}
     .position(v-if="phrases && phrases.length") {{ position + playing }} / {{ phrases.length }}
-    transport(ref="transport", v-bind="transportProps")
+    transport(v-bind="transportProps")
 </template>
 
 <script>
@@ -26,7 +26,8 @@
       tempo: Number,
       show: Boolean,
       count: Boolean,
-      play: String
+      play: String,
+      progression: Boolean
     },
     data() {
       return {
@@ -55,15 +56,23 @@
           this.$emit('position', this.position);
         }
       },
-      beatTickHandler({time, beatTick}) {
+      beatTickHandler({time, beat, tick, beatTick}) {
         let phrase = this.phrases[this.position];
         if (phrase) {
           phrase.onBeatTick(beatTick, time);
           if (this.play) {
+            let progressionBeatTick = BeatTick.from((this.position * this.beatsPerMeasure) + beat, tick);
+            _.forEach(this.getNotes('progression', progressionBeatTick), note => {
+              note.play(time);
+            });
             _.forEach(this.getNotes(this.play, beatTick), note => {
               note.play(time);
             });
           }
+        } else if (this.progression && this.position < 0) {
+          _.forEach(this.getNotes('metronome', beatTick), note => {
+            note.play(time);
+          });
         }
       },
       ...mapActions({
@@ -74,9 +83,10 @@
     computed: {
       transportProps() {
         return {
+          show: this.show,
           beatsPerMeasure: this.beatsPerMeasure,
           tempo: this.tempo,
-          metronome: this.position < 0
+          metronome: !this.progression && this.position < 0
         };
       },
       ...mapGetters({
