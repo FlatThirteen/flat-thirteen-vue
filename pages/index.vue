@@ -9,14 +9,16 @@
       p This game is a #[strong work in progress]
       p Make sure your #[strong sound is turned up!]
       p Works best with Chrome, mobile may be wonky
-    .feedback Comments? Questions? Feedback?#[br]feedback@flatthirteen.com
+    feedback
 </template>
 
 <script>
+  import Feedback from '~/components/feedback.component';
   import DrumBlox from '~/components/title/drum-blox.component';
 
   export default {
     components: {
+      'feedback': Feedback,
       'drum-blox': DrumBlox
     },
     layout: 'public'
@@ -48,12 +50,4 @@
 
     p
       font-size: 3vw;
-
-  .feedback
-    background-color: main-blue;
-    color: white;
-    font-size: 15px;
-    text-align: center;
-    margin-top: 20px;
-    padding: 20px;
 </style>

@@ -1,10 +1,12 @@
 <template lang="pug">
   .content
-    img.logo(src="~/assets/logo.png")
+    nuxt-link(to="/")
+      img.logo(src="~/assets/logo.png")
     .header
       h1 Flat Thirteen
       h3 Teaching music through gaming
     .menu
+      nuxt-link(to="/", key="/", exact).home Home
       nuxt-link(v-for="(link, label) in views", :to="link", :key="link") {{ label }}
     nuxt
 </template>
@@ -14,6 +16,7 @@
     data() {
       return {
         views: {
+          About: '/about'
         }
       };
     }
@@ -46,7 +49,8 @@
     background-color: main-blue;
     display: block;
     height: 48px;
-    padding: 0 1vw 0 content-side-margin;
+    padding: 0 1vw;
+    position: relative;
 
     a
       display: inline-block;
@@ -56,11 +60,23 @@
       margin-right: 50px;
       text-decoration: none;
       vertical-align: middle;
-      cursor: pointer;
+      transition: all 250ms;
+      transform: scale(1);
+      transform-origin: center left;
 
       &.nuxt-link-active
         font-weight: 800;
+        transform: scale(2);
 
-    .links
-      padding-top: 15px;
+    .home
+      margin-left: 2vw;
+      margin-right: 2vw;
+      min-width: 7vw;
+
+      &.nuxt-link-active
+        opacity: 0;
+        transform: scale(1);
+
+  .nuxt-link-exact-active
+    cursor: default;
 </style>
