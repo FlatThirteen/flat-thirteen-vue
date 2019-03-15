@@ -11,7 +11,10 @@
         type: String,
         default: null
       },
-      count: 0
+      count: {
+        type: Number,
+        default: 0
+      }
     },
     computed: {
       particles() {
