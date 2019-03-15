@@ -183,11 +183,12 @@
                 (condition, pulseBeat) => _.get(this.displayScores, [pulseBeat, condition]));
       },
       showNextNotes() {
+        let lastRow = _.last(_.values(this.pulseBeatGroups));
         return !this.clicked && this.next.notes &&  this.totalPoints >= this.nextPoints &&
             this.totalPoints >= (this.next.notes - 4) * 600 &&
             (this.next.notes < 9 || this.level.layout > 1) &&
-            _.some(_.last(_.values(this.pulseBeatGroups)),
-                pulseBeat => _.get(this.displayScores, [pulseBeat, 'passing']));
+            (_.some(lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'perfect'])) ||
+            _.every(lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'passing'])));
       },
       bottomStyle() {
         return {

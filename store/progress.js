@@ -152,8 +152,8 @@ export const getters = {
     });
   },
   playable: (state, getters) => _.mapValues(getters.modeScores, (scores, pulseBeat, modeScores) =>
-      scores.length || !getters.prerequisite[pulseBeat] || !getters.prerequisite[pulseBeat].length ||
-          _.some(getters.prerequisite[pulseBeat], pulseBeat => modeScores[pulseBeat].length)),
+      !!scores.length || !getters.prerequisite[pulseBeat] || !getters.prerequisite[pulseBeat].length ||
+          _.some(getters.prerequisite[pulseBeat], pulseBeat => _.filter(modeScores[pulseBeat], 'passing').length)),
   groupsWithoutStars: (state, getters) => _.filter(getters.pulseBeatGroups,
       pulseBeatGroup => !_.some(pulseBeatGroup, pulseBeat =>
           _.some(getters.modeScores[pulseBeat], score => score.star))),

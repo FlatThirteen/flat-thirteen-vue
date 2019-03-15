@@ -1,13 +1,14 @@
 <template lang="pug">
   .lesson(ref="lesson", :style="{backgroundColor: intensity}",
-      :class="{transition, touched, done, fail, button: playable, flip: verticalFlip}",
+      :class="{transition, touched, passing, button: playable, flip: verticalFlip}",
       @transitionend="unflip($event)", @touchend="onTouch($event)", @mousedown="emit($event)",
       @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')", @click="emit($event)")
-    .score(ref="score", v-show="done")
-      .score-contents(:class="{flip: horizontalFlip}")
-        star(v-for="(star, i) in display.stars", :color="star", :key="i", :class="{dim: display.points}")
-        .points(v-if="display.points", :style="{color: display.intensity}") {{ display.points }}
-    .pulse-beat(ref="pulse", :class="{blank: !playable}")
+    .stars(v-if="display.stars && display.stars.length")
+      star(v-for="(star, i) in display.stars", :color="star", :key="i", :class="{dim: display.points}")
+    .points(ref="score", v-if="display.stars", :style="{color: display.intensity}",
+        :class="{hide: !display.points, flip: horizontalFlip, transparent}",
+        @transitionend="unflip($event)") {{ display.points }}
+    .pulse-beat(ref="pulse", :class="{blank: !playable, played: display.points, transparent}")
       .backing(v-if="backing")
       .beat(v-for="pulses in pulsesByBeat")
         .pulse(v-for="pulse in pulses", :class="'pulse' + pulse", v-if="playable")
@@ -78,11 +79,11 @@
       pulsesByBeat() {
         return _.map(_.split(this.pulseBeat, ''), pulses => _.times(pulses, () => pulses));
       },
-      done() {
-        return !!(this.display.stars || this.display.points);
+      transparent() {
+        return this.display.stars && this.display.stars.length;
       },
-      fail() {
-        return this.done && !this.display.passing;
+      passing() {
+        return this.display.passing;
       }
     },
     watch: {
@@ -92,7 +93,11 @@
         handler(score, oldScore) {
           if (this.intensityChange) {
             if (oldScore && score.intensity !== oldScore.intensity) {
-              this.horizontalFlip = true;
+              if (oldScore.points) {
+                this.horizontalFlip = true;
+              } else {
+                setTimeout(this.updateScore, 250);
+              }
             }
           } else if (!this.tempoChange) {
             this.updateScore();
@@ -120,18 +125,20 @@
     transition: transform 250ms ease-in-out;
 
     &.button
-      color: primary-blue;
+      border: solid 5px primary-blue;
 
       &.touched
         transform: scale(1.2);
-        background-color: back-blue;
-        outline: solid 3px back-blue;
+        outline: solid 3px primary-blue;
         box-shadow: 0 0 15px 5px white;
         z-index: 1;
 
       &:hover, &.touched
-        .pulse-beat
-          background-color: primary-blue;
+        .dim
+          opacity: 1;
+
+        .pulse-beat, /.pulse-beat.played
+          background-color: alpha(primary-blue, .6);
 
           .backing
             transform: rotate(-20deg) translate(-5px, -10px);
@@ -140,45 +147,39 @@
           background-color: black;
           opacity: 0.5;
 
-    &.done
+    &.passing
       .pulse-beat
-        background-color: primary-blue;
+        background-color: alpha(primary-blue, .6);
         transform: scaleY(0);
         transform-origin: bottom;
+
+      .points
+        background-color: alpha(primary-blue, .6);
+        opacity: 1;
 
       &:hover:not(:active), &.touched
         .pulse-beat
           transform: scaleY(1);
 
-        .score
-          transform: scaleY(0);
-          transform-origin: top;
-
-      &.fail .score
-        border: solid 5px primary-blue;
-
-        .score-contents
-          opacity: 0.7;
-          shadow(black, 5px);
+    &:hover:not(:active), &.touched
+      .points
+        transform: scaleY(0);
 
     &.flip
       transform: scaleY(0.04);
 
-  .pulse-beat
-    border: solid 5px primary-blue;
+  .backing
+    posit(absolute)
+    transform: rotate(-20deg) translate(-180px, -15px);
+    transition: transform 400ms ease-out;
 
-    .backing
-      posit(absolute)
-      transform: rotate(-20deg) translate(-180px, -15px);
-      transition: transform 400ms ease-out;
-
-      &:after
-        posit(absolute, 0, -40px);
-        content: '';
-        animation: bass 750ms linear infinite;
-        background-color: bass-color;
-        background: linear-gradient(-25deg, alpha(bass-color, 0.7) 13px, transparent 18px) repeat-x;
-        background-size: 30px 20px;
+    .lesson:hover &:after
+      posit(absolute, 0, -40px);
+      content: '';
+      animation: bass 750ms linear infinite;
+      background-color: bass-color;
+      background: linear-gradient(-25deg, alpha(bass-color, 0.7) 13px, transparent 18px) repeat-x;
+      background-size: 30px 20px;
 
   .blank
     border: dashed 5px primary-blue;
@@ -187,24 +188,32 @@
     transform-origin: bottom;
 
   .transition
-    .pulse, .pulse-beat, .score, .score-contents
+    .pulse, .pulse-beat, .points
       transition: all 250ms ease-in-out;
 
-  .score
+  .stars
     posit(absolute);
     background-color: primary-blue;
-    border: solid 5px primary-blue;
-
-  .score-contents.flip
-    transform: scaleX(0.04);
 
   .points
     posit(absolute);
+    transform-origin: top;
+    opacity: .5;
+
+    &.flip
+      transform: scaleX(0.04);
+
+    &.hide
+      transform: scaleX(0);
+
+  .transparent
+    background-color: transparent !important;
 
   .dim
-    opacity: .4;
+    opacity: .5;
+    transition: opacity 250ms ease-in-out;
 
-  .pulse-beat, .beat, .score-contents
+  .pulse-beat, .beat, .points
     display: flex;
     justify-content: space-evenly;
     align-items: center;

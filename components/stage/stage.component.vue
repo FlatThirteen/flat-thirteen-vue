@@ -6,8 +6,7 @@
         stage-ball.whole(v-bind="stageBallProps")
         .controls.whole
           loop-button(ref="loop", @click="onLoop()", :show="showLoop",
-          :off="!autoLoop",
-              :repeat="autoRepeat",
+              :off="!autoLoop", :repeat="autoRepeat",
               :assist="!!weenie.intensity && loopCount > 2 * weenie.intensity")
           goal-button(ref="goal", @click="onAction('goal')",
               :penalty="!preGoal", :weenie="stageWeenie === 'goal'")
@@ -514,9 +513,8 @@
       },
       intensity: {
         immediate: true,
-        handler(intensity, oldIntensity) {
+        handler() {
           this.autoLevel = this.defaultAutoLevel;
-          console.log(intensity, oldIntensity);
           if (!this.active && this.autoGoal) {
             this.onAction('count');
           }

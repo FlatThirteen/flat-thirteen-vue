@@ -40,7 +40,7 @@
       key-handler
       composer(ref="composer", defaultRhythm="%1,%1|%2,%2|%3,%3|%1,%1")
       transition(name="finish")
-        .finish.button(v-if="exitable", :class="{weenie: final && paused}", @click="finish()")
+        .finish.button(v-if="earlyExit || exitable", :class="{weenie: final && paused}", @click="finish()")
           play-button.play-button(:disable="true")
       arrangement.arrangement(:phrases="phrases", :tempo="tempo", :count="!ready",
           play="finale", :loop="final ? 4 : undefined", :progression="progression",
@@ -329,6 +329,7 @@
         }, 110 * this.highScores.length));
       },
       finish() {
+        this.stop();
         _.forEach(this.timeouts, timeout => {
           clearTimeout(timeout);
         });
@@ -336,6 +337,7 @@
       },
       ...mapActions({
         start: 'transport/start',
+        stop: 'transport/stop',
         clear: 'phrase/clear',
         setFinale: 'phrase/setFinale',
         setBonusStart: 'phrase/setBonusStart',
@@ -345,6 +347,9 @@
     computed: {
       progression() {
         return this.level.intensity > 0;
+      },
+      earlyExit() {
+        return !this.bonus & this.phrases.length=== this.stages.length;
       },
       ready() {
         return this.state >= this.stages.length;
