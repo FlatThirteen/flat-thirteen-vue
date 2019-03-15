@@ -5,6 +5,7 @@ import SynthSound from './synth.sound';
 
 let firstUserAction = false;
 let Sound = {
+  preloadSounds: ['sawtooth6'],
   FX: {
     next: 'cowbell:16t:A6,E7,A7',
     intensity: 'cowbell:32n:D6,F#6,Eb6,G6,E6,G#6,F6,A6',
@@ -89,5 +90,9 @@ if (process.browser) {
   Sound.click = new ClickSound();
   Sound.cowbell = new CowbellSound();
   Sound.synth = new SynthSound();
+
+  _.forEach(Sound.preloadSounds, soundName => {
+    Sound.set(soundName, soundName);
+  });
 }
 export default Sound;
