@@ -1,20 +1,20 @@
 <template lang="pug">
-  .lesson(ref="lesson", :class="{transition, touched, done, fail, button: playable, flip: tempoFlip}",
+  .lesson(ref="lesson", :style="{backgroundColor: intensity}",
+      :class="{transition, touched, done, fail, button: playable, flip: verticalFlip}",
       @transitionend="unflip($event)", @touchend="onTouch($event)", @mousedown="emit($event)",
       @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')", @click="emit($event)")
     .score(ref="score", v-show="done")
-      .score-contents(:class="{flip: backingFlip}")
-        star(v-for="(star, i) in stars", :backing="star", :key="i")
-        div(v-if="amount", :class="amount.backing") {{ amount.base }}
+      .score-contents(:class="{flip: horizontalFlip}")
+        star(v-for="(star, i) in display.stars", :color="star", :key="i", :class="{dim: display.points}")
+        .points(v-if="display.points", :style="{color: display.intensity}") {{ display.points }}
     .pulse-beat(ref="pulse", :class="{blank: !playable}")
-      .backing(:class="backing")
+      .backing(v-if="backing")
       .beat(v-for="pulses in pulsesByBeat")
         .pulse(v-for="pulse in pulses", :class="'pulse' + pulse", v-if="playable")
 </template>
 
 <script>
   import Star from '~/components/star.component';
-  import { PASSING_LESSON } from "~/store/progress";
 
   export default {
     components: {
@@ -22,21 +22,21 @@
     },
     props: {
       pulseBeat: String,
-      backing: String,
+      backing: Boolean,
       transition: Boolean,
-      backingChange: Boolean,
+      intensity: String,
+      intensityChange: Boolean,
       tempoChange: Boolean,
-      points: Array, // [{ base, heavy, light, backing }]
+      score: Object, // { intensity, stars, points, dim, heavy, light }]
     },
     data() {
       return {
         move: '',
         touched: false,
-        backingFlip: false,
-        tempoFlip: false,
+        horizontalFlip: false,
+        verticalFlip: false,
         playable: false,
-        amount: null,
-        stars: []
+        display: {}
       }
     },
     methods: {
@@ -55,8 +55,8 @@
       unflip(event) {
         if (event.propertyName === 'transform' && _.includes(event.target.className, 'flip')) {
           this.updateScore();
-          this.backingFlip = false;
-          this.tempoFlip = false;
+          this.horizontalFlip = false;
+          this.verticalFlip = false;
         }
       },
       emit(event) {
@@ -70,9 +70,8 @@
         }
       },
       updateScore() {
-        this.playable = !!this.points;
-        this.stars = _.map(_.filter(_.take(this.points, 3), 'star'), 'backing');
-        this.amount = !this.stars.length && this.points && this.points[0];
+        this.playable = !!this.score;
+        this.display = this.score || {};
       }
     },
     computed: {
@@ -80,19 +79,20 @@
         return _.map(_.split(this.pulseBeat, ''), pulses => _.times(pulses, () => pulses));
       },
       done() {
-        return !!(this.stars.length || this.amount);
+        return !!(this.display.stars || this.display.points);
       },
       fail() {
-        return this.amount && this.amount.base < PASSING_LESSON;
+        return this.done && !this.display.passing;
       }
     },
     watch: {
-      points: {
+      score: {
+        deep: true,
         immediate: true,
-        handler(points, oldPoints) {
-          if (this.backingChange) {
-            if (points[0] && oldPoints[0] && points[0].backing !== oldPoints[0].backing) {
-              this.backingFlip = true;
+        handler(score, oldScore) {
+          if (this.intensityChange) {
+            if (oldScore && score.intensity !== oldScore.intensity) {
+              this.horizontalFlip = true;
             }
           } else if (!this.tempoChange) {
             this.updateScore();
@@ -101,7 +101,7 @@
       },
       tempoChange(tempoChange) {
         if (tempoChange) {
-          this.tempoFlip = true;
+          this.verticalFlip = true;
         }
       }
     }
@@ -111,13 +111,13 @@
 
 <style scoped lang="stylus" type="text/stylus">
   .lesson
-    background-color: white;
     display: inline-block;
     margin: .5vh .5vw;
     font-size: 40px;
     line-height: 60px;
     overflow: hidden;
     position: relative;
+    transition: transform 250ms ease-in-out;
 
     &.button
       color: primary-blue;
@@ -165,7 +165,6 @@
       transform: scaleY(0.04);
 
   .pulse-beat
-    background-color: white;
     border: solid 5px primary-blue;
 
     .backing
@@ -173,7 +172,7 @@
       transform: rotate(-20deg) translate(-180px, -15px);
       transition: transform 400ms ease-out;
 
-      &.bass:after
+      &:after
         posit(absolute, 0, -40px);
         content: '';
         animation: bass 750ms linear infinite;
@@ -182,14 +181,13 @@
         background-size: 30px 20px;
 
   .blank
-    background-color: white;
     border: dashed 5px primary-blue;
     height: 60px;
     opacity: 0.2;
     transform-origin: bottom;
 
   .transition
-    .pulse, .pulse-beat, .score, .score-contents, /.lesson
+    .pulse, .pulse-beat, .score, .score-contents
       transition: all 250ms ease-in-out;
 
   .score
@@ -199,6 +197,12 @@
 
   .score-contents.flip
     transform: scaleX(0.04);
+
+  .points
+    posit(absolute);
+
+  .dim
+    opacity: .4;
 
   .pulse-beat, .beat, .score-contents
     display: flex;
@@ -226,12 +230,6 @@
   .pulse2, .pulse3, .pulse4
     width: 12px;
     height: @width;
-
-  .none
-    color: white;
-
-  .bass
-    color: bass-color;
 
   @keyframes bass
     0%

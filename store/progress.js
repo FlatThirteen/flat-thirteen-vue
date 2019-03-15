@@ -1,10 +1,8 @@
 import Vue from 'vue';
 import Combinatorics from 'js-combinatorics';
 
+import { intensityColors, fgIntensity, bgIntensity } from '~/common/colors';
 import GameAnalytics from '~/common/game-analytics';
-
-export const PASSING_LESSON = 360;
-export const PERFECT_LESSON = 400;
 
 const TEMPO = 120;
 const INCREMENT = 10;
@@ -15,77 +13,85 @@ const LAYOUTS = [
   [{ noteByKey: { q: 'snare' } }, { noteByKey: { a: 'kick' } }]
 ];
 
-const BACKINGS = ['none', 'bass'];
-
 const MAX_POWER = {
-  auto: 3,
-  backing: BACKINGS.length - 1,
+  intensity: intensityColors.length - 1,
   layout: LAYOUTS.length - 1,
   tempo: 8,
   notes: 16
 };
 
+function passing(points) {
+  return points >= 360;
+}
+
+function perfect(points) {
+  return points >= 400;
+}
+
 export const state = () => ({
   lesson: {
-    name: null,
+    pulseBeat: null,
     stages: [],
     index: -1,
     tempo: 0,
-    backing: 0
   },
   power: {
-    auto: 0,
-    backing: 0,
+    intensity: 0,
     layout: 0,
     tempo: 0,
     notes: 0
   },
   mode: {
-    auto: 0,
-    backing: 0,
+    intensity: 0,
     layout: -1,
     tempo: 0
   },
   weenie: {
-    auto: 0,
-    backing: 0,
+    intensity: 0,
     layout: 0,
     tempo: 0,
     notes: 0
   },
   penalty: {
-    backing: 0,
     tempo: 0
   },
   hack: {
     playable: false
   },
-  points: [], // [layout][pulseBeat][tempo][backing] = [{base, heavy, light}]
+  scores: {}, // [tempo][layout][pulseBeat] = [{intensity, base, star, perfect, passing, heavy, light}]
   nextPoints: 0,
-  disableProgression: false
 });
 
 export const getters = {
-  lessonName: state => state.lesson.name,
+  lessonName: state => state.lesson.pulseBeat ? state.mode.layout + '-' + state.lesson.pulseBeat : undefined,
   stageIndex: state => state.lesson.index,
   stageGoal: state => state.lesson.stages[state.lesson.index],
   lessonDone: state => state.lesson.index === state.lesson.stages.length,
+  fgIntensity: state => fgIntensity(state.mode.intensity),
+  bgIntensity: state => bgIntensity(state.mode.intensity),
+  backing: state => state.mode.intensity > 2,
   layouts: state => _.take(LAYOUTS, state.power.layout + 1),
   layout: state => LAYOUTS[state.mode.layout],
   layoutNotesMultiple: (state, getters) => getters.layout && getters.layout.length,
   tempos: (state, getters) => _.range(getters.minTempo, getters.maxTempo + INCREMENT, INCREMENT),
   tempo: (state, getters) => TEMPO + INCREMENT * getters.level.tempo,
-  minTempo: state => Math.max(60, TEMPO - INCREMENT * state.power.tempo),
+  minTempo: () => TEMPO,
   maxTempo: (state, getters) => TEMPO + INCREMENT * (getters.stageGoal ? state.mode.tempo : state.power.tempo),
-  backings: state => _.take(BACKINGS, state.power.backing + 1),
-  backing: (state, getters) => BACKINGS[getters.level.backing],
-  showBacking: (state, getters) => getters.stageGoal ? state.mode.backing : state.power.backing,
-  backingVolume: (state, getters) => !getters.stageGoal || state.lesson.backing ? 10 : 0,
-  pulseBeats: state => _.concat(_.map(Combinatorics.baseN([1, 2], 4).toArray(),
-    _.partial(_.join, _, ''))),
+  pulseBeats: () => _.concat(_.map(Combinatorics.baseN([1, 2], 4).toArray(), _.partial(_.join, _, ''))),
   pulseBeatGroups: (state, getters) => _.mapValues(_.pickBy(_.groupBy(_.map(getters.pulseBeats, splitPulseBeat), _.sum),
       (group, noteCount) => _.toNumber(noteCount) * getters.layoutNotesMultiple <= state.power.notes),
       _.partial(_.map, _, _.partial(_.join, _, ''))),
+  prerequisite: (state, getters) => _.reduce(getters.pulseBeats, (result, pulseBeat) => {
+    let replace = _.find(['4', '3', '2'], value => _.includes(pulseBeat, value));
+    if (replace) {
+      let replacement = String(_.floor(_.toNumber(replace) / 2));
+      result[pulseBeat] = _.compact(_.times(pulseBeat.length, i =>
+        pulseBeat.charAt(i) === replace && splice(pulseBeat, i, 1, replacement)));
+    }
+    return result;
+  }, {}),
+  scaleClass: state => (state.power.notes === 4 ? 'first' :
+      state.power.notes === 5 ? 'second' : state.power.notes ? '' : 'initial'),
   power: state => state.power,
   level: (state, getters) => !getters.stageGoal ? state.mode :
       _.mapValues(state.mode, (value, power) =>
@@ -94,140 +100,82 @@ export const getters = {
   penalty: (state, getters) => getters.stageGoal ? state.penalty : {},
   hack: state => state.hack,
   next: state => _.mapValues(state.power, (value, power) =>
-      !state.power.notes && power !== 'auto' || value === MAX_POWER[power] ? 0 : value + 1),
-  autoLevel: state => state.mode.auto,
-  showLoop: state => state.power.auto > 1,
-  progression: state => !state.disableProgression && state.mode.auto > 0,
+      !state.power.notes || value === MAX_POWER[power] ? 0 : value + 1),
   nextPoints: state => state.nextPoints,
-  totalPoints: state => _.reduce(state.points, (result, pointsByLayout) => {
-    _.forEach(pointsByLayout, pointsByPulseBeat => {
-      _.forEach(pointsByPulseBeat, pointsByTempo => {
-        _.forEach(pointsByTempo, pointsList => {
-          _.forEach(pointsList, points => {
-            result += points.base;
-          });
+  totalPoints: state => _.reduce(state.scores, (result, scoresByTempo) => {
+    _.forEach(scoresByTempo, scoresByLayout => {
+      _.forEach(scoresByLayout, scoresByPulseBeat => {
+        _.forEach(scoresByPulseBeat, score => {
+          result += score.base;
         });
       });
     });
     return result;
   }, 0),
-  highPoints: (state, getters) => _.times(getters.layouts.length, layout => {
-    return _.reduce(getters.pulseBeats, (pointsByPulseBeat, pulseBeat) => {
-      let fasterPoints = _.times(getters.backings.length, () => []);
-      pointsByPulseBeat[pulseBeat] = _.reduceRight(getters.tempos, (pointsByTempo, tempo) => {
-        pointsByTempo[tempo] = _.cloneDeep(fasterPoints);
-        _.forEachRight(getters.backings, (readBacking, readBackingLevel) => {
-          let points = _.get(state.points, [layout, pulseBeat, tempo, readBackingLevel], []);
-          _.forEach(getters.backings, (writeBacking, writeBackingLevel) => {
-            let bestPoints = pointsByTempo[tempo][writeBackingLevel];
-            _.forEach(points, (nextPoints, pointIndex) => {
-              let amount = _.assign({ backing: readBacking }, nextPoints);
-              if (!bestPoints.length) {
-                bestPoints.push(amount);
-              } else if (nextPoints.star) {
-                if (!pointIndex && !bestPoints[0].star) {
-                  // Replacing previous best points with stars, look at all backing
-                  let betterPoints = _.find(fasterPoints,
-                      bestPoints => bestPoints[0] && bestPoints[0].star);
-                  if (betterPoints) {
-                    bestPoints = pointsByTempo[tempo][writeBackingLevel] = _.cloneDeep(betterPoints);
-                  }
-                }
-                if (bestPoints[0].star || readBackingLevel === writeBackingLevel) {
-                  let insertion = _.sortedLastIndexBy(bestPoints, amount, sortAmount);
-                  bestPoints.splice(insertion, bestPoints[0].star ? 0 : 1, amount);
-                }
-              } else if (!pointIndex && readBackingLevel === writeBackingLevel &&
-                  _.every(bestPoints, amount => amount.backing !== writeBacking || !amount.star)) {
-                bestPoints.splice(0, 1, amount);
-              }
-            });
-          });
-        });
-        fasterPoints = pointsByTempo[tempo];
-        return pointsByTempo;
-      }, {});
-      return pointsByPulseBeat;
-    }, {});
-  }),
-  ranking: (state, getters) => base => {
-    let newAmount = { backing: getters.backing, tempo: getters.tempo, base, isNew: true };
-    let ranking = getters.rankingForDisplay[getters.lessonName];
-    let insertion = _.sortedLastIndexBy(ranking, newAmount, sortAmount);
-    return _.take(ranking, insertion).concat(newAmount, _.takeRight(ranking, ranking.length - insertion),
-        getters.rankingFiltered[getters.lessonName]);
-  },
-  rankingByLesson: (state, getters) => {
-    let ranking = {};
-    _.times(getters.layouts.length, layout => {
-      _.forEach(getters.pulseBeats, pulseBeat => {
-        let pointRank = [];
-        _.forEachRight(getters.tempos, tempo => {
-          _.forEach(getters.backings, (backing, backingLevel) => {
-            let pointsForLevel = _.get(state.points, [layout, pulseBeat, tempo, backingLevel], []);
-            _.forEach(pointsForLevel, nextPoints => {
-              let amount = _.assign({ backing, tempo }, nextPoints);
-              let insertion = _.sortedLastIndexBy(pointRank, amount, sortAmount);
-              pointRank.splice(insertion, 0, amount);
-            });
-          });
-        });
-        ranking[layout + '-' + pulseBeat] = pointRank;
-      });
-    });
-    return ranking;
-  },
-  rankingForDisplay: (state, getters) => _.mapValues(getters.rankingByLesson, ranking =>
-      _.filter(ranking, amount => amount.tempo >= getters.tempo)),
-  rankingFiltered: (state, getters) => _.mapValues(getters.rankingByLesson, ranking =>
-      _.filter(ranking, amount => amount.tempo < getters.tempo)),
-  pointsByPulseBeat: (state, getters) => _.mapValues(getters.highPoints[state.mode.layout],
-      _.property([getters.tempo, state.mode.backing])),
-  prerequisite: (state, getters) => _.reduce(getters.pulseBeats, (result, pulseBeat) => {
-    let replace = _.find(['4', '3', '2'], value => _.includes(pulseBeat, value));
-    if (replace) {
-      let replacement = String(_.floor(_.toNumber(replace) / 2));
-      result[pulseBeat] = _.compact(_.times(pulseBeat.length, i =>
-          pulseBeat.charAt(i) === replace && splice(pulseBeat, i, 1, replacement)));
-    }
-    return result;
-  }, {}),
-  playable: (state, getters) => _.mapValues(getters.pointsByPulseBeat, (points, pulseBeat, pointsByPulseBeat) =>
-      points.length || !getters.prerequisite[pulseBeat] || !getters.prerequisite[pulseBeat].length ||
-          _.some(getters.prerequisite[pulseBeat], pulseBeat => pointsByPulseBeat[pulseBeat].length)),
-  displayPoints: (state, getters) => _.mapValues(getters.pointsByPulseBeat, (points, pulseBeat) =>
-      state.hack.playable || getters.playable[pulseBeat] ? points : undefined),
-  totalStars: (state, getters) => _.reduce(getters.highPoints, (result, pointsByPulseBeat) => {
-    _.forEach(pointsByPulseBeat, pointsByTempo => {
-      _.forEach(_.filter(pointsByTempo, (value, tempo) => tempo >= TEMPO), pointsByBacking => {
-        _.forEach(pointsByBacking, (points, backingIndex) => {
-          _.forEach(_.take(points, 3), amount => {
-            if (amount.star && BACKINGS[backingIndex] === amount.backing) {
-              result += 1;
-            }
-          })
-        });
+  totalStars: state => _.reduce(state.scores, (result, scoresByTempo) => {
+    _.forEach(scoresByTempo, scoresByLayout => {
+      _.forEach(scoresByLayout, scoresByPulseBeat => {
+        result += Math.min(3, _.filter(scoresByPulseBeat, 'star').length);
       });
     });
     return result;
   }, 0),
+  modeScores: (state, getters) => _.mapValues(_.invert(getters.pulseBeats), (i, pulseBeat) =>
+      _.get(state.scores, [getters.tempo, state.mode.layout, pulseBeat], [])),
+  newHighScores: (state, getters) => base => {
+    let newScore = { intensity: state.mode.intensity, base, isNew: true, passing: passing(base) };
+    let ranking = getters.modeScores[state.lesson.pulseBeat];
+    let insertion = _.sortedLastIndexBy(ranking, newScore, sortScore);
+    let highScores = _.take(ranking, insertion).concat(newScore,
+        _.takeRight(ranking, ranking.length - insertion));
+    return _.map(highScores, score => _.defaults({ intensity: bgIntensity(score.intensity) }, score));
+  },
+  displayScores: (state, getters) => {
+    let scoresByPulseBeat = _.get(state.scores, [getters.tempo, state.mode.layout], {});
+    return _.mapValues(_.invert(getters.pulseBeats), (i, pulseBeat) => {
+      let scores = scoresByPulseBeat[pulseBeat];
+      if (!scores) {
+        return state.hack.playable || getters.playable[pulseBeat] ? { finished: 0 } : undefined;
+      }
+      let validScores = _.filter(scores, score => score.intensity === state.mode.intensity);
+      let stars = _.filter(scores, 'star');
+      let score = validScores[0] || scores[0];
+
+      return {
+        intensity: fgIntensity(score.intensity),
+        finished: validScores.length || 1,
+        stars: _.map(_.take(stars, 3), score => fgIntensity(score.intensity)),
+        points: score.star ? undefined : score.base,
+        passing: score.passing,
+        perfect: score.perfect,
+      };
+    });
+  },
+  playable: (state, getters) => _.mapValues(getters.modeScores, (scores, pulseBeat, modeScores) =>
+      scores.length || !getters.prerequisite[pulseBeat] || !getters.prerequisite[pulseBeat].length ||
+          _.some(getters.prerequisite[pulseBeat], pulseBeat => modeScores[pulseBeat].length)),
   groupsWithoutStars: (state, getters) => _.filter(getters.pulseBeatGroups,
       pulseBeatGroup => !_.some(pulseBeatGroup, pulseBeat =>
-          _.some(getters.pointsByPulseBeat[pulseBeat], amount => amount.star))),
+          _.some(getters.modeScores[pulseBeat], score => score.star))),
   rowsWithStars: (state, getters) =>
       _.size(getters.pulseBeatGroups) - getters.groupsWithoutStars.length,
+  starsCountForIntensity: state => _.flatMap(state.scores, scoresByLayout =>
+    _.flatMap(scoresByLayout, scoresByPulseBeat =>
+      _.flatMap(scoresByPulseBeat, scores => _.filter(scores, {
+        star: true, intensity: state.mode.intensity
+      })))).length
 };
 
 export const mutations = {
   resetPower(state, params) {
-    state.points = [];
+    state.scores = {};
     state.nextPoints = 0;
     if (params.max) {
       _.forEach(MAX_POWER, (max, power) => {
         state.power[power] = max;
       });
       _.forEach(_.keys(state.mode), power => {
-        state.mode[power] = power === 'auto' ? MAX_POWER[power] : 0;
+        state.mode[power] = 0;
       });
       _.forEach(_.keys(state.hack), hack => {
         state.hack[hack] = true;
@@ -251,7 +199,7 @@ export const mutations = {
       });
     }
   },
-  newStage(state, {name, stages = {}, next}) {
+  newStage(state, {pulseBeat, stages = {}, next}) {
     if (next) {
       if (state.lesson.index + 1 <= state.lesson.stages.length) {
         state.lesson.index = state.lesson.index + 1;
@@ -259,12 +207,11 @@ export const mutations = {
         console.error('Cannot advance stage any more');
       }
     } else {
-      state.lesson.name = name;
+      state.lesson.pulseBeat = pulseBeat;
       state.lesson.stages = stages;
       state.lesson.index = stages.length ? 0 : -1;
     }
     state.lesson.tempo = state.mode.tempo;
-    state.lesson.backing = state.mode.backing;
     _.forEach(state.penalty, (level, penalty) => {
       state.penalty[penalty] = state.mode[penalty]
     });
@@ -294,7 +241,7 @@ export const mutations = {
         state.power.notes = 4;
         state.weenie.notes = 4;
       }
-      if (power === 'auto' || state.power[power] === level) {
+      if (state.power[power] === level) {
         if (state.weenie[power] === level) {
           GameAnalytics.power('Weenie', power, state.weenie[power]);
         }
@@ -323,23 +270,21 @@ export const mutations = {
     }
     state.weenie[power] = level;
   },
-  disableProgression(state) {
-    state.disableProgression = true;
-  },
-  points(state, {pulseBeat, tempo, amount}) {
-    if (!amount.base) {
+  score(state, {tempo, pulseBeat, score}) {
+    if (!score.base) {
       return;
     }
-    let layoutPoints = state.points[state.mode.layout] ||
-        Vue.set(state.points, state.mode.layout, {});
-    let pulseBeatPoints = layoutPoints[pulseBeat] ||
-        Vue.set(layoutPoints, pulseBeat, {});
-    let tempoPoints = pulseBeatPoints[tempo] ||
-        Vue.set(pulseBeatPoints, tempo, []);
-    let points = tempoPoints[state.mode.backing] ||
-        Vue.set(tempoPoints, state.mode.backing, []);
-    let index = _.sortedLastIndexBy(points, amount, sortAmount);
-    points.splice(index, 0, amount);
+    score.intensity = state.mode.intensity;
+    score.passing = passing(score.base);
+    score.perfect = perfect(score.base);
+    let tempoScores = state.scores[tempo] ||
+      Vue.set(state.scores, tempo, []);
+    let layoutScores = tempoScores[state.mode.layout] ||
+        Vue.set(tempoScores, state.mode.layout, {});
+    let pulseBeatScores = layoutScores[pulseBeat] ||
+        Vue.set(layoutScores, pulseBeat, []);
+    let index = _.sortedLastIndexBy(pulseBeatScores, score, sortScore);
+    pulseBeatScores.splice(index, 0, score);
   }
 };
 
@@ -359,7 +304,7 @@ export const actions = {
     commit('nextPower', {
       power,
       nextPoints: getters.totalPoints + 100,
-      updateMode: state.mode[power] === state.power[power] && power === 'auto'
+      updateMode: state.mode[power] === state.power[power] && power === 'intensity'
     });
   },
   weenie({state, commit}, {power, level}) {
@@ -368,11 +313,8 @@ export const actions = {
     }
     commit('weenie', {power, level});
   },
-  auto({commit}, level) {
-    commit('mode', { power: 'auto', level, min: 1});
-  },
-  backing({getters, commit}, level) {
-    commit(getters.stageGoal ? 'lesson' : 'mode', { power: 'backing', level });
+  intensity({commit}, level) {
+    commit('mode', { power: 'intensity', level });
   },
   layout({commit}, level) {
     commit('mode', { power: 'layout', level });
@@ -384,8 +326,8 @@ export const actions = {
       min: -getters.power.tempo
     });
   },
-  addPoints({getters, commit}, {pulseBeat, amount}) {
-    commit('points', {pulseBeat, amount, tempo: getters.tempo});
+  addScore({getters, commit}, {pulseBeat, score}) {
+    commit('score', {pulseBeat, score, tempo: getters.tempo});
   }
 };
 
@@ -397,8 +339,7 @@ function splice(string, startIndex, length, insertString) {
   return string.substring(0, startIndex) + insertString + string.substring(startIndex + length);
 }
 
-function sortAmount(amount) {
-  return -amount.base * Math.pow(2, (amount.heavy || 0) + (amount.light || 0)) -
-      (amount.tempo || 0) / 1000 - _.indexOf(BACKINGS, amount.backing || 'none') / 10000 +
-      (amount.isNew || 0) / 100000;
+function sortScore(score) {
+  return -score.base * Math.pow(2, (score.heavy || 0) + (score.light || 0)) -
+      (score.intensity || 0) / 10 + (score.isNew || 0) / 100;
 }

@@ -1,19 +1,17 @@
 <template lang="pug">
-  .container
+  .container(:style="{backgroundColor: bgIntensity}")
     backing
-    stage(ref="stage", :goal="goal", :showNextAuto="true", :tempo="tempo",
+    stage(ref="stage", :goal="goal", :intensity="intensityLevel", :tempo="tempo",
         @basePoints="basePoints = $event", @complete="$refs.stage.start()")
     .top
-      .backing.left
-        backing-button.button(:backing="hasBacking ? 'bass' : 'none'",
-            @click="toggleBackingLevel()")
+      .intensity.left
+        level-control.control(:level="intensityLevel", :max="4", @level="setIntensity($event)")
+          intensity-icon(:level="intensityLevel")
         span(v-show="hasBacking") =
         composer(ref="composer", :show="hasBacking")
       tempo-control.right(:tempo="tempo", @tempo="tempo = $event", :min="60", :max="240")
     .bottom
-      .auto.left
-        .icon(@click="setAuto(false)") o
-        span(@click="setAuto(next.auto)") :{{ power.auto }}
+      .left
       .middle
         .pulses-input
           input(type="text", v-model="pulseBeat", placeholder="# pulses", @keydown.stop="")
@@ -27,19 +25,21 @@
 <script>
   import { mapGetters } from 'vuex';
 
-  import Sound from '~/common/sound/sound';
+  import { bgIntensity } from "~/common/colors";
 
   import Backing from '~/components/backing.component';
-  import BackingButton from '~/components/backing-button.component';
   import Composer from '~/components/composer.component';
+  import IntensityIcon from '~/components/icon/intensity-icon.component';
+  import LevelControl from '~/components/level-control.component';
   import Stage from '~/components/stage/stage.component';
   import TempoControl from '~/components/tempo-control.component';
 
   export default {
     components: {
       'backing': Backing,
-      'backing-button': BackingButton,
       'composer': Composer,
+      'intensity-icon': IntensityIcon,
+      'level-control': LevelControl,
       'stage': Stage,
       'tempo-control': TempoControl
     },
@@ -50,6 +50,7 @@
     data() {
       return {
         pulseBeat: '1111',
+        intensityLevel: 0,
         layout: [
           { noteByKey: { q: 'snare', a: 'kick' } },
         ],
@@ -58,18 +59,16 @@
         victoryLevel: 10
       }
     },
-    created() {
-      this.setAuto(false);
-    },
     mounted() {
       this.$refs.stage.start();
     },
     methods: {
-      setAuto(next) {
-        if (next) {
-          this.$store.dispatch('progress/next', 'auto');
+      setIntensity(level) {
+        this.intensityLevel = level;
+        if (level > 2) {
+          this.$refs.composer.reset();
         } else {
-          this.$store.dispatch('progress/initialize');
+          this.$refs.composer.clear();
         }
       },
       setVictory(level = this.victoryLevel > 1 ? this.victoryLevel - 1 : 10) {
@@ -77,19 +76,12 @@
       },
       onVictory(clear) {
         this.$refs.stage.setVictory(clear ? 0 : this.victoryLevel);
-      },
-      toggleBackingLevel() {
-        if (this.paused) {
-          Sound.playSequence(this.$refs.composer.type, this.hasBacking ? ['A1'] : ['A1', 'A2'], '32n');
-        }
-        if (this.hasBacking) {
-          this.$refs.composer.clear();
-        } else {
-          this.$refs.composer.reset();
-        }
       }
     },
     computed: {
+      bgIntensity() {
+        return bgIntensity(this.intensityLevel);
+      },
       goal() {
         return !this.numBeats ? null : [{
           type: 'drums',
@@ -97,20 +89,11 @@
         }];
       },
       ...mapGetters({
-        keyDown: 'keyDown',
-        paused: 'transport/paused',
         hasBacking: 'phrase/hasBacking',
-        power: 'progress/power',
-        next: 'progress/next',
         numBeats: 'player/numBeats'
       })
     },
     watch: {
-      keyDown(key) {
-        if (key === 'o') {
-          this.setAuto(this.next.auto);
-        }
-      },
       pulseBeat: {
         immediate: true,
         handler(pulseBeat) {
@@ -135,7 +118,7 @@
     height: 0;
 
     .left, .right
-      top: 0;
+      posit(absolute, 0, x, x, x);
       margin: 20px;
 
     .right
@@ -148,9 +131,8 @@
     align-items: flex-end;
 
     .left, .right
-      background-color: white;
-      box-shadow: 0 0 25px 15px white;
       margin: 5px 10px;
+      min-width: 90px;
 
     input
       background: transparent;
@@ -168,29 +150,15 @@
   .right
     text-align: right;
 
-  .auto, .backing, .victory
+  .intensity, .victory
     font-size: 40px;
     font-weight: bold;
 
-  .auto .icon
-    color: primary-blue;
-    display: inline-block;
-
-  .backing
-    color: lightgrey;
-    margin-top: -10px;
-
-    .composer
-      transform: translateY(8px);
+  .control
+    vertical-align: middle;
 
   .points
     color: active-blue;
     font-size: 40px;
     font-weight: 600;
-
-  .info
-    color: gray;
-    font-size: 20px;
-    font-weight: 600;
-
 </style>

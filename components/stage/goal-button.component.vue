@@ -56,9 +56,6 @@
           transform: 'translateY(0) scale(0)'
         }]]
       }
-    },
-    mounted() {
-      this.animate('appear');
     }
   }
 </script>
@@ -78,7 +75,7 @@
     width: 48px;
 
     &.count
-      background-color: white;
+      background-color: transparent;
       transition: background-color 200ms;
 
   img

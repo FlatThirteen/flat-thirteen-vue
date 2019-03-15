@@ -5,7 +5,7 @@
     .config(v-if="!pulseBeat")
       .button(@click="max()") o
     transition(name="lesson-container")
-      .lesson-container(v-show="pulseBeat", :style="transformOrigin")
+      .lesson-container(v-show="pulseBeat", :style="lessonContainerStyle")
         transition(name="finale", mode="out-in")
           .finale(v-if="finaleStages.length")
             finale(:stages="finaleStages", :bonusStage="true", @finish="finale($event)")
@@ -15,11 +15,8 @@
             .points
               .button(@click="finishLesson()") +
               input(v-for="(points, i) in pointsByStage", type="number",
-                  v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}",
-                  @mouseover="i > 1 && showNextAuto()")
-              star.button(:hollow="hollow", @click.native="onStar()")
-              .power
-                power-auto(ref="auto", @click="$store.dispatch('progress/next', 'auto')")
+                  v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}")
+              star.button(:hollow="hollowStar", @click.native="onStar()")
             quit-button(@click="exitLesson()")
 </template>
 
@@ -30,7 +27,6 @@
   import Curriculum from '~/components/curriculum/curriculum.component';
   import Finale from '~/components/finale.component';
   import LessonBuilder from '~/components/lesson-builder.component';
-  import PowerAuto from '~/components/power/power-auto.component';
   import QuitButton from '~/components/quit-button.component';
   import Star from '~/components/star.component';
 
@@ -42,7 +38,6 @@
       'curriculum': Curriculum,
       'finale': Finale,
       'lesson-builder': LessonBuilder,
-      'power-auto': PowerAuto,
       'quit-button': QuitButton,
       'star': Star
     },
@@ -57,16 +52,15 @@
         pointsByStage: _.times(4, _.constant(MAX_POINTS)),
         finaleStages: [],
         scrollTop: 0,
-        transformOrigin: {}
+        transformOrigin: null
       };
     },
     methods: {
       max() {
         this.$store.dispatch('progress/initialize', { max: !this.power.notes});
-        this.$refs.auto.disappear();
       },
       onStar() {
-        if (this.hollow) {
+        if (this.hollowStar) {
           this.pointsByStage = _.times(4, _.constant(MAX_POINTS));
         } else {
           this.finale(500);
@@ -75,20 +69,16 @@
       onLesson({pulseBeat, x, y, scrollTop}) {
         this.pulseBeat = pulseBeat;
         this.scrollTop = scrollTop;
-        this.transformOrigin = {
-          transformOrigin: x + 'px ' + (y - scrollTop) + 'px'
-        };
+        this.transformOrigin = x + 'px ' + (y - scrollTop) + 'px';
         this.$store.dispatch('player/update', { pulseBeat,
           layout: this.layout,
           clear: true
         });
-        this.$store.dispatch('progress/setStages', {
-          name: this.level.layout + '-' + pulseBeat
-        });
+        this.$store.dispatch('progress/setStages', { pulseBeat });
         this.buildLesson();
       },
       buildLesson() {
-        let finished = this.pointsByPulseBeat[this.pulseBeat].length;
+        let finished = this.displayScores[this.pulseBeat].finished;
         this.$refs.lessonBuilder.build(finished);
       },
       finishLesson() {
@@ -110,44 +100,36 @@
         this.$store.dispatch('progress/setStages');
       },
       finale(points) {
-        this.$store.dispatch('progress/addPoints', {
+        this.$store.dispatch('progress/addScore', {
           pulseBeat: this.pulseBeat,
-          amount: { base: points, star: points === 500 }
+          score: { base: points, star: points === 500 }
         });
         this.exitLesson();
-      },
-      showNextAuto() {
-        if (this.next.auto && !this.hollow) {
-          this.$refs.auto.appear(this.next.auto);
-        }
       }
     },
     computed: {
       invalidPoints() {
         return _.map(this.pointsByStage, points => points < 5 || points > MAX_POINTS);
       },
-      hollow() {
+      hollowStar() {
         return !_.every(this.pointsByStage, points => points === MAX_POINTS);
+      },
+      lessonContainerStyle() {
+        return {
+          backgroundColor: this.bgIntensity,
+          transformOrigin: this.transformOrigin
+        };
       },
       ...mapGetters({
         power: 'progress/power',
-        next: 'progress/next',
-        level: 'progress/level',
+        bgIntensity: 'progress/bgIntensity',
         layout: 'progress/layout',
-        pointsByPulseBeat: 'progress/pointsByPulseBeat',
+        displayScores: 'progress/displayScores',
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })
-    },
-    watch: {
-      hollow(hollow) {
-        if (hollow) {
-          this.$refs.auto.disappear();
-        }
-      }
     }
   }
-
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
@@ -178,7 +160,6 @@
 
   .lesson-container
     posit(absolute);
-    background-color: white;
     overflow: scroll;
 
   .points
@@ -208,8 +189,4 @@
 
     .button
       vertical-align: baseline;
-
-  .power
-    height: 0px;
-    flex-grow: 1;
 </style>

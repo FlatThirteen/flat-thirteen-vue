@@ -1,14 +1,15 @@
 <template lang="pug">
-  .frame
+  .corner-frame(:style="{backgroundColor: bgIntensity}")
     slot
     transition(name="top")
-      .top(v-show="!hideTop")
-        transition(name="boing")
-          backing-button.left(v-if="showBacking || hint.backing", :backing="backing", :throttle="500",
-              :penalty="penalty.backing > 0 && level.backing === penalty.backing", :hint="hint.backing",
-              :class="{weenie: weenie.backing}", @click="$store.dispatch('progress/backing')",
-              @mouseenter.native="!showBacking && onHint('backing')", @mouseleave.native="onHint()")
-        power-backing(ref="backing", @click="$store.dispatch('progress/next', 'backing')")
+      .top.scale(v-show="!hideTop", :class="scaleClass")
+        transition(name="fade")
+          level-control.left(v-if="!lessonName", :level="level.intensity", :max="power.intensity",
+              @level="$store.dispatch('progress/intensity', $event)")
+            intensity-icon.intensity(:level="level.intensity", :color="fgIntensity",
+                @mouseenter.native="level.intensity === power.intensity && onHint('intensity')",
+                @mouseleave.native="onHint()")
+        power-intensity(ref="intensity", @click="$store.dispatch('progress/next', 'intensity')")
         transition(name="boing")
           tempo-control.right(v-if="minTempo < maxTempo || hint.tempo", :tempo="tempo",
               :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
@@ -20,7 +21,7 @@
       .left: slot(name="bottom-left")
       .right
         transition(name="slide"): .stars(v-if="totalStars")
-          star.star(:class="{highlight: activeHint === 'backing'}")
+          star.star(:class="{highlight: activeHint === 'intensity'}")
           span {{ totalStars }}
         transition(name="slide"): .points(v-if="showPoints") {{ showPoints | floor }}
 </template>
@@ -31,16 +32,18 @@
 
   import Sound from '~/common/sound/sound';
 
-  import BackingButton from '~/components/backing-button.component';
-  import PowerBacking from '~/components/power/power-backing.component';
+  import IntensityIcon from '~/components/icon/intensity-icon.component';
+  import LevelControl from '~/components/level-control.component';
+  import PowerIntensity from '~/components/power/power-intensity.component';
   import PowerTempo from '~/components/power/power-tempo.component';
   import Star from '~/components/star.component';
   import TempoControl from '~/components/tempo-control.component';
 
   export default {
     components: {
-      'backing-button': BackingButton,
-      'power-backing': PowerBacking,
+      'intensity-icon': IntensityIcon,
+      'level-control': LevelControl,
+      'power-intensity': PowerIntensity,
       'power-tempo': PowerTempo,
       'star': Star,
       'tempo-control': TempoControl
@@ -58,20 +61,19 @@
     },
     methods: {
       onHint(type) {
-        this.activeHint = type;
-        this.$emit('hint', type && this.hint[type] ? type : null);
+        this.activeHint = this.next[type] && type;
+        this.$emit('hint', this.next[type] && this.hint[type] ? type : null);
       }
     },
     computed: {
       hint() {
         return !this.lessonName && {
-          backing: !this.showBacking && this.level.auto > 1,
           tempo: this.minTempo === this.maxTempo && this.power.notes >= 8
         };
       },
-      showNextBacking() {
-        return !this.lessonName && !!this.next.backing && this.level.auto > 1 &&
-            this.totalPoints >= this.nextPoints && this.totalStars >= 6;
+      showNextIntensity() {
+        return !this.lessonName && this.level.intensity === this.next.intensity - 1 &&
+            this.totalPoints >= this.nextPoints && this.starsCountForIntensity >= 2;
       },
       showNextTempo() {
         return !this.lessonName && !!this.next.tempo && this.tempo === this.maxTempo &&
@@ -79,34 +81,32 @@
       },
       ...mapGetters({
         lessonName: 'progress/lessonName',
-        level: 'progress/level',
         power: 'progress/power',
+        level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
         penalty: 'progress/penalty',
-        backing: 'progress/backing',
-        showBacking: 'progress/showBacking',
+        bgIntensity: 'progress/bgIntensity',
+        fgIntensity: 'progress/fgIntensity',
         tempo: 'progress/tempo',
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
+        scaleClass: 'progress/scaleClass',
+        starsCountForIntensity: 'progress/starsCountForIntensity',
         rowsWithStars: 'progress/rowsWithStars',
-        nextPoints: 'progress/nextPoints',
-        paused: 'transport/paused'
+        nextPoints: 'progress/nextPoints'
       })
     },
     watch: {
-      backing(backing) {
-        if (this.paused) {
-          Sound.playSequence('sawtooth6', backing === 'bass' ? ['A1', 'A2'] : ['A1'], '32n');
-        }
+      'level.intensity'(intensity, oldIntensity) {
+        Sound.toggle(intensity > oldIntensity);
       },
       tempo(tempo, oldTempo) {
-        Sound.click.play('+0', { variation: tempo > oldTempo ? 'normal' : 'heavy' });
-        Sound.click.play('+16n', { variation: tempo > oldTempo ? 'heavy' : 'normal' });
+        Sound.toggle(tempo > oldTempo);
       },
-      showNextBacking(showNextBacking) {
-        if (showNextBacking) {
-          this.$refs.backing.appear(this.next.backing);
+      showNextIntensity(showNextIntensity) {
+        if (showNextIntensity) {
+          this.$refs.intensity.appear(this.next.intensity);
         }
       },
       showNextTempo(showNextTempo) {
@@ -116,7 +116,7 @@
       },
       lessonName(lessonName) {
         if (lessonName) {
-          this.$refs.backing.disappear();
+          this.$refs.intensity.disappear();
           this.$refs.tempo.disappear();
         }
       },
@@ -129,14 +129,17 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/scale.styl"
   @import "~assets/stylus/weenie.styl"
 
-  .frame
+  .corner-frame
     posit(absolute);
 
   .top
     posit(absolute, 0, 0, x, 0);
     height: 0;
+    transform-origin: top left;
+
 
     .left, .right
       top: 0;
@@ -170,13 +173,19 @@
     posit(absolute, x, 0, x, x);
     text-align: right;
 
-  .points, .stars
+  .intensity, .points, .stars
     color: active-blue;
     font-size: 40px;
     font-weight: 600;
 
   .star
     transition: all 250ms ease-in-out;
+
+  .fade-enter-active, .fade-leave-active
+    transition: opacity 500ms;
+
+  .fade-enter, .fade-leave-to
+    opacity: 0;
 
   .boing-enter-active
     transition: transform 300ms cubic-bezier(0,.5,.5,1.5);

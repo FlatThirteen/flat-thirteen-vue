@@ -5,10 +5,10 @@
         @click.native="button && $emit('update:toggle', !toggle)")
     .control(v-if="!hint", :class="{stage: stageGoal, flip: throttled}",
         :style="{animationDuration: throttle + 'ms'}") {{ displayTempo | three}}
-      .up(v-show="tempo < max", :class="{button: !throttled, weenie: weenie && !stageGoal}",
+      .up(v-show="max && tempo < max", :class="{button: !throttled, weenie: weenie && !stageGoal}",
           @click="onChange(tempo + increment)")
         .arrow ▲
-      .down(v-show="tempo > min", :class="{penalty, button: !throttled}",
+      .down(v-show="min && tempo > min", :class="{penalty, button: !throttled}",
           @click="onChange(tempo - increment)") ▼
 </template>
 
@@ -39,7 +39,10 @@
         type: Boolean,
         default: undefined
       },
-      throttle: Number
+      throttle: {
+        type: Number,
+        default: 0
+      }
     },
     data() {
       return {
@@ -127,7 +130,7 @@
         background-color: faint-grey;
 
     .up
-      posit(absolute, x, x, 57px, 0)
+      posit(absolute, x, x, 95%, 0)
 
       &.weenie .arrow
         font-size: 20px;
@@ -135,7 +138,7 @@
         padding-top: 4px;
 
     .down
-      posit(absolute, x, x, 0, 0)
+      posit(absolute, 85%, x, x, 0)
 
   .weenie:not(:hover)
     animation: weenie-move 1s infinite 500ms;

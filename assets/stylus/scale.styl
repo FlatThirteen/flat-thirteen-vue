@@ -1,0 +1,16 @@
+.scale
+  transition: transform 500ms ease-in-out;
+  transition-delay: 250ms;
+
+.initial
+  transform: scale(5);
+
+.first
+  transform: scale(2);
+  transition-delay: 0;
+
+  @media (max-height: 600px)
+    transform: scale(1.6);
+
+.second
+  transform: scale(1.4);

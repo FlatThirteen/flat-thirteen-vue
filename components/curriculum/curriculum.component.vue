@@ -1,10 +1,11 @@
 <template lang="pug">
   .curriculum-container(ref="container", @click="onTouch()")
-    .main-content(:class="scaleClass")
+    .main-content.scale(:class="scaleClass")
       .settings(:class="{space: power.tempo}")
         .layouts
           power-layout.power(ref="layout", @click="onNext('layout')")
-          .layout-selected(ref="selected", :class="{off: level.layout < 0}")
+          .layout-selected(ref="selected", :class="{off: level.layout < 0}",
+              :style="{backgroundColor: bgIntensity}")
           transition-group(name="layout", tag="div", ref="layouts", class="layouts")
             layout-button(v-for="(layout, i) in layouts", :key="String(i)", :layout="layout",
                 :selected="initialSelected || level.layout === i",
@@ -12,16 +13,16 @@
       slot
       .lessons(ref="lessons", :class="{transition}"): transition-group(name="lesson-group")
         .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="String(notes)",
-            v-if="displayPoints", :class="{transition, weenie: String(weenie.notes) === notes}")
+            v-if="displayScores", :class="{transition, weenie: String(weenie.notes) === notes}")
           lesson-button(v-for="pulseBeat in lessonGroup", ref="lessonButton", :key="pulseBeat",
-              :class="{highlight: highlight[pulseBeat]}", :backing="backing",
-              :pulseBeat="pulseBeat", :points="displayPoints[pulseBeat]", :transition="transition",
-              :backingChange="backingChange", :tempoChange="tempoChange", @onTouch="onTouch(pulseBeat)",
+              :class="{highlight: highlight[pulseBeat]}", :intensity="bgIntensity", :backing="backing",
+              :pulseBeat="pulseBeat", :score="displayScores[pulseBeat]", :transition="transition",
+              :intensityChange="intensityChange", :tempoChange="tempoChange", @onTouch="onTouch(pulseBeat)",
               @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
               @mouseenter="onMouseOver(pulseBeat)", @mouseleave="onMouseOver()")
       .end
-    .bottom(:class="scaleClass")
-      note-count(:notes="power.notes")
+    .bottom.scale(:class="scaleClass", :style="bottomStyle")
+      note-count.bottom__contents(:notes="power.notes")
         power-notes.power(ref="notes", @click="onNext('notes')")
 </template>
 
@@ -35,8 +36,6 @@
   import NoteCount from '~/components/curriculum/note-count.component';
   import PowerLayout from '~/components/power/power-layout.component';
   import PowerNotes from '~/components/power/power-notes.component';
-
-  import { PASSING_LESSON, PERFECT_LESSON } from "~/store/progress";
 
   export default {
     mixins: [AnimatedMixin],
@@ -69,9 +68,9 @@
         }]]
       },
       nextLayoutConditions: [
-        { '1111': PASSING_LESSON },
-        { '1111': PERFECT_LESSON, '2221': PERFECT_LESSON, '2212': PERFECT_LESSON,
-          '2122': PERFECT_LESSON, '1222': PERFECT_LESSON, '2222': PERFECT_LESSON }
+        { '1111': 'passing' },
+        { '1111': 'perfect', '2221': 'perfect', '2212': 'perfect',
+          '2122': 'perfect', '1222': 'perfect', '2222': 'perfect' }
       ],
     },
     data() {
@@ -79,7 +78,7 @@
         initialSelected: false,
         clicked: false,
         layoutChange: false,
-        backingChange: false,
+        intensityChange: false,
         tempoChange: false,
         highlight: {}
       };
@@ -154,7 +153,7 @@
         });
       },
       onMouseOver(pulseBeat) {
-        this.highlight = !pulseBeat || this.displayPoints[pulseBeat] ? {} : _.reduce(
+        this.highlight = !pulseBeat || this.displayScores[pulseBeat] ? {} : _.reduce(
             this.prerequisite[pulseBeat], (result, required) => _.set(result, required, true), {});
       },
       onLesson(pulseBeat, {x, y}) {
@@ -178,21 +177,23 @@
       transition() {
         return !this.layoutChange;
       },
-      scaleClass() {
-        return this.power.notes === 4 ? 'first' : this.power.notes === 5 ? 'second' :
-            this.power.notes ? '' : 'initial';
-      },
       showNextLayout() {
         return this.next.layout && this.next.layout === this.level.layout + 1 &&
             _.every(this.nextLayoutConditions[this.level.layout],
-                (points, pulseBeat) => _.get(this.displayPoints, [pulseBeat, 0, 'base']) >= points);
+                (condition, pulseBeat) => _.get(this.displayScores, [pulseBeat, condition]));
       },
       showNextNotes() {
         return !this.clicked && this.next.notes &&  this.totalPoints >= this.nextPoints &&
             this.totalPoints >= (this.next.notes - 4) * 600 &&
             (this.next.notes < 9 || this.level.layout > 1) &&
             _.some(_.last(_.values(this.pulseBeatGroups)),
-                pulseBeat => _.some(this.displayPoints[pulseBeat], amount => amount.base >= PASSING_LESSON));
+                pulseBeat => _.get(this.displayScores, [pulseBeat, 'passing']));
+      },
+      bottomStyle() {
+        return {
+          backgroundColor: this.bgIntensity,
+          boxShadow: '0 0 25px 15px ' + this.bgIntensity
+        }
       },
       ...mapGetters({
         power: 'progress/power',
@@ -200,10 +201,12 @@
         next: 'progress/next',
         weenie: 'progress/weenie',
         backing: 'progress/backing',
+        bgIntensity: 'progress/bgIntensity',
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',
+        scaleClass: 'progress/scaleClass',
         groupsWithoutStars: 'progress/groupsWithoutStars',
-        displayPoints: 'progress/displayPoints',
+        displayScores: 'progress/displayScores',
         prerequisite: 'progress/prerequisite',
         nextPoints: 'progress/nextPoints',
         totalPoints: 'progress/totalPoints'
@@ -212,7 +215,7 @@
     watch: {
       hint(hint) {
         if (hint === 'TODO') { // TODO: Use for power needing all playable
-          this.highlight = _.mapValues(this.displayPoints, value => !value);
+          this.highlight = _.mapValues(this.displayScores, value => !value);
         } else if (hint === 'tempo') {
           let pulseBeats = _.flatten(this.groupsWithoutStars);
           this.highlight = _.zipObject(pulseBeats, _.times(pulseBeats.length, _.constant(true)));
@@ -230,10 +233,10 @@
           this.$nextTick(() => this.$refs.notes.appear(this.next.notes));
         }
       },
-      'level.backing'() {
-        this.backingChange = true;
+      bgIntensity() {
+        this.intensityChange = true;
         this.$nextTick(() => {
-          this.backingChange = false;
+          this.intensityChange = false;
         });
       },
       'level.tempo'() {
@@ -247,6 +250,7 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  @import "~assets/stylus/scale.styl"
   @import "~assets/stylus/weenie.styl"
 
   .curriculum-container
@@ -257,7 +261,7 @@
     transform-origin: top;
 
   .settings
-    background-color: faint-grey;
+    background-color: alpha(gray, .2);
     padding: 30px 0 20px;
     margin-bottom: 20px;
     display: flex;
@@ -277,7 +281,6 @@
   .layout-selected
     position: absolute;
     left: -5px;
-    background-color: white;
     height: 100px;
     width: 100px;
     margin-top: -20px;
@@ -316,31 +319,21 @@
 
   .bottom
     posit(fixed, x, 0, 0, 0);
-    background-color: white;
-    box-shadow: 0 0 25px 15px white;
+    height: 0;
     text-align: center;
     transform-origin: bottom;
+    pointer-events: none;
 
     &.initial
       transform: scale(0);
 
-  .main-content, .bottom
-    transition: all 500ms ease-in-out;
-    transition-delay: 250ms;
+    &__contents
+      posit(relative, -55px, x, x, x);
+      opacity: .9;
 
-  .initial
-    transform: scale(5);
+    .power
+      pointer-events: visible;
 
-  .first
-    transform: scale(2);
-    transition-delay: 0;
-
-    @media (max-height: 600px)
-      transform: scale(1.6);
-
-  .second
-    transform: scale(1.4);
-
-    .lessons
+  .second .lessons
       margin: 0 15%;
 </style>

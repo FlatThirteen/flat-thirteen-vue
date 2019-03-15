@@ -7,8 +7,8 @@ let firstUserAction = false;
 let Sound = {
   FX: {
     next: 'cowbell:16t:A6,E7,A7',
-    auto: 'cowbell:32n:C#6,E6,E6,A6',
-    layout: 'cowbell:32n:D6,F#6,Eb6,G6,E6,G#6,F6,A6',
+    intensity: 'cowbell:32n:D6,F#6,Eb6,G6,E6,G#6,F6,A6',
+    layout: 'cowbell:32n:C#6,E6,E6,A6',
     notes: 'cowbell:32n:F#6,G6,G#6,A6',
     backing: 'cowbell:16t:B5,A6,G#6,E6,G#6,E6,G#6,A6',
     tempo: 'cowbell:16t:A5,D6,F#6,D6,E6,A6',
@@ -76,6 +76,10 @@ let Sound = {
     } else {
       console.warn('No effect named', name);
     }
+  },
+  toggle(up) {
+    Sound.click.play('+0', { variation: up ? 'normal' : 'heavy' });
+    Sound.click.play('+16n', { variation: up ? 'heavy' : 'normal' });
   }
 };
 

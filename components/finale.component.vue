@@ -2,11 +2,11 @@
   .finale-container
     backing
     .meter
-      .meter__container(:class="[backing, {'meter--hide': bonus}]", :style="hideTransition")
+      .meter__container(:class="{'meter--hide': bonus}", :style="hideTransition")
         .meter__level(:style="meterStyle")
         .meter__bar
       .meter__star(ref="star")
-        star(:backing="backing", :white="true")
+        star
     .stages
       .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)",
           @touchstart="play(i), $event.preventDefault()")
@@ -29,15 +29,11 @@
         particle-fx(:type="particleType", :count="particleCount")
       .bonus__footer
     .high(:class="{'high--hide': bonusActive}")
-      .high__ranking
+      .high__scores
         transition-group(name="high__score")
           .high__score(v-for="(score, i) in highScores", :key="score.isNew ? 'new' : i",
-              ref="highScore", :style="{transitionDelay: (final || score.isNew ? 0 : 100 * i) + 'ms'}",
-              :class="[score.backing, {new: score.isNew, flash: score.isNew && final}]")
-            .high__value(:class="{fail: ready && score.base < pass, dim: score.tempo < tempo}") {{ score.base }}
-            .high__tempo(:class="{hide: score.isNew ? !score.tempo || !power.tempo : score.tempo === tempo}")
-              metronome(:mini="true")
-              | {{ score.tempo }}
+              ref="highScore", :style="highScoreStyles[i]", :class="{new: score.isNew}")
+            .high__value(:class="{fail: ready && !score.passing, flash: score.isNew && final}") {{ score.base }}
     .stages-footer
       goal-button.stages-footer__goal(ref="fail", v-if="bonusFail", @click="onGoal()")
     .footer
@@ -74,8 +70,6 @@
   import Star from '~/components/star.component';
   import BouncingBall from '~/components/widget/bouncing-ball.component';
 
-  import { PASSING_LESSON, PERFECT_LESSON } from "~/store/progress";
-
   export default {
     mixins: [AnimatedMixin],
     components: {
@@ -98,7 +92,6 @@
     },
     constants: {
       keys: ['A', 'B', 'C', 'D'],
-      pass: PASSING_LESSON,
       animationDefinitions: {
         appear: [[.5, {
           transform: 'scale(1.1)'
@@ -180,7 +173,7 @@
     },
     mounted() {
       this.phrases = this.$refs.phrase;
-      if (this.bonusStage && this.totalPoints === PERFECT_LESSON) {
+      if (this.bonusStage && _.every(this.stages, stage => stage.points === 100)) {
         this.addEmptyPhrase();
       }
       if (this.progression) {
@@ -202,7 +195,7 @@
         });
       }
       setTimeout(() => {
-        this.highScores = [{ isNew: true, base: 0, backing: this.backing }];
+        this.highScores = [{ isNew: true, base: 0, passing: true }];
         this.start('+0');
       }, 500);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
@@ -308,7 +301,7 @@
             part: position,
             number: Math.floor(this.stages[position].points * .12 + 4),
             backing: this.backing,
-            alternate: total === PERFECT_LESSON
+            alternate: total === this.stages.length * 100
           });
         }
       },
@@ -327,7 +320,7 @@
         }
       },
       showHighScores() {
-        this.highScores = this.ranking(this.totalPoints);
+        this.highScores = this.newHighScores(this.totalPoints);
         this.timeouts.push(setTimeout(() => {
           this.$refs.highScore[_.findIndex(this.highScores, 'isNew')].scrollIntoView({behavior: 'smooth'});
         }, 90 * this.highScores.length));
@@ -350,6 +343,9 @@
       })
     },
     computed: {
+      progression() {
+        return this.level.intensity > 0;
+      },
       ready() {
         return this.state >= this.stages.length;
       },
@@ -392,7 +388,7 @@
         return this.particleType ? 100 : null;
       },
       noAnimation() {
-        return this.bonus === 'goal' && !!this.level.auto;
+        return this.bonus === 'goal' && this.progression;
       },
       hideTransition() {
         return { 'transition-duration': 2 * this.duration + 's' };
@@ -401,18 +397,21 @@
         return { height: (this.ready ? this.totalPoints :
             this.highScores[0] && this.highScores[0].base) / 5 + '%'};
       },
+      highScoreStyles() {
+        return _.map(this.highScores, (score, i) => ({
+          backgroundColor: score.intensity,
+          transitionDelay: (this.final || score.isNew ? 0 : 100 * i) + 'ms'
+        }));
+      },
       ...mapGetters({
         keyDown: 'keyDown',
         numBeats: 'player/numBeats',
         pulsesByBeat: 'player/pulsesByBeat',
         phraseProperties: 'player/phraseProperties',
         level: 'progress/level',
-        power: 'progress/power',
         backing: 'progress/backing',
-        progression: 'progress/progression',
         tempo: 'progress/tempo',
-        lessonName: 'progress/lessonName',
-        ranking: 'progress/ranking',
+        newHighScores: 'progress/newHighScores',
         paused: 'transport/paused'
       }),
     },
@@ -457,7 +456,7 @@
                 this.animate('disappear', { element });
               });
             } else {
-              if (this.bonus === 'start' && this.level.backing) {
+              if (this.bonus === 'start' && this.backing) {
                 this.$refs.composer.reset([0, -8, -5]);
               }
               this.bonus = 'ready';
@@ -485,7 +484,7 @@
           this.phrases = [];
           if (this.state < this.stages.length) {
             this.state = this.stages.length;
-            if (this.level.backing) {
+            if (this.backing) {
               this.$refs.composer.reset([0, -8, -5]);
             }
           }
@@ -608,12 +607,6 @@
       text-align: center;
       transform-origin: top;
 
-      &.bass
-        border-color: bass-color;
-
-        & .meter__level, & .meter__bar
-          background-color: bass-color;
-
     &__level
       posit(absolute, x, 0, 0);
       background-color: primary-blue;
@@ -639,7 +632,7 @@
     &--hide
       transform: scale(0);
 
-    &__ranking
+    &__scores
       margin: auto 0;
       padding: 50px 0;
 
@@ -647,21 +640,15 @@
       color: primary-blue;
       font-weight: 600;
       font-size: calc(25px + 4vh);
-      line-height: calc(5px + 4vh);
       min-height: 25px;
       padding-right: 10px;
       text-align: right;
+      margin: -10px 0;
 
       &.new
         font-size: calc(30px + 5vh);
-        padding: 10px;
+        padding: 0 10px;
         white-space: nowrap;
-
-      &.flash
-        animation: flash 1500ms 20;
-
-      &.bass
-        color: bass-color;
 
       &-enter
         transform: translateX(25vw);
@@ -678,6 +665,9 @@
         animation: shake 1s;
         opacity: 0.6;
         shadow(#555, 5px);
+
+      &.flash
+        animation: flash 1500ms 20;
 
     &__tempo
       display: inline-block;

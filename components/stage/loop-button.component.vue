@@ -78,7 +78,6 @@
       &:before, &:after
         content: '';
         border-radius: 50%;
-        background-color: white;
         border: solid 5px primary-blue;
         display: block;
         margin: 1px;
@@ -91,10 +90,10 @@
 
       &.off
         &:before, &:after
-          border-color: faint-grey;
+          border-color: alpha(gray, 0.4);
 
         &:hover:before, &:hover:after
-          border-color: faint-grey - 20%;
+          border-color: alpha(gray, 0.4) - 20%;
 
       &.assist
         outline: solid alpha(primary-green, 0.3);

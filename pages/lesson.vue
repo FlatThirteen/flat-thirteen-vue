@@ -1,9 +1,8 @@
 <template lang="pug">
   .page
     main-frame(:bonus="true")
-      .auto(slot="help")
-        .icon(@click="initialize(power.auto === 0)") o
-        | :{{ power.auto }}
+      .max(slot="help")
+        .icon(@click="initialize(power.notes === 0)") o
 </template>
 
 <script>
@@ -37,7 +36,7 @@
     posit(absolute);
     user-select: none;
 
-  .auto
+  .max
     font-size: 40px;
     font-weight: 600;
 

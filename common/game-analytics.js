@@ -17,10 +17,10 @@ let GameAnalytics = {
           _.join(_.map([2486484157, 3889590087, 3576893628, 1290759513, 553095923], n => n.toString(16)), ''));
     }
   },
-  start(lessonName, backing, tempo, stage, auto) {
+  start(lessonName, intensity, tempo, stage) {
     this._lessonName = lessonName;
-    this._p2 = backing + '-' + tempo;
-    this._p3 = auto + '-' + stage;
+    this._p2 = intensity + '-' + tempo;
+    this._p3 = stage;
     this.progress('Start');
   },
   complete(points) {

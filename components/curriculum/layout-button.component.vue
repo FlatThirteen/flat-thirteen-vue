@@ -66,8 +66,8 @@
 
   .block
     cursor: pointer;
-    background-color: #ddd;
-    border: solid 3px #bbb;
+    background-color: alpha(lightgray, .8);
+    border: solid 3px alpha(gray, .4);
     position: relative;
     height: 22px;
     width: 22px;

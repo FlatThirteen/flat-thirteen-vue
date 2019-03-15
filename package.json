@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "color": "^3.1.0",
     "gameanalytics": "^3.0.1",
     "gsap": "^2.0.1",
     "js-combinatorics": "^0.5.3",

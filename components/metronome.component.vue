@@ -1,9 +1,13 @@
 <template lang="pug">
   svg(:height="size", :width="size", viewBox="0 0 60 60")
-    path.metronome(:d="path", :class="{hint, disabled}")
-    g.arm(v-if="!hint && !mini", :class="{playing}", :style="style")
-      line(x1="30", y1="3", x2="30", y2="45", stroke="#EEE", stroke-width="2px")
-      circle(cx="30", cy="45", r="8", fill="#EEE")
+    defs
+      mask(id="arm-mask")
+        g.arm(v-if="!hint && !mini", :class="{playing}", :style="style")
+          rect(x="-50%", y="-50%", width="200%", height="200%", fill="white")
+          line(x1="30", y1="3", x2="30", y2="45", stroke="black", stroke-width="2px")
+          circle(cx="30", cy="45", r="8", fill="black")
+    path.metronome(:d="path", :class="{hint, disabled}", mask="url(#arm-mask)")
+
 </template>
 
 <script>

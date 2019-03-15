@@ -11,7 +11,7 @@
           :style="transformOrigin", @finish="clearLesson($event)")
       .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
-        stage(:goal="stageGoal", :tempo="tempo", :showNextAuto="showNextAuto",
+        stage(:goal="stageGoal", :intensity="level.intensity", :tempo="tempo",
             @basePoints="stagePoints = $event", @complete="nextStage($event)")
         quit-button(@click="clearLesson()")
     slot(name="help", slot="bottom-left")
@@ -66,11 +66,10 @@
           transformOrigin: x + 'px ' + (y - scrollTop) + 'px'
         };
         this.update({ pulseBeat, layout: this.layout, clear: true });
-        this.setStages({
-          stages: this.$refs.lessonBuilder.build(this.pointsByPulseBeat[pulseBeat].length),
-          name: this.level.layout + '-' + pulseBeat
+        this.setStages({ pulseBeat,
+          stages: this.$refs.lessonBuilder.build(this.displayScores[pulseBeat].finished),
         });
-        if (this.level.backing) {
+        if (this.backing) {
           this.$refs.composer.reset();
         }
         this.pulseBeat = pulseBeat;
@@ -78,7 +77,7 @@
       nextStage(points) {
         this.stages.push({ phrase: this.stageGoal, points });
         this.$store.dispatch('progress/nextStage');
-        if (this.level.backing) {
+        if (this.backing) {
           this.$refs.composer.updateRhythm();
         }
       },
@@ -88,9 +87,9 @@
         if (!points) {
           GameAnalytics.fail(this.stagePoints);
         }
-        this.addPoints({
+        this.addScore({
           pulseBeat: this.pulseBeat,
-          amount: { base: points, star: points === (this.bonus ? 500 : 400) }
+          score: { base: points, star: points === (this.bonus ? 500 : 400) }
         });
         this.pulseBeat = null;
         this.stages = [];
@@ -99,7 +98,7 @@
       },
       ...mapActions({
         update: 'player/update',
-        addPoints: 'progress/addPoints',
+        addScore: 'progress/addScore',
         setStages: 'progress/setStages'
       })
     },
@@ -107,19 +106,14 @@
       points() {
         return this.totalPoints + _.sumBy(this.stages, 'points');
       },
-      showNextAuto() {
-        return this.totalStars >= Math.pow(2, this.next.auto) && this.points >= this.nextPoints &&
-            this.next.auto === this.level.auto + 1;
-      },
       ...mapGetters({
         stageGoal: 'progress/stageGoal',
         lessonDone: 'progress/lessonDone',
         level: 'progress/level',
-        next: 'progress/next',
+        backing: 'progress/backing',
         layout: 'progress/layout',
         tempo: 'progress/tempo',
-        pointsByPulseBeat: 'progress/pointsByPulseBeat',
-        nextPoints: 'progress/nextPoints',
+        displayScores: 'progress/displayScores',
         totalPoints: 'progress/totalPoints',
         totalStars: 'progress/totalStars'
       })

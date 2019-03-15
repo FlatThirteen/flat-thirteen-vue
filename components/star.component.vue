@@ -1,6 +1,7 @@
 <template lang="pug">
   svg(height="30", width="30", viewBox="0 0 30 30")
-    path.star(:d="path", stroke-width="2px", stroke-linejoin="miter", :class="[backing, { white, hollow }]")
+    path.star(:d="path", stroke-width="2px", stroke-linejoin="miter",
+        :fill="hollow ? 'transparent' : color", :stroke="color")
 </template>
 
 <script>
@@ -10,11 +11,10 @@
 
   export default {
     props: {
-      backing: {
+      color: {
         type: String,
-        default: 'default'
+        default: 'black'
       },
-      white: Boolean,
       hollow: Boolean
     },
     constants: {
@@ -22,24 +22,3 @@
     }
   }
 </script>
-
-<style scoped lang="stylus" type="text/stylus">
-  .default
-    fill: black;
-    stroke: @fill;
-
-  .none
-    fill: white;
-    stroke: @fill;
-
-    &.white
-      fill: primary-blue;
-      stroke: @fill;
-
-  .bass
-    fill: bass-color;
-    stroke: @fill;
-
-  .hollow
-    fill: transparent;
-</style>

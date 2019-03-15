@@ -6,7 +6,7 @@
       svg(viewBox="0 0 60 60")
         defs(v-if="wrong !== undefined")
           linearGradient(id="playGradient" x1="0" y1="0" x2="0" y2="100%")
-            stop(:offset="stopLevel + '%'", stop-color="white")
+            stop(:offset="stopLevel + '%'", :stop-color="backgroundColor")
             stop(:offset="(stopLevel ? stopLevel + 15 : 0) + '%'", :stop-color="color")
         path.play-icon(:d="playPath",
             :fill="wrong === undefined ? color : 'url(#playGradient)'",
@@ -19,7 +19,7 @@
 
   import AnimatedMixin from '~/mixins/animated.mixin';
 
-  import { primaryGreen, hexString } from '~/common/colors'
+  import { primaryGreen, hexString, alpha } from '~/common/colors'
 
   export default {
     mixins: [AnimatedMixin],
@@ -32,6 +32,7 @@
       animationTarget: 'play',
       animationDefinitions: {
         bounce: [[.1, {
+          opacity: 1,
           transform: 'translateY(-1vh)',
           transformOrigin: 'center center'
         }], [.6, {
@@ -117,13 +118,17 @@
       toStopLevel(playNotes, goalNotes) {
         let highest = goalNotes > 4 ? 15 : 45 - goalNotes * 6;
         let notch = (75 - highest) / (goalNotes - 1);
-        let stopLevel = playNotes === goalNotes ? 0 : 75 - notch * playNotes;
+        let stopLevel = playNotes === goalNotes ? 0 : !playNotes ? 100 :
+            80 - notch * playNotes;
         TweenMax.to(this.$data, this.animationDuration, { stopLevel });
       }
     },
     computed: {
       color() {
-        return this.disable ? '#DDD' : hexString(primaryGreen);
+        return this.disable ? 'rgba(128,128,128,0.4)' : hexString(primaryGreen);
+      },
+      backgroundColor() {
+        return this.disable ? 'rgba(0,0,0,0)' : alpha(primaryGreen, 0.1);
       }
     }
   }

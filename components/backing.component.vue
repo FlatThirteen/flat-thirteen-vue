@@ -63,9 +63,6 @@
         this.notes = {};
       },
       beatTickHandler({beatTick, time}) {
-        if (!this.backingVolume) {
-          return;
-        }
         let notes = this.getNotes('backing', beatTick);
         _.forEach(notes, (note) => {
           note.play(time);
@@ -120,7 +117,6 @@
     computed: {
       ...mapGetters({
         getNotes: 'phrase/getNotes',
-        backingVolume: 'progress/backingVolume',
         starting: 'transport/starting',
         paused: 'transport/paused',
       })
