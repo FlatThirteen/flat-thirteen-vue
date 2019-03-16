@@ -4,7 +4,8 @@
       @transitionend="unflip($event)", @touchend="onTouch($event)", @mousedown="emit($event)",
       @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')", @click="emit($event)")
     .stars(v-if="display.stars && display.stars.length")
-      star(v-for="(star, i) in display.stars", :color="star", :key="i", :class="{dim: display.points}")
+      star.star(v-for="(star, i) in display.stars", :color="star", :key="i",
+          :class="{dim: display.points}")
     .points(ref="score", v-if="display.stars", :style="{color: display.intensity}",
         :class="{hide: !display.points, flip: horizontalFlip, transparent}",
         @transitionend="unflip($event)") {{ display.points }}
@@ -134,6 +135,9 @@
         z-index: 1;
 
       &:hover, &.touched
+        .star
+          animation: star 1.5s ease-in-out infinite;
+
         .dim
           opacity: 1;
 
@@ -246,4 +250,15 @@
 
     100%
       transform: translateX(-30px);
+
+  @keyframes star
+    0%, 100%
+      opacity: 1;
+      transform: scale(1);
+      shadow(white, 2px);
+
+    50%
+      opacity: .9;
+      transform: scale(1.1);
+      shadow(white, 5px);
 </style>

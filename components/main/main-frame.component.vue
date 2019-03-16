@@ -67,7 +67,7 @@
         };
         this.update({ pulseBeat, layout: this.layout, clear: true });
         this.setStages({ pulseBeat,
-          stages: this.$refs.lessonBuilder.build(this.displayScores[pulseBeat].finished),
+          stages: this.$refs.lessonBuilder.build(this.displayScores[pulseBeat]),
         });
         if (this.backing) {
           this.$refs.composer.reset();

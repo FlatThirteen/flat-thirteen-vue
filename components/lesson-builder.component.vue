@@ -2,11 +2,12 @@
   .builder(v-if="debug")
     arrangement.arrangement(:phrases="phrases", :tempo="tempo", :show="true")
     .notes
-      .note.toggle(:class="{active: !notes}", @click="build(finished)") Default
-      .note.toggle(v-for="numNotes in notesRange", :class="{active: numNotes === notes}",
+      .primary.toggle(:class="{active: !notes}", @click="build()") Default
+      .primary.toggle(v-for="numNotes in notesRange", :class="{active: numNotes === notes}",
           @click="setNotes(numNotes)") {{ numNotes }}
-      .finished.toggle(:class="{active: finished}",
-          @click="finished = !finished; notes ? setNotes(notes) : build(finished)") Finished
+      .primary.toggle(:class="{active: finished}", @click="onStar(0)")
+        star(v-for="i in 3", :key="i", :hollow="!stars[i-1]", :color="stars[i-1]",
+            @click.native.stop="onStar(i)")
     .pages(v-if="pages.length > 1")
       .page.toggle(v-for="p in pages.length", :class="{active: page === p - 1}",
           @click="page = p - 1") {{ p }}
@@ -25,6 +26,7 @@
 <script>
   import { mapActions, mapGetters } from 'vuex'
 
+  import { intensityColors, fgIntensity } from '~/common/colors';
   import Monotonic from '~/common/composer/monotonic';
   import Parser from '~/common/composer/parser';
   import Rhythm from '~/common/composer/rhythm';
@@ -33,14 +35,19 @@
 
   import Arrangement from '~/components/arrangement.component';
   import Phrase from '~/components/phrase.component';
+  import Star from '~/components/star.component';
 
   export default {
     components: {
-      arrangement: Arrangement,
-      phrase: Phrase
+      'arrangement': Arrangement,
+      'phrase': Phrase,
+      'star': Star
     },
     props: {
       debug: Boolean
+    },
+    constants: {
+      starIntensity: _.times(intensityColors.length, i => fgIntensity(i))
     },
     data() {
       return {
@@ -48,7 +55,8 @@
         stages: [],
         page: 0,
         notes: null,
-        finished: false
+        finished: false,
+        stars: []
       };
     },
     methods: {
@@ -62,7 +70,9 @@
           return false;
         }
       },
-      build(finished) {
+      build({ finished = this.finished, stars = this.stars } = this) {
+        this.finished = !!finished;
+        this.stars = stars;
         this.page = 0;
         this.notes = null;
         if (this.oneNote && this.noteCombinations[0][0] === 'kick' &&
@@ -74,16 +84,32 @@
             [{ type: 'drums', notes: 'K|K||K' }]
           ], _.ary(Parser.parseTracks, 1));
         } else {
+          let numStars = stars.length;
           let numStages = this.debug ? 24 : 4;
           let pickedPhrases = {};
           let avoidBeatTicks = {}; // avoidBeatTicks[count][beatTicksString] = true
           let avoidSequences = {}; // avoidSequences[beatTick] = [replacementForSeedIndex]
           let lastNotes = null;
           this.stages = _.times(numStages, (stage) => {
+            let firstStage = stage === 0;
+            let latterStages = stage >= 2;
+            let lastStage = stage > 2;
+            let startingRests = (this.oneNote ? !numStars - (!finished && !stage) : -!!numStars) + numStars;
+            let maxRests = startingRests + ((!this.oneNote || !numStars) && latterStages) + (numStars && stage);
+            let minRests = stage > 3 ? this.oneNote : startingRests + (!this.oneNote && numStars && !firstStage) + lastStage;
             let debug = {
-              minNotes: Math.max(3, this.beatTicks.length - finished - stage),
-              maxNotes: this.beatTicks.length - (this.oneNote && !!(finished || stage))
+              minNotes: Math.max(3, this.beatTicks.length - maxRests),
+              maxNotes: Math.max(3, this.beatTicks.length - minRests)
             };
+/*
+            if (debug.minNotes > debug.maxNotes || debug.maxNotes > this.beatTicks.length) {
+              console.log(debug, stage,
+                'maxRests ' + startingRests + '+' + ((!this.oneNote || !numStars) && latterStages) + '+' + (numStars && stage) + '=' + maxRests,
+                'minRests ' + startingRests + '+' + (!this.oneNote && numStars && !firstStage) + '+' + lastStage + '=' + minRests);
+              debug.minNotes = 4;
+              debug.maxNotes = 4;
+            }
+*/
             let beatTicks;
             let noteSequence;
             while (!noteSequence) {
@@ -98,8 +124,8 @@
               beatTicks = debug.notes === this.beatTicks.length ? this.beatTicks : null;
               if (!beatTicks) {
                 debug.requiredBeatTicks = this.requiredBeatTicks(
-                  this.pulseBeat !== '1111' || !this.oneNote || !finished,
-                  stage < numStages - 1 && !finished);
+                  numStars < 2 && (this.pulseBeat !== '1111' || !this.oneNote || !finished),
+                  stage < 3 && !finished);
                 let combinations = Rhythm.combinations(this.beatTicks, debug.requiredBeatTicks, debug.notes,
                   _.get(avoidBeatTicks, debug.notes, {}));
                 if (combinations.length) {
@@ -156,7 +182,8 @@
         this.page = 0;
         this.notes = notes;
         let requiredBeatTicks = this.requiredBeatTicks(
-            this.pulseBeat !== '1111' || !this.oneNote || !this.finished, !this.finished);
+          this.stars.length < 2 && (this.pulseBeat !== '1111' || !this.oneNote || !finished),
+          !this.finished);
         let rhythmCombinations = Rhythm.combinations(this.beatTicks, requiredBeatTicks, notes);
         this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => {
           let seedRange = this.oneNote ? [0] : _.range(0, Monotonic.combos(this.noteCombos, beatTicks.length));
@@ -166,6 +193,26 @@
               rhythmSeed, noteSeed, forbidden: this.isForbidden(noteSequence) });
           })
         });
+      },
+      onStar(num) {
+        if (num) {
+          this.finished = true;
+        } else {
+          this.finished = !this.finished;
+        }
+        if (num < this.stars.length) {
+          this.stars = _.take(this.stars, num);
+        } else if (num > this.stars.length) {
+          this.stars = this.stars.concat(_.times(num - this.stars.length, _.constant(this.starIntensity[0])));
+        } else if (num > 0) {
+          let index = _.indexOf(this.starIntensity, this.stars[num - 1]);
+          this.stars[num - 1] = this.starIntensity[(index + 1) % intensityColors.length];
+        }
+        if (this.notes) {
+          this.setNotes(this.notes);
+        } else {
+          this.build();
+        }
       },
       requiredBeatTicks(requireInitial, requireOffbeats) {
         let requiredBeatTicks = [];
@@ -243,22 +290,14 @@
   .notes, .pages
     text-align: center;
 
-  .note
+  .primary
     display: inline-block;
     margin: 10px;
     padding: 10px;
-    font-size: 3vw;
+    font-size: 34px;
     border-radius: 5px;
-    vertical-align: baseline;
 
-  .finished
-    display: inline-block;
-    border-radius: 5px;
-    font-size: 3vw;
-    padding: 7px;
-
-  toggle-color('.note', primary-blue);
-  toggle-color('.finished', primary-blue);
+  toggle-color('.primary', primary-blue);
 
   .page
     display: inline-block;

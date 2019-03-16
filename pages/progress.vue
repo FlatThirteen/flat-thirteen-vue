@@ -78,8 +78,7 @@
         this.buildLesson();
       },
       buildLesson() {
-        let finished = this.displayScores[this.pulseBeat].finished;
-        this.$refs.lessonBuilder.build(finished);
+        this.$refs.lessonBuilder.build(this.displayScores[this.pulseBeat]);
       },
       finishLesson() {
         let stages = this.$refs.lessonBuilder.stages;
