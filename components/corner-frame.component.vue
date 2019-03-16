@@ -72,8 +72,9 @@
         };
       },
       showNextIntensity() {
-        return !this.lessonName && this.level.intensity === this.next.intensity - 1 &&
-            this.totalPoints >= this.nextPoints && this.starsCountForIntensity >= 2;
+        return !this.lessonName && this.power.notes > 4 &&
+            this.level.intensity === this.next.intensity - 1 &&
+            this.starsCountForIntensity >= 2;
       },
       showNextTempo() {
         return !this.lessonName && !!this.next.tempo && this.tempo === this.maxTempo &&

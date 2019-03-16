@@ -21,6 +21,7 @@
           marginLeft: '-70px'
         }], [1, {
           marginLeft: 0,
+          opacity: 1,
           delay: 1.8
         }]],
         click: [[.5, {
@@ -44,6 +45,6 @@
   @import "~assets/stylus/power.styl"
 
   .power
-    posit(absolute, 5px, x, x, 10px)
-
+    posit(absolute, 5px, x, x, 10px);
+    margin-left: -200vw;
 </style>

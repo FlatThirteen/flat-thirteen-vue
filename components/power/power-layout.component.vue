@@ -1,6 +1,6 @@
 <template lang="pug">
   .power.button(ref="layout", v-if="show", @click="onClick()", :class="{active}",
-      @mouseenter="onMouseEnter()", @mouseleave="onMouseLeave()")
+      :style="{right: '200vw'}", @mouseenter="onMouseEnter()", @mouseleave="onMouseLeave()")
     .square
 </template>
 

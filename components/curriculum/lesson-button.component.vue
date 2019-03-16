@@ -138,7 +138,7 @@
           opacity: 1;
 
         .pulse-beat, /.pulse-beat.played
-          background-color: alpha(primary-blue, .6);
+          background-color: alpha(primary-blue, .4);
 
           .backing
             transform: rotate(-20deg) translate(-5px, -10px);
@@ -198,7 +198,7 @@
   .points
     posit(absolute);
     transform-origin: top;
-    opacity: .5;
+    opacity: .6;
 
     &.flip
       transform: scaleX(0.04);
@@ -213,7 +213,7 @@
     opacity: .5;
     transition: opacity 250ms ease-in-out;
 
-  .pulse-beat, .beat, .points
+  .pulse-beat, .beat, .stars
     display: flex;
     justify-content: space-evenly;
     align-items: center;

@@ -76,7 +76,6 @@
     data() {
       return {
         initialSelected: false,
-        clicked: false,
         layoutChange: false,
         intensityChange: false,
         tempoChange: false,
@@ -166,8 +165,6 @@
       },
       onNext(power) {
         this.$store.dispatch('progress/next', power);
-        this.clicked = true;
-        this.$nextTick(() => this.clicked = false);
       },
       getLayoutLeft(layout = this.level.layout) {
         return this.$refs.layouts.children[layout].elm.offsetLeft
@@ -184,7 +181,7 @@
       },
       showNextNotes() {
         let lastRow = _.last(_.values(this.pulseBeatGroups));
-        return !this.clicked && this.next.notes &&  this.totalPoints >= this.nextPoints &&
+        return this.next.notes &&  this.totalPoints >= this.nextPoints &&
             this.totalPoints >= (this.next.notes - 4) * 600 &&
             (this.next.notes < 9 || this.level.layout > 1) &&
             (_.some(lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'perfect'])) ||

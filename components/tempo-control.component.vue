@@ -118,7 +118,7 @@
       opacity: 1;
 
     .up, .down
-      opacity: 0;
+      opacity: .2;
       cursor: pointer;
       font-size: 10px;
       margin: 0 5%;
