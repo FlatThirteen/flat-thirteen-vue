@@ -70,7 +70,7 @@
           return false;
         }
       },
-      build({ finished = this.finished, stars = this.stars } = this) {
+      build({ finished = false, stars = [] } = this) {
         this.finished = !!finished;
         this.stars = stars;
         this.page = 0;
@@ -91,25 +91,13 @@
           let avoidSequences = {}; // avoidSequences[beatTick] = [replacementForSeedIndex]
           let lastNotes = null;
           this.stages = _.times(numStages, (stage) => {
-            let firstStage = stage === 0;
-            let latterStages = stage >= 2;
-            let lastStage = stage > 2;
-            let startingRests = (this.oneNote ? !numStars - (!finished && !stage) : -!!numStars) + numStars;
-            let maxRests = startingRests + ((!this.oneNote || !numStars) && latterStages) + (numStars && stage);
-            let minRests = stage > 3 ? this.oneNote : startingRests + (!this.oneNote && numStars && !firstStage) + lastStage;
-            let debug = {
-              minNotes: Math.max(3, this.beatTicks.length - maxRests),
-              maxNotes: Math.max(3, this.beatTicks.length - minRests)
+            let startingRests = (this.oneNote && (finished || !!stage)) + numStars + (numStars && stage);
+            let maxRests = startingRests + (stage > 1);
+            let minRests = startingRests + (stage > 2) - !!numStars;
+            let debug = { startingRests, maxRests, minRests,
+              minNotes: numStars > 2 ? 3 : Math.max(3, this.beatTicks.length - maxRests),
+              maxNotes: Math.max(3, this.beatTicks.length - (numStars > 2 ? this.oneNote : minRests))
             };
-/*
-            if (debug.minNotes > debug.maxNotes || debug.maxNotes > this.beatTicks.length) {
-              console.log(debug, stage,
-                'maxRests ' + startingRests + '+' + ((!this.oneNote || !numStars) && latterStages) + '+' + (numStars && stage) + '=' + maxRests,
-                'minRests ' + startingRests + '+' + (!this.oneNote && numStars && !firstStage) + '+' + lastStage + '=' + minRests);
-              debug.minNotes = 4;
-              debug.maxNotes = 4;
-            }
-*/
             let beatTicks;
             let noteSequence;
             while (!noteSequence) {
@@ -124,7 +112,7 @@
               beatTicks = debug.notes === this.beatTicks.length ? this.beatTicks : null;
               if (!beatTicks) {
                 debug.requiredBeatTicks = this.requiredBeatTicks(
-                  numStars < 2 && (this.pulseBeat !== '1111' || !this.oneNote || !finished),
+                  !stage || numStars < 2 && (this.pulseBeat !== '1111' || !this.oneNote || !finished),
                   stage < 3 && !finished);
                 let combinations = Rhythm.combinations(this.beatTicks, debug.requiredBeatTicks, debug.notes,
                   _.get(avoidBeatTicks, debug.notes, {}));
@@ -182,7 +170,7 @@
         this.page = 0;
         this.notes = notes;
         let requiredBeatTicks = this.requiredBeatTicks(
-          this.stars.length < 2 && (this.pulseBeat !== '1111' || !this.oneNote || !finished),
+          this.stars.length < 2 && (this.pulseBeat !== '1111' || !this.oneNote || !this.finished),
           !this.finished);
         let rhythmCombinations = Rhythm.combinations(this.beatTicks, requiredBeatTicks, notes);
         this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => {
@@ -197,6 +185,8 @@
       onStar(num) {
         if (num) {
           this.finished = true;
+        } else if (this.stars.length) {
+          this.stars = [];
         } else {
           this.finished = !this.finished;
         }
