@@ -1,7 +1,7 @@
 import { TimelineMax, TweenMax } from 'gsap';
 import { mapGetters } from 'vuex';
 
-const DEBUG = 'goal';
+const DEBUG = '';
 
 function matches(target, condition) {
   if (_.isArray(condition)) {
