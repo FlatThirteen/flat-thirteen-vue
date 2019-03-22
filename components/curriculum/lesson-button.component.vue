@@ -3,19 +3,21 @@
       :class="{transition, touched, passing, button: playable, flip: verticalFlip}",
       @transitionend="unflip($event)", @touchend="onTouch($event)", @mousedown="emit($event)",
       @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')", @click="emit($event)")
-    .stars(v-if="display.stars && display.stars.length")
-      star.star(v-for="(star, i) in display.stars", :color="star", :key="i",
-          :class="{dim: display.points}")
+    .stars(v-if="starColors.length")
+      .star-container
+        star.star(v-for="(color, i) in starColors", :color="color", :key="i",
+            :class="{dim: display.points}")
     .points(ref="score", v-if="display.stars", :style="{color: display.intensity}",
         :class="{hide: !display.points, flip: horizontalFlip, transparent}",
         @transitionend="unflip($event)") {{ display.points }}
     .pulse-beat(ref="pulse", :class="{blank: !playable, played: display.points, transparent}")
-      .backing(v-if="backing")
       .beat(v-for="pulses in pulsesByBeat")
         .pulse(v-for="pulse in pulses", :class="'pulse' + pulse", v-if="playable")
 </template>
 
 <script>
+  import { fgIntensity } from '~/common/colors';
+
   import Star from '~/components/star.component';
 
   export default {
@@ -24,7 +26,6 @@
     },
     props: {
       pulseBeat: String,
-      backing: Boolean,
       transition: Boolean,
       intensity: String,
       intensityChange: Boolean,
@@ -85,6 +86,9 @@
       },
       passing() {
         return this.display.passing;
+      },
+      starColors() {
+        return _.map(this.display.stars, star => fgIntensity(star));
       }
     },
     watch: {
@@ -121,7 +125,6 @@
     margin: .5vh .5vw;
     font-size: 40px;
     line-height: 60px;
-    overflow: hidden;
     position: relative;
     transition: transform 250ms ease-in-out;
 
@@ -135,6 +138,9 @@
         z-index: 1;
 
       &:hover, &.touched
+        .star-container
+          transform: scale(1.5)
+
         .star
           animation: star 1.5s ease-in-out infinite;
 
@@ -199,10 +205,18 @@
     posit(absolute);
     background-color: primary-blue;
 
+  .star-container
+    posit(absolute);
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    transform-origin: center 200%;
+    transition: transform 250ms ease-in-out;
+    pointer-events: none;
+
   .points
     posit(absolute);
     transform-origin: top;
-    opacity: .6;
 
     &.flip
       transform: scaleX(0.04);
@@ -259,6 +273,6 @@
 
     50%
       opacity: .9;
-      transform: scale(1.1);
+      transform: scale(1.2);
       shadow(white, 5px);
 </style>

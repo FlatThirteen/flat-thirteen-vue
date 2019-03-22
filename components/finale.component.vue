@@ -38,12 +38,11 @@
       goal-button.stages-footer__goal(ref="fail", v-if="bonusFail", @click="onGoal()")
     .footer
       key-handler
-      composer(ref="composer", defaultRhythm="%1,%1|%2,%2|%3,%3|%1,%1")
       transition(name="finish")
         .finish.button(v-if="earlyExit || exitable", :class="{weenie: final && paused}", @click="finish()")
           play-button.play-button(:disable="true")
       arrangement.arrangement(:phrases="phrases", :tempo="tempo", :count="!ready",
-          play="finale", :loop="final ? 4 : undefined", :progression="progression",
+          :loop="final ? 4 : undefined", :progression="progression",
           @position="onPosition($event)")
 </template>
 
@@ -86,6 +85,7 @@
       'star': Star,
       'bouncing-ball': BouncingBall
     },
+    inject: ['getComposer'],
     props: {
       stages: Array, // [{ phrase, points }]
       bonusStage: Boolean
@@ -176,25 +176,8 @@
       if (this.bonusStage && _.every(this.stages, stage => stage.points === 100)) {
         this.addEmptyPhrase();
       }
-      if (this.progression) {
-        this.$store.dispatch('phrase/setTracks', {
-          name: 'metronome',
-          tracks: [{
-            type: 'cowbell',
-            notes: 'C5:7|6|4|7',
-          }]
-        });
-        this.$store.dispatch('phrase/setTracks', {
-          name: 'progression',
-          tracks: [{
-            type: 'fatsquare5',
-            notes: 'C5:II^3|-|-|-|III^3|-|-|-|IV^3|-|-|-|V^3|-|-|-|VI^3|-,V|-,bVI|VI',
-            velocity: .2
-          }],
-          numBeats: 20
-        });
-      }
       setTimeout(() => {
+        this.getComposer().setFinale(_.map(this.stages, 'points'));
         this.highScores = [{ isNew: true, base: 0, passing: true }];
         this.start('+0');
       }, 500);
@@ -273,14 +256,9 @@
             });
           }
           if (this.bonusSuccess) {
-            this.$refs.composer.clear();
-            this.setBonusSuccess({ layout: this.level.layout, backing: this.backing });
             this.animate('success', { element: this.$refs.star, duration: 4 * this.duration });
-          } else {
-            this.$refs.composer.updateRootNote(['C2', 'F2', 'G2', 'Bb2'][this.position % 4]);
           }
         } else if (position === this.stages.length) {
-          this.setBonusStart({ layout: this.level.layout, backing: this.backing });
           this.bonus = 'start';
           this.animate('fill', { element: this.$refs.star, duration: 4 * this.duration });
         } else if (position >= 0 && this.state < position) {
@@ -296,12 +274,6 @@
               }
             },
             onUpdateParams: ['{self}'],
-          });
-          this.setFinale({
-            part: position,
-            number: Math.floor(this.stages[position].points * .12 + 4),
-            backing: this.backing,
-            alternate: total === this.stages.length * 100
           });
         }
       },
@@ -338,10 +310,6 @@
       ...mapActions({
         start: 'transport/start',
         stop: 'transport/stop',
-        clear: 'phrase/clear',
-        setFinale: 'phrase/setFinale',
-        setBonusStart: 'phrase/setBonusStart',
-        setBonusSuccess: 'phrase/setBonusSuccess'
       })
     },
     computed: {
@@ -437,8 +405,6 @@
       },
       paused(paused) {
         if (paused) {
-          this.clear('finale');
-          this.$store.dispatch('phrase/setProgression', { enable: this.progression });
           if (this.bonusActive) {
             if (this.bonus === 'play' && this.playKeys.length === this.targetKeys.length) {
               if (this.playKeys === this.targetKeys) {
@@ -461,9 +427,6 @@
                 this.animate('disappear', { element });
               });
             } else {
-              if (this.bonus === 'start' && this.backing) {
-                this.$refs.composer.reset([0, -8, -5]);
-              }
               this.bonus = 'ready';
               if (this.$refs.goal) {
                 this.$refs.goal.animate(this.bonus === 'goal' ? 'land' : 'appear');
@@ -488,10 +451,9 @@
           }
           this.phrases = [];
           if (this.state < this.stages.length) {
+            // End of finale
             this.state = this.stages.length;
-            if (this.backing) {
-              this.$refs.composer.reset([0, -8, -5]);
-            }
+            this.getComposer().setStage({ finale: true });
           }
         }
       },

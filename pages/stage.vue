@@ -1,17 +1,21 @@
 <template lang="pug">
   .container(:style="{backgroundColor: bgIntensity}")
     backing
-    stage(ref="stage", :goal="goal", :intensity="intensityLevel", :tempo="tempo",
-        @basePoints="basePoints = $event", @complete="$refs.stage.start()")
+    stage(ref="stage", :goal="stageGoals[stageIndex]", :stage="stageIndex",
+        :intensity="intensity", :tempo="tempo",
+        @basePoints="basePoints = $event", @complete="onComplete()")
     .top
       .intensity.left
-        level-control.control(:level="intensityLevel", :max="4", @level="setIntensity($event)")
-          intensity-icon(:level="intensityLevel")
-        span(v-show="hasBacking") =
-        composer(ref="composer", :show="hasBacking")
+        level-control.control(:level="intensity", :max="4", @level="setIntensity($event)")
+          intensity-icon(:level="intensity")
+        stars-control.stars.toggle(:stars="stars", @stars="setStars($event)" :default="intensity")
+        lesson-builder(ref="lessonBuilder", @stages="stageGoals = $event")
+        composer(ref="composer", :show="true")
       tempo-control.right(:tempo="tempo", @tempo="tempo = $event", :min="60", :max="240")
     .bottom
       .left
+        .stage.toggle(v-for="i in 4", :class="{active: i-1 === stageIndex}",
+            @click="stageIndex = i - 1") {{ i }}
       .middle
         .pulses-input
           input(type="text", v-model="pulseBeat", placeholder="# pulses", @keydown.stop="")
@@ -30,8 +34,10 @@
   import Backing from '~/components/backing.component';
   import Composer from '~/components/composer.component';
   import IntensityIcon from '~/components/icon/intensity-icon.component';
+  import LessonBuilder from '~/components/lesson-builder.component';
   import LevelControl from '~/components/level-control.component';
   import Stage from '~/components/stage/stage.component';
+  import StarsControl from '~/components/stars-control.component';
   import TempoControl from '~/components/tempo-control.component';
 
   export default {
@@ -39,57 +45,70 @@
       'backing': Backing,
       'composer': Composer,
       'intensity-icon': IntensityIcon,
+      'lesson-builder': LessonBuilder,
       'level-control': LevelControl,
       'stage': Stage,
+      'stars-control': StarsControl,
       'tempo-control': TempoControl
     },
     head: {
       title: 'Flat Thirteen | Stage'
     },
     layout: 'debug',
+    provide() {
+      return { getComposer: () => this.$refs.composer }
+    },
     data() {
       return {
         pulseBeat: '1111',
-        intensityLevel: 0,
+        stageGoals: [],
+        stageIndex: 0,
+        intensity: 0,
         layout: [
           { noteByKey: { q: 'snare', a: 'kick' } },
         ],
         tempo: 120,
         basePoints: 0,
+        stars: [],
         victoryLevel: 10
       }
     },
     mounted() {
-      this.$refs.stage.start();
+      this.updateIfPossible();
     },
     methods: {
       setIntensity(level) {
-        this.intensityLevel = level;
-        if (level > 2) {
-          this.$refs.composer.reset();
-        } else {
-          this.$refs.composer.clear();
-        }
+        this.intensity = level;
+        this.updateIfPossible();
+      },
+      setStars(stars) {
+        this.stars = stars;
+        this.updateIfPossible();
       },
       setVictory(level = this.victoryLevel > 1 ? this.victoryLevel - 1 : 10) {
         this.victoryLevel = level;
       },
       onVictory(clear) {
         this.$refs.stage.setVictory(clear ? 0 : this.victoryLevel);
+      },
+      onComplete() {
+        this.stageIndex = (this.stageIndex + 1) % 4;
+        if (!this.stageIndex) {
+          this.updateIfPossible();
+        }
+      },
+      updateIfPossible() {
+        if (this.numBeats > 1 && this.$refs.lessonBuilder) {
+          this.stageGoals = this.$refs.lessonBuilder.build({stars: this.stars});
+          this.$refs.composer.setStage(_.defaults({ layout: 1 }, this));
+        }
       }
     },
     computed: {
       bgIntensity() {
-        return bgIntensity(this.intensityLevel);
-      },
-      goal() {
-        return !this.numBeats ? null : [{
-          type: 'drums',
-          notes: _.join(_.times(this.numBeats - 1, i => i % 2 ? 'S' : 'K'), '|')
-        }];
+        return bgIntensity(this.intensity);
       },
       ...mapGetters({
-        hasBacking: 'phrase/hasBacking',
         numBeats: 'player/numBeats'
       })
     },
@@ -98,6 +117,7 @@
         immediate: true,
         handler(pulseBeat) {
           this.$store.dispatch('player/update', { pulseBeat, layout: this.layout });
+          this.updateIfPossible();
         }
       }
     }
@@ -150,7 +170,16 @@
   .right
     text-align: right;
 
-  .intensity, .victory
+  toggle-color('.toggle', primary-blue);
+
+  .stars
+    display: inline-block;
+
+  .stage
+    display: inline-block;
+    border-radius: 5px;
+
+  .stage, .intensity, .victory
     font-size: 40px;
     font-weight: bold;
 

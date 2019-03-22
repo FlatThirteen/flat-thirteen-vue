@@ -15,7 +15,7 @@
         .lesson-group(v-for="(lessonGroup, notes) in pulseBeatGroups", :key="String(notes)",
             v-if="displayScores", :class="{transition, weenie: String(weenie.notes) === notes}")
           lesson-button(v-for="pulseBeat in lessonGroup", ref="lessonButton", :key="pulseBeat",
-              :class="{highlight: highlight[pulseBeat]}", :intensity="bgIntensity", :backing="backing",
+              :class="{highlight: highlight[pulseBeat]}", :intensity="bgIntensity",
               :pulseBeat="pulseBeat", :score="displayScores[pulseBeat]", :transition="transition",
               :intensityChange="intensityChange", :tempoChange="tempoChange", @onTouch="onTouch(pulseBeat)",
               @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
@@ -198,7 +198,6 @@
         level: 'progress/level',
         next: 'progress/next',
         weenie: 'progress/weenie',
-        backing: 'progress/backing',
         bgIntensity: 'progress/bgIntensity',
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',

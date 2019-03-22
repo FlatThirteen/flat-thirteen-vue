@@ -11,7 +11,7 @@
           :style="transformOrigin", @finish="clearLesson($event)")
       .lesson-container(v-else, key="stage", :style="transformOrigin")
         backing
-        stage(:goal="stageGoal", :intensity="level.intensity", :tempo="tempo",
+        stage(:goal="stageGoal", :stage="stageIndex", :intensity="level.intensity", :tempo="tempo",
             @basePoints="stagePoints = $event", @complete="nextStage($event)")
         quit-button(@click="clearLesson()")
     slot(name="help", slot="bottom-left")
@@ -43,6 +43,9 @@
       'quit-button': QuitButton,
       'stage': Stage,
     },
+    provide() {
+      return { getComposer: () => this.$refs.composer };
+    },
     props: {
       bonus: Boolean
     },
@@ -66,20 +69,16 @@
           transformOrigin: x + 'px ' + (y - scrollTop) + 'px'
         };
         this.update({ pulseBeat, layout: this.layout, clear: true });
+        let lessonScore = this.displayScores[pulseBeat];
         this.setStages({ pulseBeat,
-          stages: this.$refs.lessonBuilder.build(this.displayScores[pulseBeat]),
+          stages: this.$refs.lessonBuilder.build(lessonScore),
         });
-        if (this.backing) {
-          this.$refs.composer.reset();
-        }
+        this.$refs.composer.setStage(_.defaults({ stars: lessonScore.stars || [] }, this.level));
         this.pulseBeat = pulseBeat;
       },
       nextStage(points) {
         this.stages.push({ phrase: this.stageGoal, points });
         this.$store.dispatch('progress/nextStage');
-        if (this.backing) {
-          this.$refs.composer.updateRhythm();
-        }
       },
       clearLesson(points) {
         console.assert(this.pulseBeat);
@@ -89,11 +88,10 @@
         }
         this.addScore({
           pulseBeat: this.pulseBeat,
-          score: { base: points, star: points === (this.bonus ? 500 : 400) }
+          score: { base: points, star: points === 500 }
         });
         this.pulseBeat = null;
         this.stages = [];
-        this.$refs.composer.clear();
         this.setStages();
       },
       ...mapActions({
@@ -108,9 +106,9 @@
       },
       ...mapGetters({
         stageGoal: 'progress/stageGoal',
+        stageIndex: 'progress/stageIndex',
         lessonDone: 'progress/lessonDone',
         level: 'progress/level',
-        backing: 'progress/backing',
         layout: 'progress/layout',
         tempo: 'progress/tempo',
         displayScores: 'progress/displayScores',

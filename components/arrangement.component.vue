@@ -26,7 +26,6 @@
       tempo: Number,
       show: Boolean,
       count: Boolean,
-      play: String,
       progression: Boolean,
       loop: Number
     },
@@ -61,16 +60,11 @@
         let phrase = this.phrases[this.position];
         if (phrase) {
           phrase.onBeatTick(beatTick, time);
-          if (this.play) {
-            let measure = this.loop ? this.position % this.loop : this.position;
-            let progressionBeatTick = BeatTick.from((measure * this.beatsPerMeasure) + beat, tick);
-            _.forEach(this.getNotes('progression', progressionBeatTick), note => {
-              note.play(time);
-            });
-            _.forEach(this.getNotes(this.play, beatTick), note => {
-              note.play(time);
-            });
-          }
+          let measure = this.loop ? this.position % this.loop : this.position;
+          let progressionBeatTick = BeatTick.from((measure * this.beatsPerMeasure) + beat, tick);
+          _.forEach(this.getNotes('progression', progressionBeatTick), note => {
+            note.play(time);
+          });
         } else if (this.progression && this.position < 0) {
           _.forEach(this.getNotes('metronome', beatTick), note => {
             note.play(time);

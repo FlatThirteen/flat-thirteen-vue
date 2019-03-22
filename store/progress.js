@@ -76,7 +76,7 @@ export const getters = {
   tempos: (state, getters) => _.range(getters.minTempo, getters.maxTempo + INCREMENT, INCREMENT),
   tempo: (state, getters) => TEMPO + INCREMENT * getters.level.tempo,
   minTempo: () => TEMPO,
-  maxTempo: (state, getters) => TEMPO + INCREMENT * (getters.stageGoal ? state.mode.tempo : state.power.tempo),
+  maxTempo: state => TEMPO + INCREMENT * (state.lesson.pulseBeat ? state.mode.tempo : state.power.tempo),
   pulseBeats: () => _.concat(_.map(Combinatorics.baseN([1, 2], 4).toArray(), _.partial(_.join, _, ''))),
   pulseBeatGroups: (state, getters) => _.mapValues(_.pickBy(_.groupBy(_.map(getters.pulseBeats, splitPulseBeat), _.sum),
       (group, noteCount) => _.toNumber(noteCount) * getters.layoutNotesMultiple <= state.power.notes),
@@ -144,7 +144,7 @@ export const getters = {
       return {
         intensity: fgIntensity(score.intensity),
         finished: validScores.length || 1,
-        stars: _.map(_.take(stars, 3), score => fgIntensity(score.intensity)),
+        stars: _.map(_.take(stars, 3), 'intensity'),
         points: score.star ? undefined : score.base,
         passing: score.passing,
         perfect: score.perfect,

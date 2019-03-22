@@ -66,6 +66,7 @@
     },
     props: {
       goal: [Array, Object],
+      stage: Number,
       intensity: Number,
       tempo: Number
     },
@@ -141,8 +142,7 @@
         this.points = MAX_POINTS;
         this.goalCount = 0;
         GameAnalytics.start(this.lessonName, this.level.intensity, this.tempo,
-            this.stageIndex);
-        this.$store.dispatch('phrase/setProgression', { enable: this.progression });
+            this.stage);
       },
       onVisiblityChange() {
         if (document.hidden) {
@@ -154,9 +154,7 @@
         if (!first && this.playing) {
           this.showGoal = false;
           if (this.autoRepeat && this.scene !== 'count') {
-            this.measure++;
-          } else {
-            this.measure = 0;
+            this.measure = (this.measure + 1) % 4;
           }
           let scene = this.nextScene;
           if (this.scene === 'victory') {
@@ -184,10 +182,9 @@
           if (scene === 'standby') {
             this.$store.dispatch('transport/stop');
           } else if (scene === 'count') {
-            this.measure = 0;
             this.$store.dispatch('transport/start', this.tempo >= 120 ? '+2n' : '+1s');
           } else if (scene === 'playback') {
-            this.$store.commit('phrase/clear', { name: 'playback' });
+            this.$store.dispatch('phrase/clear', 'playback');
           } else if (scene === 'victory') {
             this.$store.dispatch('phrase/setVictory', _.floor(this.basePoints / 10));
             GameAnalytics.complete(this.basePoints);
@@ -197,8 +194,8 @@
       },
       beatTickHandler({time, beat, tick, beatTick, lastBeat}) {
         let progression = this.scene === 'count' ? 'metronome' : 'progression';
-        let measure = (Math.max(0, this.stageIndex) + this.measure) % 4 * this.beatsPerMeasure;
-        let progressionBeatTick = BeatTick.from(measure + beat, tick);
+        let startBeat = this.measure * this.beatsPerMeasure;
+        let progressionBeatTick = BeatTick.from(startBeat + beat, tick);
         _.forEach(this.getNotes(progression, progressionBeatTick), note => {
           note.play(time);
         });
@@ -264,7 +261,7 @@
           if (scene === 'goal' && this.goalCount > 1) {
             this.addPenalty('goalPenalty', 10);
           }
-          this.$store.commit('phrase/clear', { name: 'playback' });
+          this.$store.dispatch('phrase/clear', 'playback');
           this.$nextTick(() => {
             this.$store.dispatch('transport/start');
           });
@@ -392,7 +389,6 @@
         level: 'progress/level',
         weenie: 'progress/weenie',
         penalty: 'progress/penalty',
-        stageIndex: 'progress/stageIndex',
         lessonName: 'progress/lessonName',
         lessonDone: 'progress/lessonDone',
         active: 'transport/active',
@@ -416,12 +412,10 @@
           }
         }
       },
-      stageIndex() {
+      stage() {
         this.start();
         this.animate('next');
-      },
-      progression(progression) {
-        this.$store.dispatch('phrase/setProgression', { enable: progression });
+        this.measure = this.stage;
       },
       playing() {
         this.lastBeat = false;

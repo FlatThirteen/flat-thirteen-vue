@@ -14,11 +14,12 @@ export class Note {
 
   get duration() {
     let time = new Tone.Time(this.params && this.params.duration || '16n');
-    return time.toSeconds();
+    return time.toNotation();
   }
 
   extendDuration(duration) {
-    this.params.duration = new Tone.TimeBase(this.params.duration) + new Tone.TimeBase(duration);
+    this.params.duration = new Tone.Time(new Tone.TimeBase(this.params.duration) +
+        new Tone.TimeBase(duration)).toNotation();
   }
 
   play(time) {

@@ -1,19 +1,20 @@
 import Vue from 'vue';
 
 import Parser from '~/common/composer/parser';
-import BeatTick from '~/common/core/beat-tick.model';
 import Note from '~/common/core/note.model';
-import Tone from '~/common/tone';
 
 export const state = () => ({
   live: {
     backing: {},
-    finale: {},
     goal: {},
     metronome: {},
     playback: {},
     progression: {},
     victory: {}
+  },
+  last: {
+    metronome: {},
+    progression: {}
   },
   victory: {}
 }); // state[bucket][name][beatTick] = [Note]
@@ -34,6 +35,9 @@ export const mutations = {
     Vue.set(state[bucket], name, {});
   },
   set(state, {bucket = 'live', name, notes}) {
+    if (bucket === 'live' && state.last[name]) {
+      Vue.set(state.last, name, state.live[name]);
+    }
     Vue.set(state[bucket], name, notes);
   },
   add(state, {bucket = 'live', name, beatTick, note}) {
@@ -82,81 +86,19 @@ export const actions = {
       commit('set', { name: 'goal', notes: goal });
     }
   },
-  clear({commit}, name){
+  clear({commit}, name) {
     commit('clear', {name});
+  },
+  undo({commit, state}, name) {
+    if (state.last[name]) {
+      commit('set', {name, notes: state.last[name]});
+    }
   },
   setVictory({commit, state}, number) {
     let notes = state.victory[_.clamp(number, 2, 10)];
     if (notes) {
       commit('set', { name: 'victory', notes });
     }
-  },
-  setProgression({commit, dispatch}, {enable}) {
-    if (enable) {
-      dispatch('setTracks', {
-        name: 'metronome',
-        tracks: [{
-          type: 'cowbell',
-          notes: 'C5:7|5|4|5|7|5|4|7|7|5|4|5|7|5|5|4',
-        }],
-        numBeats: 16
-      });
-      dispatch('setTracks', {
-        name: 'progression',
-        tracks: [{
-          type: 'fatsquare5',
-          notes: 'C5:I^3|-|-|-|IV|-|-|-|V|-|-|-|bVII|-|-|-|IV|V|VI|',
-          velocity: .2
-        }],
-        numBeats: 20
-      });
-    } else {
-      dispatch('clear', 'metronome');
-      dispatch('clear', 'progression');
-    }
-  },
-  setFinale({commit}, {part, number, backing, alternate}) {
-    if (backing) {
-      let rootNote = ['D2', 'E2', 'F2', 'G2'][part];
-      let intervals = [0, -5, -2, 3, 4];
-      let rhythm = '%1,%2|%3,%1|,%2|' + (part < 3 ? '%3,%1' : '%4,%5,%1,');
-      let notes = Parser.parseTracks([{
-        type: 'sawtooth6',
-        notes: rootNote + ':' + _.reduceRight(intervals, (template, interval, index) =>
-            _.replace(template, new RegExp('%' + (index + 1), 'g'), interval), rhythm)
-      }]);
-      commit('set', { name: 'finale', notes });
-    } else {
-      commit('clear', { name: 'finale' });
-    }
-    let rootNote = ['D6', 'E6', 'F6', 'G6'][part];
-    let sequence = [0, -5, 2, -5, 4, 0, 2, -5, 4, -5, 0, 2, 4, 0, 7, part < 3 || !alternate ? 0 : 9];
-    let order = _.take([0, 6, 8, 12, 10, 4, 2, 14, 11, 5, 13, 9, 3, 7, 1, 15], number);
-    _.forEach(order, index => {
-      commit('add', {
-        name: 'finale',
-        beatTick: BeatTick.from(index >> 2, index % 4, 4),
-        note: new Note('cowbell', {
-          pitch: Tone.pitch(rootNote, sequence[index])
-        })
-      });
-    });
-  },
-  setBonusStart({commit}, {layout, backing}) {
-    let tracks = [
-      { type: 'drums', notes: ['K,|K,K|, K|K', 'K,|K,S|, K|S', 'K,|K,K.S|, K|K.S'][layout]},
-      { type: 'cowbell', notes: 'A6,A7|A7,A6|A7,A7|A6,' },
-      { type: 'sawtooth6', notes: backing && 'A2,G2|E2,G2|,G2|A2,' }
-    ];
-    commit('set', { name: 'finale', notes: Parser.parseTracks(tracks) });
-  },
-  setBonusSuccess({commit}, {layout, backing}) {
-    let tracks = [
-      { type: 'drums', notes: ['K,,,K|K,,,K|K,,K,K|K', 'K,,S,K|K,,S,K|K,K,S,K|K', 'K,,K.S,K|S.K,,K.S,K|S.K,S,K.S,K|K.S'][layout]},
-      { type: 'cowbell', notes: 'A5,,A5,A5| E5,A5,E5,E5| A5,,,E6|A6' },
-      { type: 'sawtooth6', notes: backing && 'F2,F1|G2,G1|A2,E2,G2,A2|A1,' }
-    ];
-    commit('set', { name: 'finale', notes: Parser.parseTracks(tracks) })
   },
   setTracks({commit}, {name, tracks, numBeats}) {
     commit('set', { name, notes: Parser.parseTracks(tracks, numBeats)})
