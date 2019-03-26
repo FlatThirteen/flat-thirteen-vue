@@ -16,7 +16,8 @@
             v-if="displayScores", :class="{transition, weenie: String(weenie.notes) === notes}")
           lesson-button(v-for="pulseBeat in lessonGroup", ref="lessonButton", :key="pulseBeat",
               :class="{highlight: highlight[pulseBeat]}", :intensity="bgIntensity",
-              :pulseBeat="pulseBeat", :score="displayScores[pulseBeat]", :transition="transition",
+              :pulseBeat="pulseBeat", :score="displayScores[pulseBeat]",
+              :showHollowStars="showHollowStars", :transition="transition",
               :intensityChange="intensityChange", :tempoChange="tempoChange", @onTouch="onTouch(pulseBeat)",
               @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
               @mouseenter="onMouseOver(pulseBeat)", @mouseleave="onMouseOver()")
@@ -173,6 +174,9 @@
     computed: {
       transition() {
         return !this.layoutChange;
+      },
+      showHollowStars() {
+        return _.get(this.displayScores, ['2222', 'passing']);
       },
       showNextLayout() {
         return this.next.layout && this.next.layout === this.level.layout + 1 &&

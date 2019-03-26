@@ -1,7 +1,8 @@
 <template lang="pug">
   svg(height="30", width="30", viewBox="0 0 30 30")
     path.star(:d="path", stroke-width="2px", stroke-linejoin="miter",
-        :fill="hollow ? 'transparent' : color", :stroke="color")
+        :fill="color || 'transparent'",
+        :stroke="color || 'rgba(100,100,100,.5)'")
 </template>
 
 <script>
@@ -11,11 +12,7 @@
 
   export default {
     props: {
-      color: {
-        type: String,
-        default: 'black'
-      },
-      hollow: Boolean
+      color: String
     },
     constants: {
       path: Svg.path(Svg.mirror(halfStar, [15,0]), {z: true})

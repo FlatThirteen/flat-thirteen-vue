@@ -1,6 +1,6 @@
 <template lang="pug">
   .toggle(:class="{active}", @click="onBackground()")
-    star(v-for="i in 3", :key="i", :hollow="!starColors[i-1]", :color="starColors[i-1]",
+    star(v-for="i in 3", :key="i", :color="starColors[i-1]",
         @click.native.stop="onStar(i)")
 </template>
 

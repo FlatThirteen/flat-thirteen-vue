@@ -6,7 +6,7 @@
         .meter__level(:style="meterStyle")
         .meter__bar
       .meter__star(ref="star")
-        star
+        star(color="black")
     .stages
       .lesson(v-for="(stage, i) in stages", :class="{button: playable}", @click="play(i)",
           @touchstart="play(i), $event.preventDefault()")

@@ -21,7 +21,7 @@
       .left: slot(name="bottom-left")
       .right
         transition(name="slide"): .stars(v-if="totalStars")
-          star.star(:class="{highlight: activeHint === 'intensity'}")
+          star.star(color="black", :class="{highlight: activeHint === 'intensity'}")
           span {{ totalStars }}
         transition(name="slide"): .points(v-if="showPoints") {{ showPoints | floor }}
 </template>

@@ -17,7 +17,7 @@
               .button(@click="finishLesson()") +
               input(v-for="(points, i) in pointsByStage", type="number",
                   v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}")
-              star.button(:hollow="hollowStar", @click.native="onStar()")
+              star.button(:color="hollowStar ? null : 'black'", @click.native="onStar()")
             quit-button(@click="exitLesson()")
 </template>
 

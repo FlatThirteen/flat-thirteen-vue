@@ -2,11 +2,11 @@
   .lesson(ref="lesson", :style="{backgroundColor: intensity}",
       :class="{transition, touched, passing, button: playable, flip: verticalFlip}",
       @transitionend="unflip($event)", @touchend="onTouch($event)", @mousedown="emit($event)",
-      @mouseenter="$emit('mouseenter')", @mouseleave="$emit('mouseleave')", @click="emit($event)")
+      @mouseenter="onMouse($event)", @mouseleave="onMouse($event)", @click="emit($event)")
     .stars(v-if="starColors.length")
-      .star-container
-        star.star(v-for="(color, i) in starColors", :color="color", :key="i",
-            :class="{dim: display.points}")
+      transition-group.star-container(name="star")
+        star(v-for="(color, i) in starColors", :color="color", :key="i",
+            :class="{star: color, hollow: !color, dim: display.points}")
     .points(ref="score", v-if="display.stars", :style="{color: display.intensity}",
         :class="{hide: !display.points, flip: horizontalFlip, transparent}",
         @transitionend="unflip($event)") {{ display.points }}
@@ -31,10 +31,12 @@
       intensityChange: Boolean,
       tempoChange: Boolean,
       score: Object, // { intensity, stars, points, dim, heavy, light }]
+      showHollowStars: Boolean
     },
     data() {
       return {
         move: '',
+        hovered: false,
         touched: false,
         horizontalFlip: false,
         verticalFlip: false,
@@ -43,6 +45,10 @@
       }
     },
     methods: {
+      onMouse(event) {
+        this.hovered = event.type === 'mouseenter';
+        this.$emit(event.type);
+      },
       onTouch(event) {
         if (this.playable) {
           this.touched = !this.touched;
@@ -88,7 +94,14 @@
         return this.display.passing;
       },
       starColors() {
-        return _.map(this.display.stars, star => fgIntensity(star));
+        let stars = _.map(this.display.stars, star => fgIntensity(star));
+        if (stars.length && this.showHollowStars && !this.display.points &&
+            !this.hovered && !this.touched) {
+          while(stars.length < 3) {
+            stars.push(null);
+          }
+        }
+        return stars;
       }
     },
     watch: {
@@ -205,14 +218,24 @@
     posit(absolute);
     background-color: primary-blue;
 
-  .star-container
-    posit(absolute);
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    transform-origin: center 200%;
-    transition: transform 250ms ease-in-out;
-    pointer-events: none;
+  .star, .hollow
+    margin: 0 2px;
+
+    &-container
+      posit(absolute);
+      transform-origin: center 200%;
+      transition: transform 250ms ease-in-out;
+      pointer-events: none;
+
+    &-enter-active, &-leave-active
+      transition: all 175ms ease-in-out;
+
+    &-enter-active
+      transition-delay: 75ms;
+
+    &-enter, &-leave-to
+      margin: 0;
+      width: 0;
 
   .points
     posit(absolute);
@@ -229,7 +252,6 @@
 
   .dim
     opacity: .5;
-    transition: opacity 250ms ease-in-out;
 
   .pulse-beat, .beat, .stars
     display: flex;
