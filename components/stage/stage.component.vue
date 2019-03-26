@@ -6,8 +6,8 @@
         stage-ball.whole(v-bind="stageBallProps")
         .controls.whole
           loop-button(ref="loop", @click="onLoop()", :show="showLoop",
-              :off="!autoLoop", :repeat="autoRepeat",
-              :assist="!!weenie.intensity && loopCount > 2 * weenie.intensity")
+              :off="!autoLoop", :repeat="autoRepeat")
+            penalty-fx(ref="loopPenalty", top="50%", left="-15%")
           goal-button(ref="goal", @click="onAction('goal')",
               :penalty="!preGoal", :weenie="stageWeenie === 'goal'")
             penalty-fx(ref="goalPenalty", top="50%", left="10%")
@@ -141,6 +141,7 @@
         this.preGoal = !this.autoLoop;
         this.points = MAX_POINTS;
         this.goalCount = 0;
+        this.autoLevel = this.defaultAutoLevel;
         GameAnalytics.start(this.lessonName, this.level.intensity, this.tempo,
             this.stage);
       },
@@ -167,6 +168,8 @@
           } else if (this.scene === 'goal') {
             if (this.noteCount === this.goalNoteCount && this.changed) {
               scene = 'playback';
+            } else if (scene === 'count' && this.autoLevel < this.defaultAutoLevel) {
+              this.addPenalty('loopPenalty', 1);
             } else if (this.autoLoop && ++this.loopCount % (this.autoRepeat ? 4 : 3) === 0) {
               this.addPenalty('goalPenalty', this.autoRepeat ? 2 : 5, { silent: this.autoRepeat });
             }
@@ -417,8 +420,11 @@
         this.animate('next');
         this.measure = this.stage;
       },
-      playing() {
+      playing(playing) {
         this.lastBeat = false;
+        if (!playing && this.defaultAutoLevel > 1) {
+          this.addPenalty('loopPenalty', 5);
+        }
       },
       basePoints: {
         immediate: true,
@@ -505,18 +511,15 @@
           this.$refs.play.animate('twitch', { unless: 'drop' });
         }
       },
-      intensity: {
-        immediate: true,
-        handler() {
-          this.autoLevel = this.defaultAutoLevel;
-          if (!this.active && this.autoGoal) {
-            this.onAction('count');
-          }
-        }
+      intensity() {
+        this.autoLevel = this.defaultAutoLevel;
       },
       autoLevel() {
         if (this.nextScene !== 'playback') {
           this.nextScene = this.getNext(this.scene);
+        }
+        if (!this.active && this.autoGoal) {
+          this.onAction('count');
         }
       },
       'penalty.tempo'(level, oldLevel) {

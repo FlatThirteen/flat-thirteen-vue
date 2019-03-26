@@ -1,5 +1,7 @@
 <template lang="pug">
-  .loop(ref="loop", @click="show && $emit('click')", :class="{button: show, off, repeat, assist}")
+  .anchor
+    slot
+    .loop(ref="loop", @click="show && $emit('click')", :class="{button: show, off, repeat, assist}")
 </template>
 
 <script>
@@ -65,6 +67,9 @@
 </script>
 
 <style scoped lang="stylus" type="text/stylus">
+  .anchor
+    position: relative;
+
   .loop
     display: flex;
     flex-direction: column;
