@@ -1,5 +1,5 @@
 <template lang="pug">
-  .corner-frame(:style="{backgroundColor: bgIntensity}")
+  .corner-frame(:style="{backgroundColor: power.notes && bgIntensity}")
     slot
     transition(name="top")
       .top.scale(v-show="!hideTop", :class="scaleClass")
