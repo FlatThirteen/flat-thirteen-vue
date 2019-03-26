@@ -34,6 +34,9 @@
           .high__score(v-for="(score, i) in highScores", :key="score.isNew ? 'new' : i",
               ref="highScore", :style="highScoreStyles[i]", :class="{new: score.isNew}")
             .high__value(:class="{fail: ready && !score.passing, flash: score.isNew && final}") {{ score.base }}
+            .high__tempo(:class="{hide: !score.tempo || !power.tempo}")
+              metronome(:mini="true")
+              | {{ score.tempo }}
     .stages-footer
       goal-button.stages-footer__goal(ref="fail", v-if="bonusFail", @click="onGoal()")
     .footer
@@ -382,6 +385,7 @@
         pulsesByBeat: 'player/pulsesByBeat',
         phraseProperties: 'player/phraseProperties',
         level: 'progress/level',
+        power: 'progress/power',
         backing: 'progress/backing',
         tempo: 'progress/tempo',
         newHighScores: 'progress/newHighScores',

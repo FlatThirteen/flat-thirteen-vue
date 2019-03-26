@@ -11,11 +11,12 @@
                 @mouseleave.native="onHint()")
         power-intensity(ref="intensity", @click="$store.dispatch('progress/next', 'intensity')")
         transition(name="boing")
-          tempo-control.right(v-if="minTempo < maxTempo || hint.tempo", :tempo="tempo",
-              :min="minTempo", :max="maxTempo", :weenie="weenie.tempo", :throttle="500",
+          tempo-control.right(v-if="minTempo < maxTempo || hint.tempo",
+              :tempo="tempo", :min="minTempo", :max="maxTempo",
               :penalty="level.tempo === penalty.tempo", :hint="hint.tempo",
               @tempo="$store.dispatch('progress/tempo', $event)",
-              @mouseenter.native="minTempo === maxTempo && onHint('tempo')", @mouseleave.native="onHint()")
+              @mouseenter.native="minTempo === maxTempo && !showNextTempo && onHint('tempo')",
+              @mouseleave.native="onHint()")
         power-tempo(ref="tempo", @click="$store.dispatch('progress/next', 'tempo')")
     .bottom
       .left: slot(name="bottom-left")
@@ -68,7 +69,7 @@
     computed: {
       hint() {
         return !this.lessonName && {
-          tempo: this.minTempo === this.maxTempo && this.power.notes >= 8
+          tempo: this.minTempo === this.maxTempo && this.passingFinal
         };
       },
       showNextIntensity() {
@@ -78,14 +79,14 @@
       },
       showNextTempo() {
         return !this.lessonName && !!this.next.tempo && this.tempo === this.maxTempo &&
-            this.rowsWithStars >= 5 && this.totalPoints >= this.nextPoints;
+            this.power.notes > 5 && this.threeStarsCount > (this.next.tempo - 1) * 2 &&
+            this.totalPoints >= this.nextPoints;
       },
       ...mapGetters({
         lessonName: 'progress/lessonName',
         power: 'progress/power',
         level: 'progress/level',
         next: 'progress/next',
-        weenie: 'progress/weenie',
         penalty: 'progress/penalty',
         bgIntensity: 'progress/bgIntensity',
         fgIntensity: 'progress/fgIntensity',
@@ -93,8 +94,9 @@
         minTempo: 'progress/minTempo',
         maxTempo: 'progress/maxTempo',
         scaleClass: 'progress/scaleClass',
+        passingFinal: 'progress/passingFinal',
         starsCountForIntensity: 'progress/starsCountForIntensity',
-        rowsWithStars: 'progress/rowsWithStars',
+        threeStarsCount: 'progress/threeStarsCount',
         nextPoints: 'progress/nextPoints'
       })
     },
@@ -131,7 +133,6 @@
 
 <style scoped lang="stylus" type="text/stylus">
   @import "~assets/stylus/scale.styl"
-  @import "~assets/stylus/weenie.styl"
 
   .corner-frame
     posit(absolute);
@@ -140,7 +141,6 @@
     posit(absolute, 0, 0, x, 0);
     height: 0;
     transform-origin: top left;
-
 
     .left, .right
       top: 0;

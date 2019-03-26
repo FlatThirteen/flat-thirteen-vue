@@ -17,7 +17,7 @@
           lesson-button(v-for="pulseBeat in lessonGroup", ref="lessonButton", :key="pulseBeat",
               :class="{highlight: highlight[pulseBeat]}", :intensity="bgIntensity",
               :pulseBeat="pulseBeat", :score="displayScores[pulseBeat]",
-              :showHollowStars="showHollowStars", :transition="transition",
+              :showHollowStars="passingFinal", :transition="transition",
               :intensityChange="intensityChange", :tempoChange="tempoChange", @onTouch="onTouch(pulseBeat)",
               @click="onLesson(pulseBeat, $event)", @mousedown="$emit('mousedown', pulseBeat)",
               @mouseenter="onMouseOver(pulseBeat)", @mouseleave="onMouseOver()")
@@ -175,9 +175,6 @@
       transition() {
         return !this.layoutChange;
       },
-      showHollowStars() {
-        return _.get(this.displayScores, ['2222', 'passing']);
-      },
       showNextLayout() {
         return this.next.layout && this.next.layout === this.level.layout + 1 &&
             _.every(this.nextLayoutConditions[this.level.layout],
@@ -206,8 +203,8 @@
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',
         scaleClass: 'progress/scaleClass',
-        groupsWithoutStars: 'progress/groupsWithoutStars',
         displayScores: 'progress/displayScores',
+        passingFinal: 'progress/passingFinal',
         prerequisite: 'progress/prerequisite',
         nextPoints: 'progress/nextPoints',
         totalPoints: 'progress/totalPoints'
@@ -218,8 +215,9 @@
         if (hint === 'TODO') { // TODO: Use for power needing all playable
           this.highlight = _.mapValues(this.displayScores, value => !value);
         } else if (hint === 'tempo') {
-          let pulseBeats = _.flatten(this.groupsWithoutStars);
-          this.highlight = _.zipObject(pulseBeats, _.times(pulseBeats.length, _.constant(true)));
+          this.highlight =  _.mapValues(this.displayScores, score =>
+              score && score.stars && !score.points &&
+              score.stars.length && score.stars.length < 3);
         } else {
           this.highlight = {};
         }

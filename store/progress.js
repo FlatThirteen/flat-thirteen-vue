@@ -58,7 +58,7 @@ export const state = () => ({
   hack: {
     playable: false
   },
-  scores: {}, // [tempo][layout][pulseBeat] = [{intensity, base, star, perfect, passing, heavy, light}]
+  scores: {}, // [layout][pulseBeat] = [{tempo, intensity, base, star, perfect, passing, heavy, light}]
   nextPoints: 0,
 });
 
@@ -102,28 +102,29 @@ export const getters = {
   next: state => _.mapValues(state.power, (value, power) =>
       !state.power.notes || value === MAX_POWER[power] ? 0 : value + 1),
   nextPoints: state => state.nextPoints,
-  totalPoints: state => _.reduce(state.scores, (result, scoresByTempo) => {
-    _.forEach(scoresByTempo, scoresByLayout => {
-      _.forEach(scoresByLayout, scoresByPulseBeat => {
-        _.forEach(scoresByPulseBeat, score => {
-          result += score.base;
-        });
+  totalPoints: state => _.reduce(state.scores, (result, scoresByLayout) => {
+    _.forEach(scoresByLayout, scoresByPulseBeat => {
+      _.forEach(scoresByPulseBeat, score => {
+        result += score.base;
       });
     });
     return result;
   }, 0),
-  totalStars: state => _.reduce(state.scores, (result, scoresByTempo) => {
-    _.forEach(scoresByTempo, scoresByLayout => {
-      _.forEach(scoresByLayout, scoresByPulseBeat => {
-        result += Math.min(3, _.filter(scoresByPulseBeat, 'star').length);
-      });
+  totalStars: state => _.reduce(state.scores, (result, scoresByLayout) => {
+    _.forEach(scoresByLayout, scoresByPulseBeat => {
+      result += Math.min(3, _.filter(scoresByPulseBeat, 'star').length);
     });
     return result;
   }, 0),
   modeScores: (state, getters) => _.mapValues(_.invert(getters.pulseBeats), (i, pulseBeat) =>
-      _.get(state.scores, [getters.tempo, state.mode.layout, pulseBeat], [])),
+      _.get(state.scores, [state.mode.layout, pulseBeat], [])),
   newHighScores: (state, getters) => base => {
-    let newScore = { intensity: state.mode.intensity, base, isNew: true, passing: passing(base) };
+    let newScore = { base,
+      intensity: state.mode.intensity,
+      tempo: getters.tempo,
+      isNew: true,
+      passing: passing(base)
+    };
     let ranking = getters.modeScores[state.lesson.pulseBeat];
     let insertion = _.sortedLastIndexBy(ranking, newScore, sortScore);
     let highScores = _.take(ranking, insertion).concat(newScore,
@@ -131,18 +132,20 @@ export const getters = {
     return _.map(highScores, score => _.defaults({ intensity: bgIntensity(score.intensity) }, score));
   },
   displayScores: (state, getters) => {
-    let scoresByPulseBeat = _.get(state.scores, [getters.tempo, state.mode.layout], {});
+    let scoresByPulseBeat = _.get(state.scores, state.mode.layout, {});
     return _.mapValues(_.invert(getters.pulseBeats), (i, pulseBeat) => {
       let scores = scoresByPulseBeat[pulseBeat];
       if (!scores) {
         return state.hack.playable || getters.playable[pulseBeat] ? { finished: 0 } : undefined;
       }
-      let validScores = _.filter(scores, score => score.intensity === state.mode.intensity);
+      let validScores = _.filter(scores, score =>
+        score.intensity === state.mode.intensity && score.tempo === getters.tempo);
       let stars = _.filter(scores, 'star');
       let score = validScores[0] || scores[0];
 
       return {
         intensity: fgIntensity(score.intensity),
+        tempo: score.tempo,
         finished: validScores.length || 1,
         stars: _.map(_.take(stars, 3), 'intensity'),
         points: score.star ? undefined : score.base,
@@ -151,6 +154,7 @@ export const getters = {
       };
     });
   },
+  passingFinal: (state, getters) => _.get(getters.displayScores, ['2222', 'passing']),
   playable: (state, getters) => _.mapValues(getters.modeScores, (scores, pulseBeat, modeScores) =>
       !!scores.length || !getters.prerequisite[pulseBeat] || !getters.prerequisite[pulseBeat].length ||
           _.some(getters.prerequisite[pulseBeat], pulseBeat => _.filter(modeScores[pulseBeat], 'passing').length)),
@@ -159,11 +163,14 @@ export const getters = {
           _.some(getters.modeScores[pulseBeat], score => score.star))),
   rowsWithStars: (state, getters) =>
       _.size(getters.pulseBeatGroups) - getters.groupsWithoutStars.length,
-  starsCountForIntensity: state => _.flatMap(state.scores, scoresByLayout =>
-    _.flatMap(scoresByLayout, scoresByPulseBeat =>
-      _.flatMap(scoresByPulseBeat, scores => _.filter(scores, {
+  starsCountForIntensity: state => _.flatMap(state.scores, scoresByPulseBeat =>
+    _.flatMap(scoresByPulseBeat, scores =>
+      _.filter(scores, {
         star: true, intensity: state.mode.intensity
-      })))).length
+      }))).length,
+  threeStarsCount: state => _.flatMap(state.scores, scoresByPulseBeat =>
+      _.filter(scoresByPulseBeat, scores =>
+          _.filter(scores, { star: true }).length > 2)).length
 };
 
 export const mutations = {
@@ -223,7 +230,7 @@ export const mutations = {
       state.nextPoints = nextPoints;
       state.power[power]++;
       if (updateMode) {
-        state.mode[power]++;
+        state.mode[power] = state.power[power];
       }
       state.weenie[power] = state.power[power];
       GameAnalytics.power('Next', power, state.power[power]);
@@ -270,17 +277,15 @@ export const mutations = {
     }
     state.weenie[power] = level;
   },
-  score(state, {tempo, pulseBeat, score}) {
+  score(state, {pulseBeat, score}) {
     if (!score.base) {
       return;
     }
     score.intensity = state.mode.intensity;
     score.passing = passing(score.base);
     score.perfect = perfect(score.base);
-    let tempoScores = state.scores[tempo] ||
-      Vue.set(state.scores, tempo, []);
-    let layoutScores = tempoScores[state.mode.layout] ||
-        Vue.set(tempoScores, state.mode.layout, {});
+    let layoutScores = state.scores[state.mode.layout] ||
+        Vue.set(state.scores, state.mode.layout, {});
     let pulseBeatScores = layoutScores[pulseBeat] ||
         Vue.set(layoutScores, pulseBeat, []);
     let index = _.sortedLastIndexBy(pulseBeatScores, score, sortScore);
@@ -304,7 +309,7 @@ export const actions = {
     commit('nextPower', {
       power,
       nextPoints: getters.totalPoints + 100,
-      updateMode: state.mode[power] === state.power[power] && power === 'intensity'
+      updateMode: power === 'intensity' || power === 'tempo'
     });
   },
   weenie({state, commit}, {power, level}) {
@@ -327,7 +332,7 @@ export const actions = {
     });
   },
   addScore({getters, commit}, {pulseBeat, score}) {
-    commit('score', {pulseBeat, score, tempo: getters.tempo});
+    commit('score', {pulseBeat, score: _.set(score, 'tempo', getters.tempo)});
   }
 };
 
@@ -341,5 +346,5 @@ function splice(string, startIndex, length, insertString) {
 
 function sortScore(score) {
   return -score.base * Math.pow(2, (score.heavy || 0) + (score.light || 0)) -
-      (score.intensity || 0) / 10 + (score.isNew || 0) / 100;
+      (score.intensity || 0) / 10 - score.tempo / 10000 + (score.isNew || 0) / 100000;
 }

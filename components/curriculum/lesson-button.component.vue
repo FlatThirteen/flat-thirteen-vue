@@ -109,22 +109,17 @@
         deep: true,
         immediate: true,
         handler(score, oldScore) {
-          if (this.intensityChange) {
-            if (oldScore && score.intensity !== oldScore.intensity) {
+          if (this.intensityChange || this.tempoChange) {
+            if (oldScore) {
               if (oldScore.points) {
                 this.horizontalFlip = true;
               } else {
                 setTimeout(this.updateScore, 250);
               }
             }
-          } else if (!this.tempoChange) {
+          } else {
             this.updateScore();
           }
-        }
-      },
-      tempoChange(tempoChange) {
-        if (tempoChange) {
-          this.verticalFlip = true;
         }
       }
     }
@@ -214,6 +209,12 @@
     .pulse, .pulse-beat, .points
       transition: all 250ms ease-in-out;
 
+    .star-enter-active, .star-leave-active
+      transition: all 175ms ease-in-out;
+
+    .star-enter-active
+      transition-delay: 75ms;
+
   .stars
     posit(absolute);
     background-color: primary-blue;
@@ -221,17 +222,14 @@
   .star, .hollow
     margin: 0 2px;
 
+    &:nth-child(2):last-child
+      margin-left: 15px;
+
     &-container
       posit(absolute);
       transform-origin: center 200%;
       transition: transform 250ms ease-in-out;
       pointer-events: none;
-
-    &-enter-active, &-leave-active
-      transition: all 175ms ease-in-out;
-
-    &-enter-active
-      transition-delay: 75ms;
 
     &-enter, &-leave-to
       margin: 0;
