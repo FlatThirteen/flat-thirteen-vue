@@ -14,7 +14,7 @@ export class Note {
 
   get duration() {
     let time = new Tone.Time(this.params && this.params.duration || '16n');
-    return time.toNotation();
+    return time.toSeconds();
   }
 
   extendDuration(duration) {

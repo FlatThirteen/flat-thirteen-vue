@@ -81,6 +81,7 @@
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
     },
     destroyed() {
+      this.clear('backing')
       window.removeEventListener('keydown', this.onKeyDown);
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },
@@ -138,6 +139,7 @@
         }
       },
       ...mapActions({
+        clear: 'phrase/clear',
         setTracks: 'phrase/setTracks'
       })
     },
