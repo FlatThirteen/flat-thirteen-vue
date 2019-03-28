@@ -170,7 +170,8 @@
               scene = 'playback';
             } else if (scene === 'count' && this.autoLevel < this.defaultAutoLevel) {
               this.addPenalty('loopPenalty', 1);
-            } else if (this.autoLoop && ++this.loopCount % (this.autoRepeat ? 4 : 3) === 0) {
+            } else if (this.autoLoop && ++this.loopCount %
+                ((this.level.layout || 1) * (this.autoRepeat ? 4 : 3)) === 0) {
               this.addPenalty('goalPenalty', this.autoRepeat ? 2 : 5, { silent: this.autoRepeat });
             }
           } else if (this.scene === 'playback') {
