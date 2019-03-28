@@ -98,8 +98,8 @@
     },
     methods: {
       beatTickHandler({time, beatTick}) {
-        _.forEach(this.getNotes(beatTick), note => {
-          note.play(time);
+        _.forEach(this.getNotes(beatTick), (note, i) => {
+          note.play(time + i / 40);
         });
       }
     },

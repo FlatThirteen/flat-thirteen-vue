@@ -212,13 +212,13 @@
           case 'goal':
             let goalNotes = this.getNotes('goal', beatTick);
             this.goalKeys = this.showGoal ? goalNotes : undefined;
-            _.forEach(goalNotes, note => {
-              note.play(time);
+            _.forEach(goalNotes, (note, i) => {
+              note.play(time + i / 40);
             });
             break;
           case 'playback':
-            _.forEach(this.getPlayerNotes(beatTick), note => {
-              note.play(time);
+            _.forEach(this.getPlayerNotes(beatTick), (note, i) => {
+              note.play(time + i / 40);
               if (this.scene === 'playback') {
                 this.$store.commit('phrase/add', { name: 'playback', beatTick, note });
               }

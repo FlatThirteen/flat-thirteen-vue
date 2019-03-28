@@ -49,8 +49,8 @@
     methods: {
       onBeatTick(beatTick, time) {
         let indices = this.indicesByBeatTick[beatTick];
-        _.forEach(indices, index => {
-          Note.from(this.notes[index].note.toString()).play(time);
+        _.forEach(indices, (index, i) => {
+          Note.from(this.notes[index].note.toString()).play(time + i / 40);
           if (!this.noAnimation) {
             Tone.Draw.schedule(() => {
               this.animate('note', { element: this.$refs.note[index] });
