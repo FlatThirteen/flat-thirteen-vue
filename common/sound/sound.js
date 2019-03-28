@@ -5,7 +5,7 @@ import SynthSound from './synth.sound';
 
 let firstUserAction = false;
 let Sound = {
-  preloadSounds: ['sawtooth6'],
+  preloadSounds: [],
   FX: {
     next: 'cowbell:16t:A6,E7,A7',
     intensity: 'cowbell:32n:D6,F#6,Eb6,G6,E6,G#6,F6,A6',
@@ -31,6 +31,9 @@ let Sound = {
       return Promise.resolve();
     }
   },
+  exists(soundName) {
+    return !!Sound[soundName];
+  },
   get(soundName, isCowbell) {
     try {
       if (isCowbell) {
@@ -38,7 +41,7 @@ let Sound = {
           Sound[soundName] = new CowbellSound();
         }
       } else if (!Sound[soundName]){
-        Sound[soundName] = new SynthSound({ type: soundName });
+        Sound[soundName] = new SynthSound({ oscillator: { type: soundName } });
       }
       return Sound[soundName];
     } catch (e) {
@@ -89,7 +92,21 @@ if (process.browser) {
   Sound.snare = new SnareSound();
   Sound.click = new ClickSound();
   Sound.cowbell = new CowbellSound();
-  Sound.synth = new SynthSound();
+
+  Sound.autoFilter = new Tone.AutoFilter({
+    frequency: '2n',
+    baseFrequency: 500,
+    octaves: 2,
+    depth: .6,
+    filter: {
+      rolloff: -48
+    }
+  });
+  Sound.chords = new SynthSound({
+    oscillator: { type: 'fatsquare' },
+    effects: [Sound.autoFilter]
+  });
+  Sound.bass = new SynthSound({ oscillator: { type: 'sawtooth6' } });
 
   _.forEach(Sound.preloadSounds, soundName => {
     Sound.set(soundName, soundName);

@@ -99,8 +99,9 @@ const parseTracks = function(tracks, numBeats) {
     let soundName = track.name || track.type;
     let parser = track.type === 'drums' ? drumsParser : track.type === 'cowbell' ?
         Sound.get(soundName, true) && cowbellParser(soundName) :
-        Sound.set(soundName, track.type) ? synthParser(soundName,
-            track.type.match(/(fm|am|fat|)(\D+)(\d*)/)[2], track.velocity) : null;
+        track.type && Sound.set(soundName, track.type) || Sound.exists(soundName) ?
+            synthParser(soundName, track.type &&
+                track.type.match(/(fm|am|fat|)(\D+)(\d*)/)[2], track.velocity) : null;
     if (parser && track.notes) {
       let lastNotes = [];
       let parts = track.notes.split(':');

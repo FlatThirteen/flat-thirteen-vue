@@ -1,10 +1,11 @@
 import Tone from '../tone';
 
 export class SynthSound {
-  constructor(oscillator = {type: 'fatsawtooth'}, polyphony = 5, envelope = {
-    attack: 0.01, decay: 0.1, sustain: 0.07, release: 0.4, attackCurve: 'exponential'
-  }) {
-    this.synth = new Tone.PolySynth(polyphony, Tone.Synth, { oscillator, envelope }).toMaster();
+  constructor({ oscillator = {type: 'fatsawtooth'}, polyphony = 5, envelope = {
+    attack: 0.02, decay: 0.1, sustain: 0.07, release: 0.4, attackCurve: 'exponential'
+  }, effects = []} = {}) {
+    this.synth = new Tone.PolySynth(polyphony, Tone.Synth, { oscillator, envelope }).
+        chain(...effects, Tone.Master);
   }
 
   get(...properties) {

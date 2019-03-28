@@ -12,6 +12,7 @@
   import Shaper from '~/common/composer/shaper';
   import BeatTick from '~/common/core/beat-tick.model';
   import Note from '~/common/core/note.model';
+  import Sound from '~/common/sound/sound';
   import Tone from '~/common/tone';
 
   export default {
@@ -55,6 +56,11 @@
         this.phraseClear(this.name);
       },
       setStage({layout, intensity, stars, finale} = {}) {
+        if (intensity && intensity > 1) {
+          Sound.autoFilter.start();
+        } else if (intensity && intensity < 2) {
+          Sound.autoFilter.stop();
+        }
         this.layout = _.isUndefined(layout) ? this.layout : layout;
         this.intensity = _.isUndefined(intensity) ? this.intensity : intensity;
         this.stars = _.isUndefined(stars) ? this.stars : stars;
@@ -83,13 +89,13 @@
             numBeats: 16
           });
           tracks.push({
-            type: 'fatsquare5',
+            name: 'chords',
             notes: [
               'C5:I^3|-|-|-|IV|-|-|-|V|-|-|-|bVII|-|-|-',
               'C5:I^3|-|IV|-|V|-|bVII|-|v|-|bIII|-|ii|-|bII|-',
               'C5:I^3|-,IV|-|V|bVII|-,v|-|bIII|ii|-,bII|-|bVI|iv|-,bVIIsus4|-|bVII'
             ][this.progressionLevel] + '|IV|V|VI|',
-            velocity: .2
+            velocity: .7
           });
           if (this.bass) {
             let rootNotes = finale ? ['C2', 'F2', 'G2', 'Bb2'] :
@@ -101,7 +107,7 @@
               return Parser.applyRhythm(rhythm, Parser.applyIntervals(rootNote, intervals));
             }), '|');
             tracks.push({
-              type: 'sawtooth6',
+              name: 'bass',
               notes: notes + '|F2,F1|G2,G1|A2,E2,G2,A2|A1,'
             });
           }
@@ -129,17 +135,17 @@
             }]
           });
           tracks.push({
-            type: 'fatsquare5',
+            name: 'chords',
             notes: [
               'C5:II^3|-|-|-|III^3|-|-|-|IV^3|-|-|-|V^3|-|-|-|VI^3|-,V|-,bVI|VI',
               'C5:II^3|-|I^5|-|III|-|II^5|-|IV|-|bIII^5|-|V|-|IV^5|-|VI|-,V|-,bVI|VI',
               'C5:II^3|-,vii|-|I|III|-,bii|-|II|IV|-,ii|-|bIII|V|-,biv|-|IV|VI|-,V|-,bVI|VI',
               ][this.progressionLevel],
-            velocity: .2
+            velocity: .5
           });
           if (this.bass) {
             tracks.push({
-              type: 'sawtooth6',
+              name: 'bass',
               notes: this.intensity < 3 ? null :_.join(_.map(['D2', 'E2', 'F2', 'G2'], (rootNote, part) => {
                 let rhythm = '%1,%2|%3,%1|,%2|' + (part < 3 ? '%3,%1' : '%4,%5,%1,');
                 return Parser.applyRhythm(rhythm, Parser.applyIntervals(rootNote, [0, -5, -2, 3, 4]));

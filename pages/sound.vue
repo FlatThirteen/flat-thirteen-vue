@@ -31,7 +31,7 @@
     },
     layout: 'debug',
     constants: {
-      soundNames: ['kick', 'snare', 'click', 'cowbell', 'synth'],
+      soundNames: ['kick', 'snare', 'click', 'cowbell', 'chords'],
       keyLookup: _.zipObject(keyArray, _.range(keyArray.length))
     },
     data() {
@@ -88,14 +88,14 @@
           }
           if (event.key === 'ArrowDown') {
             if (this.lastSoundName === 'cowbell') {
-              this.onSound('synth', false);
-            } else if (this.lastSoundName === 'synth') {
+              this.onSound('chords', false);
+            } else if (this.lastSoundName === 'chords') {
               this.onSound('custom', false);
             }
           } else if (event.key === 'ArrowUp') {
             if (this.lastSoundName === 'custom') {
-              this.onSound('synth', false);
-            } else if (this.lastSoundName === 'synth') {
+              this.onSound('chords', false);
+            } else if (this.lastSoundName === 'chords') {
               this.onSound('cowbell', false);
             } else {
               this.onSound('snare', false);
@@ -178,7 +178,7 @@
           snare: this.percussionMode ? 'a' : '&nbsp;',
           click: this.percussionMode ? 'z' : '&nbsp;',
           cowbell: this.lastSoundName === 'cowbell' ? this.octaveShift : '&nbsp;',
-          synth: this.lastSoundName === 'synth' ? this.octaveShift : '&nbsp;'
+          chords: this.lastSoundName === 'chords' ? this.octaveShift : '&nbsp;'
         };
       },
       customButtonLabel() {
