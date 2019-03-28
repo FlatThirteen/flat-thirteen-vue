@@ -210,6 +210,7 @@
         } else {
           this.measure = -1;
           this.beat = -1;
+          Sound.releaseAll();
         }
       },
       latencyHint(latencyHint) {

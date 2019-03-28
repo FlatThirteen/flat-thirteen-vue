@@ -84,6 +84,9 @@ let Sound = {
   toggle(up) {
     Sound.click.play('+0', { variation: up ? 'normal' : 'heavy' });
     Sound.click.play('+16n', { variation: up ? 'heavy' : 'normal' });
+  },
+  releaseAll() {
+    _.invokeMap(Sound, 'releaseAll');
   }
 };
 
