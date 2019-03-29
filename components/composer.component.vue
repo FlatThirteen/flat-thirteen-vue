@@ -95,7 +95,7 @@
               'C5:I^3|-|IV|-|V|-|bVII|-|v|-|bIII|-|ii|-|bII|-',
               'C5:I^3|-,IV|-|V|bVII|-,v|-|bIII|ii|-,bII|-|bVI|iv|-,bVIIsus4|-|bVII'
             ][this.progressionLevel] + '|IV|V|VI|',
-            velocity: .7
+            velocity: .3
           });
           if (this.bass) {
             let rootNotes = finale ? ['C2', 'F2', 'G2', 'Bb2'] :
@@ -141,7 +141,7 @@
               'C5:II^3|-|I^5|-|III|-|II^5|-|IV|-|bIII^5|-|V|-|IV^5|-|VI|-,V|-,bVI|VI',
               'C5:II^3|-,vii|-|I|III|-,bii|-|II|IV|-,ii|-|bIII|V|-,biv|-|IV|VI|-,V|-,bVI|VI',
               ][this.progressionLevel],
-            velocity: .5
+            velocity: .3
           });
           if (this.bass) {
             tracks.push({
