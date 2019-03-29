@@ -5,7 +5,7 @@
       @mouseenter="onMouse($event)", @mouseleave="onMouse($event)", @click="emit($event)")
     .stars(v-if="starColors.length")
       transition-group.star-container(name="star")
-        star(v-for="(color, i) in starColors", :color="color", :key="i",
+        star(v-for="(color, i) in starColors", :color="color", :key="i + color",
             :class="{star: color, hollow: !color, dim: display.points}")
     .points(ref="score", v-if="display.stars", :style="{color: display.intensity}",
         :class="{hide: !display.points, flip: horizontalFlip, transparent}",
