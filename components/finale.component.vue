@@ -139,9 +139,11 @@
           opacity: 1
         }], [.3, {
           transform: 'translateY(10vh) rotate(180deg)'
-        }], [.4, {
+        }], [.3, {
           transform: 'translateY(100vh)',
           opacity: 0
+        }], [.1, {
+          transform: 'translateY(0);'
         }]],
         success: [[.3, {
           transform: 'scale(1)',
