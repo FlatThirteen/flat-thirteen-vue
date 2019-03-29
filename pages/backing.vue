@@ -1,5 +1,6 @@
 <template lang="pug">
   .container
+    mixer(:show="true", :showFps="true")
     backing(:fixed="fixed", :show="showFx", :skip="showFx === undefined", :showCounts="true")
     .left
       transport-controls(:playTime="'+0.1'", :beatsPerMeasure="bpm")
@@ -34,11 +35,13 @@
 
   import Backing from '~/components/backing.component';
   import TransportControls from '~/components/transport-controls.component';
+  import Mixer from '~/components/widget/mixer.component';
 
   export default {
     components: {
       'backing': Backing,
-      'transport-controls': TransportControls
+      'transport-controls': TransportControls,
+      'mixer': Mixer
     },
     head: {
       title: 'Flat Thirteen | Backing'
@@ -81,7 +84,7 @@
       this.$bus.$on(BeatTick.EVENT, this.beatTickHandler);
     },
     destroyed() {
-      this.clear('backing')
+      this.clear('backing');
       window.removeEventListener('keydown', this.onKeyDown);
       this.$bus.$off(BeatTick.EVENT, this.beatTickHandler);
     },

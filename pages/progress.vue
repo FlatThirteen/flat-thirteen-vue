@@ -7,6 +7,7 @@
       .button(@click="max()") o
     transition(name="lesson-container")
       .lesson-container(v-if="pulseBeat", :style="lessonContainerStyle")
+        mixer(:show="true")
         transition(name="finale", mode="out-in")
           .finale(v-if="finaleStages.length")
             finale(:stages="finaleStages", :bonusStage="true", @finish="finale($event)")
@@ -31,6 +32,7 @@
   import LessonBuilder from '~/components/lesson-builder.component';
   import QuitButton from '~/components/quit-button.component';
   import Star from '~/components/star.component';
+  import Mixer from '~/components/widget/mixer.component';
 
   const MAX_POINTS = 100;
 
@@ -42,7 +44,8 @@
       'finale': Finale,
       'lesson-builder': LessonBuilder,
       'quit-button': QuitButton,
-      'star': Star
+      'star': Star,
+      'mixer': Mixer
     },
     head: {
       title: 'Flat Thirteen | Progress'

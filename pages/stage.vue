@@ -1,6 +1,6 @@
 <template lang="pug">
   .container(:style="{backgroundColor: bgIntensity}")
-    backing
+    mixer(:show="true")
     stage(ref="stage", :goal="stageGoals[stageIndex]", :stage="stageIndex",
         :intensity="intensity", :tempo="tempo",
         @basePoints="basePoints = $event", @complete="onComplete()")
@@ -31,7 +31,6 @@
 
   import { bgIntensity } from "~/common/colors";
 
-  import Backing from '~/components/backing.component';
   import Composer from '~/components/composer.component';
   import IntensityIcon from '~/components/icon/intensity-icon.component';
   import LessonBuilder from '~/components/lesson-builder.component';
@@ -39,17 +38,18 @@
   import Stage from '~/components/stage/stage.component';
   import StarsControl from '~/components/stars-control.component';
   import TempoControl from '~/components/tempo-control.component';
+  import Mixer from '~/components/widget/mixer.component';
 
   export default {
     components: {
-      'backing': Backing,
       'composer': Composer,
       'intensity-icon': IntensityIcon,
       'lesson-builder': LessonBuilder,
       'level-control': LevelControl,
       'stage': Stage,
       'stars-control': StarsControl,
-      'tempo-control': TempoControl
+      'tempo-control': TempoControl,
+      'mixer': Mixer
     },
     head: {
       title: 'Flat Thirteen | Stage'

@@ -114,5 +114,8 @@ if (process.browser) {
   _.forEach(Sound.preloadSounds, soundName => {
     Sound.set(soundName, soundName);
   });
+
+  Sound.meter = new Tone.Meter(0.5);
+  Tone.Master.connect(Sound.meter);
 }
 export default Sound;
