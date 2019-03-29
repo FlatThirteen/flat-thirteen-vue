@@ -176,7 +176,7 @@
         this.notes = notes;
         let requiredBeatTicks = this.requiredBeatTicks(
           this.stars ? this.stars.length < 2 : this.pulseBeat !== '1111' || !this.oneNote,
-          this.stars.length < 3);
+          !this.stars || this.stars.length < 3);
         let rhythmCombinations = Rhythm.combinations(this.beatTicks, requiredBeatTicks, notes);
         this.stages = _.flatMap(rhythmCombinations, (beatTicks, rhythmSeed) => {
           let seedRange = this.oneNote ? [0] : _.range(0, Monotonic.combos(this.noteCombos, beatTicks.length));
