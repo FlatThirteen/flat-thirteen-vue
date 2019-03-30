@@ -76,18 +76,14 @@
           notes: this.fourBars + 'A5,,A5,A5| E5,A5,E5,E5| A5,,,E6|A6'
         }];
         if (this.intensity) {
-          this.setTracks({
-            name: 'metronome',
-            tracks: [{
-              type: 'cowbell',
-              notes: 'C5:' + [
-                '7|5|4|5|7|5|4|7|7|5|4|5|7|5|5|4',
-                '7|5|4|5|7|5|4|5|7|5|3|5|7|5|5|3',
-                '7|5|4|5|7|5|3|7|7|3|5|3|7|5|5|3'
-              ][this.progressionLevel],
-            }],
-            numBeats: 16
-          });
+          let metronomeTracks = [{
+            type: 'cowbell',
+            notes: 'C5:' + [
+              '7|5|4|5|7|5|4|7|7|5|4|5|7|5|5|4',
+              '7|5|4|5|7|5|4|5|7|5|3|5|7|5|5|3',
+              '7|5|4|5|7|5|3|7|7|3|5|3|7|5|5|3'
+            ][this.progressionLevel]
+          }];
           tracks.push({
             name: 'chords',
             notes: [
@@ -100,6 +96,11 @@
           if (this.bass) {
             let rootNotes = finale ? ['C2', 'F2', 'G2', 'Bb2'] :
                 this.intensity > 3 ? ['C2', 'F1', 'G1', 'Bb1'] :_.times(4, () => 'C2');
+            metronomeTracks.push({
+              name: 'bass',
+              notes: _.join(_.map(rootNotes, (rootNote, part) =>
+                  _.join(Parser.applyIntervals(rootNote, part ? [12, 10, 7, 3] : [0, -5, -2, -1]), '|')), '|')
+            });
             let intervals = finale ? [0, -5, -2] : [0, 12];
             let notes = _.join(_.map(rootNotes, (rootNote, part) => {
               let rhythm = finale ? '%1|%2|%3|%1' :
@@ -111,6 +112,11 @@
               notes: notes + '|F2,F1|G2,G1|A2,E2,G2,A2|A1,'
             });
           }
+          this.setTracks({
+            name: 'metronome',
+            tracks: metronomeTracks,
+            numBeats: 16
+          });
         } else {
           this.phraseClear('metronome');
           this.phraseClear('progression');
@@ -158,7 +164,7 @@
           tracks: tracks,
           numBeats: 20
         });
-        let bonus = _.every(stagePoints, points => points === 100)
+        let bonus = _.every(stagePoints, points => points === 100);
         _.map(['D6', 'E6', 'F6', 'G6'], (rootNote, part) => {
           let number = Math.floor(stagePoints[part] * .12 + 4);
           let order = _.take([0, 6, 8, 12, 10, 4, 2, 14, 11, 5, 13, 9, 3, 7, 1, 15], number);
