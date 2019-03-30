@@ -100,7 +100,6 @@
         nextScene: 'standby',
         autoLevel: 0,
         preGoal: false,
-        changed: false,
         showGoal: false,
         goalCount: 0,
         loopCount: 0,
@@ -154,9 +153,6 @@
       topHandler({first}) {
         if (!first && this.playing) {
           this.showGoal = false;
-          if (this.autoRepeat && this.scene !== 'count') {
-            this.measure = (this.measure + 1) % 4;
-          }
           let scene = this.nextScene;
           if (this.scene === 'victory') {
             this.loopCount = 0;
@@ -166,9 +162,7 @@
               scene = 'standby';
             }
           } else if (this.scene === 'goal') {
-            if (this.noteCount === this.goalNoteCount && this.changed) {
-              scene = 'playback';
-            } else if (scene === 'count' && this.autoLevel < this.defaultAutoLevel) {
+            if (scene === 'count' && this.autoLevel < this.defaultAutoLevel) {
               this.addPenalty('loopPenalty', 1);
             } else if (this.autoLoop && ++this.loopCount %
                 ((this.level.layout || 1) * (this.autoRepeat ? 4 : 3)) === 0) {
@@ -181,6 +175,11 @@
             } else {
               this.addPenalty('wrongPenalty', 10, { noisy: true });
             }
+          }
+          if (!this.autoRepeat || scene === 'count') {
+            this.measure = this.stage;
+          } else if (this.scene !== 'count') {
+            this.measure = (this.measure + 1) % 4;
           }
           this.toScene(scene, this.getNext(scene));
           if (scene === 'standby') {
@@ -243,7 +242,7 @@
           this.$refs.loop.pulse(beat);
         }
       },
-      onAction(scene = this.scene !== 'standby' ? 'standby' : 'goal') {
+      onAction(scene) {
         if (this.scene === scene || this.nextScene === scene) {
           scene = 'standby';
         }
@@ -295,7 +294,6 @@
         }
         this.scene = scene;
         this.nextScene = nextScene;
-        this.changed = false;
         if (scene === 'goal') {
           this.goalCount++;
         }
@@ -403,7 +401,18 @@
       keyDown(key) {
         if (key === 'Enter') {
           this.$store.commit('player/unselect');
-          this.onAction();
+          if (this.nextScene === 'playback') {
+            if (this.autoLoop) {
+              this.nextScene = this.scene === 'goal' ? 'count' : 'goal';
+            } else {
+              this.onAction('standby');
+            }
+          } else if (this.showLoop) {
+            this.autoLevel = this.autoLevel > 1 ? 1 : this.defaultAutoLevel;
+            this.$store.dispatch('progress/weenie', { power: 'intensity' })
+          } else if (this.scene === 'standby') {
+            this.onAction('goal');
+          }
         }
       },
       goal: {
@@ -421,13 +430,10 @@
         this.animate('next');
         this.measure = this.stage;
       },
-      playing(playing) {
+      playing() {
         this.lastBeat = false;
-        if (!playing && this.defaultAutoLevel > 1) {
-          this.addPenalty('loopPenalty', 5);
-        }
       },
-      basePoints: {
+     basePoints: {
         immediate: true,
         handler(basePoints) {
           this.$emit('basePoints', basePoints);
@@ -442,6 +448,12 @@
           if (!this.preGoal) {
             this.$refs.play.animate('toast', { when: 'drop' });
             this.$refs.play.animate('enter', { when: 'leave' });
+          }
+          if (this.defaultAutoLevel > 1) {
+            this.$refs.loop.animate('toast', { when: 'drop' });
+            if (oldScene === 'goal') {
+              this.addPenalty('loopPenalty', 5);
+            }
           }
           if (oldScene === 'victory') {
             this.setWeenie('goal');
@@ -465,6 +477,7 @@
           }
         } else if (scene === 'playback') {
           this.$refs.play.animate('drop');
+          this.$refs.loop.animate('drop', { when : 'toast' });
           if (oldScene === 'standby') {
             this.$refs.goal.animate('disappear');
           }
@@ -487,25 +500,22 @@
         if (this.stageWeenie === 'grid') {
           this.setWeenie();
         }
-        if (this.stageWeenie !== 'goal') {
-          this.changed = true;
-          if (this.noteCount === this.goalNoteCount) {
-            if (this.scene === 'standby') {
-              this.toScene('count', 'playback');
-              this.$store.dispatch('transport/start', this.tempo >= 120 ? '+2n' : '+1s');
-            } else if (this.scene !== 'playback' && this.nextScene !== 'playback') {
-              this.nextScene = 'playback';
-            }
-          } else if (this.autoLoop) {
-            if (this.nextScene === 'playback' || this.autoRepeat && this.scene !== 'playback') {
-              this.nextScene = 'goal';
-            } else if (this.scene !== 'count') {
-              this.nextScene = 'count';
-            }
-          } else if (this.scene === 'playback' || this.nextScene === 'playback' || this.starting) {
-            this.toScene('standby');
-            this.$store.dispatch('transport/stop');
+        if (this.noteCount === this.goalNoteCount) {
+          if (this.scene === 'standby') {
+            this.toScene('count', 'playback');
+            this.$store.dispatch('transport/start', this.tempo >= 120 ? '+2n' : '+1s');
+          } else if (this.scene !== 'playback' && this.nextScene !== 'playback') {
+            this.nextScene = 'playback';
           }
+        } else if (this.autoLoop) {
+          if (this.nextScene === 'playback' || this.autoRepeat && this.scene !== 'playback') {
+            this.nextScene = 'goal';
+          } else if (this.scene !== 'count') {
+            this.nextScene = 'count';
+          }
+        } else if (this.scene === 'playback' || this.nextScene === 'playback' || this.starting) {
+          this.toScene('standby');
+          this.$store.dispatch('transport/stop');
         }
         this.$refs.play.toStopLevel(this.noteCount, this.goalNoteCount);
         if (!this.preGoal) {

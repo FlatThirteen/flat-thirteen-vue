@@ -15,7 +15,7 @@
     .bottom
       .left
         .stage.toggle(v-for="i in 4", :class="{active: i-1 === stageIndex}",
-            @click="stageIndex = i - 1") {{ i }}
+            @click="setStage(i-1)") {{ i }}
       .middle
         .pulses-input
           input(type="text", v-model="pulseBeat", placeholder="# pulses", @keydown.stop="")
@@ -84,6 +84,14 @@
       setStars(stars) {
         this.stars = stars;
         this.updateIfPossible();
+      },
+      setStage(stage) {
+        this.stageIndex = stage;
+        if (this.$refs.stage.active) {
+          this.$refs.stage.nextScene = 'count';
+        } else if (this.$refs.stage.autoGoal) {
+          this.$refs.stage.onAction('count');
+        }
       },
       setVictory(level = this.victoryLevel > 1 ? this.victoryLevel - 1 : 10) {
         this.victoryLevel = level;
