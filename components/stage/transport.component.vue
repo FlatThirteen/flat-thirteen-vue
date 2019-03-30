@@ -280,9 +280,10 @@
             this.onTopId = Tone.Transport.schedule(() => {
               let start = Tone.rightNow();
               if (this.starting || this.beat > this.beats - 3) {
-                this.$bus.$emit(BeatTick.TOP, { first: this.starting });
                 if (!this.starting && this.beat < this.beats - 1) {
                   console.warn(Tone.rightNow(), 'Top on beat', this.beat);
+                } else {
+                  this.$bus.$emit(BeatTick.TOP, { first: this.starting });
                 }
               } else if (this.playing) {
                 console.warn(Tone.rightNow(), 'Skipping top because beat', this.beat);
