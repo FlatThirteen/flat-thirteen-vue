@@ -110,7 +110,8 @@
         immediate: true,
         handler(score, oldScore) {
           if (this.intensityChange || this.tempoChange) {
-            if (oldScore) {
+            if (oldScore && (oldScore.intensity !== score.intensity ||
+                oldScore.tempo !== score.tempo)) {
               if (oldScore.points) {
                 this.horizontalFlip = true;
               } else {
