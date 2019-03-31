@@ -1,8 +1,8 @@
 <template lang="pug">
   .mixer-container
-    canvas(ref="renderCanvas", v-show="show")
+    canvas(ref="renderCanvas")
     .fps(v-if="showFps")
-      span(:class="{warn: fps < 30}") {{ fps }}
+      span(:class="{warn: active && fps < 30}") {{ fps }}
       span fps
 </template>
 
@@ -12,7 +12,7 @@
 
   export default {
     props: {
-      show: Boolean,
+      active: Boolean,
       showWaveform: Boolean,
       showFps: Boolean,
     },
@@ -67,7 +67,7 @@
 
         this.frequencyMeter = new PIXI.Graphics();
         this.pixiApp.stage.addChild(this.frequencyMeter);
-        this.enableUpdate();
+        this.pixiApp.ticker.add(this.update);
       },
       resize() {
         const parent = this.pixiApp.view.parentNode;
@@ -82,8 +82,9 @@
         this.meter.clear();
         this.meter.lineStyle(width, primaryGreen, opacity);
         let x = width / 2;
+        let meterLevel = (masterLevel < 0 ? masterLevel + 100 : 100) * this.height / 200;
         this.meter.moveTo(x, this.height);
-        this.meter.lineTo(x, this.height - (masterLevel < 0 ? masterLevel + 100 : 100) * this.height / 200);
+        this.meter.lineTo(x, this.height - meterLevel);
         let peakValue = (masterLevel > 0 ? masterLevel : 0) * this.height / 200;
         if (this.holdPeakTime > 0) {
           this.holdPeakTime -= delta;
@@ -111,26 +112,23 @@
         }
 
         this.frequencyMeter.clear();
-        let fft = _.map(Sound.fft.getValue(), value => _.clamp(value, -100, 10));
+        let fft = _.map(Sound.fft.getValue(), value => _.clamp(value + 100, 0, 100));
         _.forEach(fft, (value, i) => {
           let x = 100 + width * i;
-          if (value > -10) console.log('fft', i, value)
           this.frequencyMeter.lineStyle(width, primaryGreen, opacity);
           this.frequencyMeter.moveTo(x, this.height);
-          this.frequencyMeter.lineTo(x, this.height - (value + 100) * this.height / 400);
-        })
-      },
-      enableUpdate() {
-        if (this.show) {
-          this.pixiApp.ticker.add(this.update);
-        } else {
-          this.pixiApp.ticker.remove(this.update);
+          this.frequencyMeter.lineTo(x, this.height - value * this.height / 400);
+        });
+        if (!this.active && !meterLevel && !this.holdPeakValue && !_.some(fft)) {
+          this.pixiApp.ticker.stop();
         }
       }
     },
     watch: {
-      show() {
-        this.enableUpdate();
+      active(active) {
+        if (active && !this.pixiApp.ticker.started) {
+          this.pixiApp.ticker.start();
+        }
       }
     }
   }

@@ -1,6 +1,6 @@
 <template lang="pug">
   .container
-    mixer(:show="true", :showFps="true")
+    mixer(:active="playing", :showFps="true")
     backing(:fixed="fixed", :show="showFx", :skip="showFx === undefined", :showCounts="true")
     .left
       transport-controls(:playTime="'+0.1'", :beatsPerMeasure="bpm")
@@ -151,7 +151,8 @@
         return _.sum(_.map(this.bpm.split(','), _.toNumber))
       },
       ...mapGetters({
-        asArray: 'phrase/asArray'
+        asArray: 'phrase/asArray',
+        playing: 'transport/playing'
       })
     },
     watch: {
