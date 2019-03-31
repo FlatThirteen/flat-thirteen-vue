@@ -7,7 +7,6 @@
       .button(@click="max()") o
     transition(name="lesson-container")
       .lesson-container(v-if="pulseBeat", :style="lessonContainerStyle")
-        mixer(:show="true")
         transition(name="finale", mode="out-in")
           .finale(v-if="finaleStages.length")
             finale(:stages="finaleStages", :bonusStage="true", @finish="finale($event)")
@@ -20,6 +19,7 @@
                   v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}")
               star.button(:color="hollowStar ? null : 'black'", @click.native="onStar()")
             quit-button(@click="exitLesson()")
+        mixer(:show="true")
 </template>
 
 <script>

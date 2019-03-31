@@ -117,5 +117,11 @@ if (process.browser) {
 
   Sound.meter = new Tone.Meter(0.5);
   Tone.Master.connect(Sound.meter);
+
+  Sound.waveform = new Tone.Waveform(128);
+  Tone.Master.connect(Sound.waveform);
+
+  Sound.fft = new Tone.FFT(64);
+  Tone.Master.connect(Sound.fft);
 }
 export default Sound;

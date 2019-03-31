@@ -13,15 +13,17 @@
   export default {
     props: {
       show: Boolean,
+      showWaveform: Boolean,
       showFps: Boolean,
     },
     data() {
       return {
         pixiApp: null,
-        mainMeter: null,
-        peakMeter: null,
-        masterLevel: 0,
-        holdPeak: 0,
+        meter: null,
+        holdPeakTime: 0,
+        holdPeakValue: 0,
+        waveform: null,
+        fft: null,
         height: 0,
         fps: 0,
       };
@@ -55,19 +57,16 @@
           transparent: true
         });
 
-        this.mainMeter = new PIXI.Graphics();
-        this.mainMeter.lineStyle(0);
-        this.mainMeter.beginFill(primaryGreen, 0.8);
-        this.mainMeter.drawRect(0, 0, 5, this.height / 2);
-        this.mainMeter.endFill();
-        this.peakMeter = new PIXI.Graphics();
-        this.peakMeter.lineStyle(0);
-        this.peakMeter.beginFill(primaryRed, 0.8);
-        this.peakMeter.drawRect(0, 0, 5, this.height / 2);
-        this.peakMeter.endFill();
+        this.meter = new PIXI.Graphics();
+        this.pixiApp.stage.addChild(this.meter);
 
-        this.pixiApp.stage.addChild(this.mainMeter);
-        this.pixiApp.stage.addChild(this.peakMeter);
+        if (this.showWaveform) {
+          this.waveform = new PIXI.Graphics();
+          this.pixiApp.stage.addChild(this.waveform);
+        }
+
+        this.frequencyMeter = new PIXI.Graphics();
+        this.pixiApp.stage.addChild(this.frequencyMeter);
         this.enableUpdate();
       },
       resize() {
@@ -76,21 +75,50 @@
         this.pixiApp.renderer.resize(parent.clientWidth, this.height);
       },
       update(delta) {
+        let width = 10;
+        let opacity = .5;
         this.fps = _.round(this.pixiApp.ticker.FPS, 1);
-        this.masterLevel = _.floor(_.clamp(Sound.meter.getLevel(), -100, 10));
-        this.mainMeter.height = (this.masterLevel < 0 ? this.masterLevel + 100 : 100) * this.height / 200;
-        this.mainMeter.y = this.height - this.mainMeter.height;
-        let peakHeight = (this.masterLevel > 0 ? this.masterLevel : 0) * this.height / 200;
-        if (this.holdPeak > 0) {
-          this.holdPeak -= delta;
+        let masterLevel = _.clamp(Sound.meter.getLevel(), -100, 10);
+        this.meter.clear();
+        this.meter.lineStyle(width, primaryGreen, opacity);
+        let x = width / 2;
+        this.meter.moveTo(x, this.height);
+        this.meter.lineTo(x, this.height - (masterLevel < 0 ? masterLevel + 100 : 100) * this.height / 200);
+        let peakValue = (masterLevel > 0 ? masterLevel : 0) * this.height / 200;
+        if (this.holdPeakTime > 0) {
+          this.holdPeakTime -= delta;
         }
-        if (this.holdPeak < 1 || peakHeight > this.peakMeter.height) {
-          this.peakMeter.height = peakHeight;
-          this.peakMeter.y = this.height / 2 - this.peakMeter.height;
-          if (peakHeight > 0) {
-            this.holdPeak = 60;
+        if (this.holdPeakTime < 1 || peakValue > this.holdPeakValue) {
+          this.holdPeakValue = peakValue;
+          if (peakValue > 0) {
+            this.holdPeakTime = 60;
           }
         }
+        if (this.holdPeakValue > 0) {
+          this.meter.lineStyle(10, primaryRed, opacity);
+          this.meter.moveTo(x, this.height / 2);
+          this.meter.lineTo(x, this.height / 2 - this.holdPeakValue);
+        }
+
+        if (this.showWaveform) {
+          let waveform = _.map(Sound.waveform.getValue(), value => _.round(value, 2));
+          this.waveform.clear();
+          this.waveform.lineStyle(5, 0xdddddd, .8);
+          this.waveform.moveTo(100, this.height / 4 + 100 * waveform[0]);
+          _.forEach(waveform, (value, i) => {
+            this.waveform.lineTo(100 + 5 * i, this.height / 4 + 100 * value);
+          });
+        }
+
+        this.frequencyMeter.clear();
+        let fft = _.map(Sound.fft.getValue(), value => _.clamp(value, -100, 10));
+        _.forEach(fft, (value, i) => {
+          let x = 100 + width * i;
+          if (value > -10) console.log('fft', i, value)
+          this.frequencyMeter.lineStyle(width, primaryGreen, opacity);
+          this.frequencyMeter.moveTo(x, this.height);
+          this.frequencyMeter.lineTo(x, this.height - (value + 100) * this.height / 400);
+        })
       },
       enableUpdate() {
         if (this.show) {
@@ -112,6 +140,7 @@
   .mixer-container
     posit(fixed);
     user-select: none;
+    pointer-events: none;
 
   canvas
     width: 100%;
