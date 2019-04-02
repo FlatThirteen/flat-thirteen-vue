@@ -161,7 +161,7 @@
             if (this.lessonDone) {
               scene = 'standby';
             }
-          } else if (this.scene === 'goal') {
+          } else if (this.scene === 'goal' && this.nextScene !== 'playback') {
             if (scene === 'count' && this.autoLevel < this.defaultAutoLevel) {
               this.addPenalty('loopPenalty', 1);
             } else if (this.autoLoop && ++this.loopCount %
