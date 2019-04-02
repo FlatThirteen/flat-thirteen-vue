@@ -41,7 +41,7 @@ export class KickSound {
         volume: -5
       }).toMaster();
       kick.triggerAttackRelease('C#0', '16n', 0.007, .9);
-      click.triggerAttackRelease('B2', '16n', 0, .9);
+      click.triggerAttackRelease('A2', '16n', 0, .9);
       click2.triggerAttackRelease('G3', '16n', 0, .9);
     }, .5).then(buffer => {
       this.player.buffer = buffer;
