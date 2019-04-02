@@ -1,6 +1,6 @@
 <template lang="pug">
   .container
-    mixer(:active="playing", :showFps="true")
+    mixer(:active="playing", :showWaveform="!showFx", :showFps="true")
     backing(:fixed="fixed", :show="showFx", :skip="showFx === undefined", :showCounts="true")
     .left
       transport-controls(:playTime="'+0.1'", :beatsPerMeasure="bpm")

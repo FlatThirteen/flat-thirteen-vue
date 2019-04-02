@@ -60,11 +60,6 @@
         this.meter = new PIXI.Graphics();
         this.pixiApp.stage.addChild(this.meter);
 
-        if (this.showWaveform) {
-          this.waveform = new PIXI.Graphics();
-          this.pixiApp.stage.addChild(this.waveform);
-        }
-
         this.frequencyMeter = new PIXI.Graphics();
         this.pixiApp.stage.addChild(this.frequencyMeter);
         this.pixiApp.ticker.add(this.update);
@@ -105,9 +100,9 @@
           let waveform = _.map(Sound.waveform.getValue(), value => _.round(value, 2));
           this.waveform.clear();
           this.waveform.lineStyle(5, 0xdddddd, .8);
-          this.waveform.moveTo(100, this.height / 4 + 100 * waveform[0]);
+          this.waveform.moveTo(100, this.height / 4 - 100 * waveform[0]);
           _.forEach(waveform, (value, i) => {
-            this.waveform.lineTo(100 + 5 * i, this.height / 4 + 100 * value);
+            this.waveform.lineTo(100 + 5 * i, this.height / 4 - 100 * value);
           });
         }
 
@@ -128,6 +123,17 @@
       active(active) {
         if (active && !this.pixiApp.ticker.started) {
           this.pixiApp.ticker.start();
+        }
+      },
+      showWaveform: {
+        immediate: true,
+        handler(showWaveform) {
+          if (showWaveform && !this.waveform) {
+            this.waveform = new PIXI.Graphics();
+            this.pixiApp.stage.addChild(this.waveform);
+          } else if (!showWaveform && this.waveform) {
+            this.waveform.clear();
+          }
         }
       }
     }
