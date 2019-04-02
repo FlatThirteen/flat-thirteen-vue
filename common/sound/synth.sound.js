@@ -3,8 +3,8 @@ import Tone from '../tone';
 export class SynthSound {
   constructor({ oscillator = {type: 'fatsawtooth'}, polyphony = 5, envelope = {
     attack: 0.02, decay: 0.1, sustain: 0.07, release: 0.4, attackCurve: 'exponential'
-  }, effects = []} = {}) {
-    this.synth = new Tone.PolySynth(polyphony, Tone.Synth, { oscillator, envelope }).
+  }, volume = 1 / polyphony, effects = []} = {}) {
+    this.synth = new Tone.PolySynth(polyphony, Tone.Synth, { oscillator, envelope, volume }).
         chain(...effects, Tone.Master);
   }
 
@@ -30,6 +30,13 @@ export class SynthSound {
 
   releaseAll(time) {
     this.synth.releaseAll(time);
+  }
+
+  envelopeValue() {
+    if (!this.envelope) {
+      this.envelope = this.synth.voices[0].envelope;
+    }
+    return _.max(_.map(this.synth.voices, voice => voice.envelope.value));
   }
 }
 
