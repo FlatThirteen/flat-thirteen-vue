@@ -88,7 +88,9 @@
       setStage(stage) {
         this.stageIndex = stage;
         if (this.$refs.stage.active) {
-          this.$refs.stage.nextScene = 'count';
+          if (this.$refs.stage.scene !== 'count') {
+            this.$refs.stage.nextScene = 'count';
+          }
         } else if (this.$refs.stage.autoGoal) {
           this.$refs.stage.onAction('count');
         }
