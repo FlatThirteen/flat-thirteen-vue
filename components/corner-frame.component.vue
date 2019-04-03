@@ -4,11 +4,13 @@
     transition(name="top")
       .top.scale(v-show="!hideTop", :class="scaleClass")
         transition(name="fade")
-          level-control.left(v-if="!lessonName", :level="level.intensity", :max="power.intensity",
-              @level="$store.dispatch('progress/intensity', $event)")
-            intensity-icon.intensity(:level="level.intensity", :color="fgIntensity",
-                @mouseenter.native="level.intensity === power.intensity && onHint('intensity')",
-                @mouseleave.native="onHint()")
+          .left(v-if="!lessonName", @mouseleave="onHint()",
+              @mouseenter="hint.intensity && onHint('intensity')")
+            level-control.control(:level="level.intensity", :max="power.intensity",
+                @level="$store.dispatch('progress/intensity', $event)")
+              intensity-icon.intensity(:level="level.intensity", :color="fgIntensity")
+            .intensity-hint(v-if="hint.intensity", :class="{active: activeHint === 'intensity'}")
+              star.star(v-for="starColor in starColors", :color="starColor")
         power-intensity(ref="intensity", @click="$store.dispatch('progress/next', 'intensity')")
         transition(name="boing")
           tempo-control.right(v-if="minTempo < maxTempo || hint.tempo",
@@ -22,7 +24,7 @@
       .left: slot(name="bottom-left")
       .right
         transition(name="slide"): .stars(v-if="totalStars")
-          star.star(color="black", :class="{highlight: activeHint === 'intensity'}")
+          star.star(color="black")
           span {{ totalStars }}
         transition(name="slide"): .points(v-if="showPoints") {{ showPoints | floor }}
 </template>
@@ -31,6 +33,7 @@
   import { TweenMax } from 'gsap';
   import { mapGetters } from 'vuex';
 
+  import { bgIntensity } from '~/common/colors';
   import Sound from '~/common/sound/sound';
 
   import IntensityIcon from '~/components/icon/intensity-icon.component';
@@ -69,8 +72,13 @@
     computed: {
       hint() {
         return !this.lessonName && {
+          intensity: this.next.intensity === this.level.intensity + 1,
           tempo: this.minTempo === this.maxTempo && this.passingFinal
         };
+      },
+      starColors() {
+        return _.times(2, i => i < this.starsCountForIntensity ?
+            bgIntensity(this.level.intensity) : null);
       },
       showNextIntensity() {
         return !this.lessonName && this.power.notes > 4 &&
@@ -178,6 +186,19 @@
     color: active-blue;
     font-size: 40px;
     font-weight: 600;
+
+  .intensity-hint
+    display: inline-block;
+    vertical-align: middle;
+    padding: 10px;
+    opacity: .2;
+    transition: opacity 250ms ease-in-out;
+
+    &.active
+      opacity: .8;
+
+  .control
+      vertical-align: middle;
 
   .star
     transition: all 250ms ease-in-out;
