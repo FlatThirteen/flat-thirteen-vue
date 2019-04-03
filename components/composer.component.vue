@@ -78,8 +78,8 @@
           numBeats: 20
         });
         let elapsedTime = _.floor(1000 * (Tone.rightNow() - start));
-        console.log('composer', pulseBeat, layout, intensity, this.level,
-            finale ? 'finale ' : '', 'took', elapsedTime);
+        //console.log('composer', pulseBeat, layout, intensity, this.level,
+        //    finale ? 'finale ' : '', 'took', elapsedTime);
       },
       setFinale(stagePoints) {
         let tracks = [
@@ -157,7 +157,7 @@
       },
       bassMetronomeNotes() {
         return _.join(_.map(this.bassRootNotes, (rootNote, part) =>
-          _.join(applyIntervals(rootNote, part ? [12, 10, 7, 3] : [0, -5, -2, -1]), '|')), '|');
+            _.join(applyIntervals(rootNote, part ? [12, 10, 7, 3] : [0, -5, -2, -1]), '|')), '|');
       },
       drumNotes() {
         return this.fourBars + [
@@ -168,10 +168,10 @@
       },
       chordNotes() {
         let progression = _.take(_.chunk(['I^3', 'IV', 'V', 'bVII', 'v','bIII', 'ii', 'bII',
-          'bVI', 'iv', 'bVIIsus4', 'bVII'], this.level[1] + 1), 4);
+            'bVI', 'iv', 'bVIIsus4', 'bVII'], this.level[1] + 1), 4);
         let changes = buildChanges(8, [null, [4], [3, 6]][this.level[1]]);
         let strum = ['%-------', '%---%---', '%--%--%-', '%-%%% %-', '%%-%%-%-', '%% %% %-'][
-        this.level[1] + this.level[2] + (this.intensity > 1)];
+            this.level[1] + this.level[2] + (this.intensity > 1)];
         let rhythm = chunkRhythm(2, _.map(strum, (action, i) =>
             action + (action === '%' ? changes[i] : '')));
         return 'C5:' + _.join(_.map(progression, chords =>
@@ -205,7 +205,6 @@
             return _.map(variation, pulse => (pulse !== '%' && pulse !== '+' ? pulse :
                 notes[pattern[beat] ^ pulse === '+']));
           });
-
         });
         return chunkRhythm(2, notesByPulse);
       },
