@@ -72,7 +72,7 @@
     computed: {
       hint() {
         return !this.lessonName && {
-          intensity: this.next.intensity === this.level.intensity + 1,
+          intensity: this.level.intensity && this.next.intensity === this.level.intensity + 1,
           tempo: this.minTempo === this.maxTempo && this.passingFinal
         };
       },
