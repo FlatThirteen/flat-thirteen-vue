@@ -10,7 +10,7 @@
                 @level="$store.dispatch('progress/intensity', $event)")
               intensity-icon.intensity(:level="level.intensity", :color="fgIntensity")
             .intensity-hint(v-if="hint.intensity", :class="{active: activeHint === 'intensity'}")
-              star.star(v-for="starColor in starColors", :color="starColor")
+              star.star(v-for="(color, i) in starColors", :key="color + i", :color="color")
         power-intensity(ref="intensity", @click="$store.dispatch('progress/next', 'intensity')")
         transition(name="boing")
           tempo-control.right(v-if="minTempo < maxTempo || hint.tempo",
