@@ -19,7 +19,7 @@
                   v-model.number="pointsByStage[i]", :class="{invalid: invalidPoints[i]}")
               star.button(:color="hollowStar ? null : 'black'", @click.native="onStar()")
             quit-button(@click="exitLesson()")
-        mixer(:show="true")
+        mixer(:active="true")
 </template>
 
 <script>
@@ -76,7 +76,9 @@
         }
       },
       overrideStars(stars) {
-        this.$refs.composer.setStage(_.defaults({ stars }, this.level));
+        this.$refs.composer.set(_.defaults({ stars,
+          pulseBeat: this.pulseBeat
+        }, this.level));
       },
       onLesson({pulseBeat, x, y, scrollTop}) {
         this.pulseBeat = pulseBeat;
@@ -91,7 +93,10 @@
           pulseBeat: this.pulseBeat,
           stages: this.$refs.lessonBuilder.build(lessonScore)
         });
-        this.$refs.composer.setStage(_.defaults({ stars: lessonScore.stars || [] }, this.level));
+        this.$refs.composer.set(_.defaults({
+          pulseBeat: this.pulseBeat,
+          stars: lessonScore.stars || []
+        }, this.level));
       },
       finishLesson() {
         let stages = this.$refs.lessonBuilder.stages;

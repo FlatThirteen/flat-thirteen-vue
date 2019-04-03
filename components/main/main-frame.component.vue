@@ -73,7 +73,9 @@
         this.setStages({ pulseBeat,
           stages: this.$refs.lessonBuilder.build(lessonScore),
         });
-        this.$refs.composer.setStage(_.defaults({ stars: lessonScore.stars || [] }, this.level));
+        this.$refs.composer.set(_.defaults({ pulseBeat,
+          stars: lessonScore.stars || []
+        }, this.level));
         this.pulseBeat = pulseBeat;
       },
       nextStage(points) {

@@ -459,7 +459,7 @@
           if (this.state < this.stages.length) {
             // End of finale
             this.state = this.stages.length;
-            this.getComposer().setStage({ finale: true });
+            this.getComposer().set({ finale: true });
           }
         }
       },

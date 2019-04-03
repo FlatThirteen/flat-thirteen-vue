@@ -148,22 +148,11 @@ const parseTracks = function(tracks, numBeats) {
   return notes;
 };
 
-const applyIntervals = function(rootNote, intervals) {
-  return _.map(intervals, interval => Tone.pitch(rootNote, interval));
-};
-
-const applyRhythm = function(rhythm, values) {
-  return _.reduceRight(values, (template, value, index) =>
-    _.replace(template, new RegExp('%' + (index + 1), 'g'), value), rhythm);
-};
-
 const beatFromBeatTick = function(beatTick) {
   return _.toNumber(_.split(beatTick, ':')[0]);
 };
 
 export default {
   parseTracks,
-  applyIntervals,
-  applyRhythm,
   beatFromBeatTick
 }

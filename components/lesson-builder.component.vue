@@ -1,7 +1,7 @@
 <template lang="pug">
   .builder(v-if="debug")
     key-handler
-    arrangement.arrangement(:phrases="phrases", :tempo="tempo", :show="true", :loop="4")
+    arrangement.arrangement(:phrases="phrases", :tempo="tempo", :show="true", :loop="4", :repeat="repeat")
     .notes
       .primary.toggle(:class="{active: !notes}", @click="build()") Default
       .primary.toggle(v-for="numNotes in notesRange", :class="{active: numNotes === notes}",
@@ -53,7 +53,8 @@
         stages: [],
         page: 0,
         notes: null,
-        stars: null
+        stars: null,
+        repeat: false
       };
     },
     methods: {
@@ -263,9 +264,13 @@
     },
     watch: {
       keyDown(key) {
-        let index = _.indexOf(this.keys, _.toUpper(key));
-        if (this.$refs.phrase) {
-          this.onPhrase(index);
+        if (key === 'Enter') {
+          this.repeat = !this.repeat;
+        } else {
+          let index = _.indexOf(this.keys, _.toUpper(key));
+          if (this.$refs.phrase) {
+            this.onPhrase(index);
+          }
         }
       },
       paused(paused) {

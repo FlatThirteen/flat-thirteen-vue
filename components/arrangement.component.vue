@@ -3,6 +3,7 @@
     .arrangement
       .phrase(v-for="(phrase, i) in phrases")
         .key(:class="{active: position === i}") {{ phrase.phraseKey }}
+      span(v-show="repeat") :
     .position(v-if="phrases && phrases.length") {{ position + playing }} / {{ phrases.length }}
     transport(v-bind="transportProps")
 </template>
@@ -27,7 +28,8 @@
       show: Boolean,
       count: Boolean,
       progression: Boolean,
-      loop: Number
+      loop: Number,
+      repeat: Boolean
     },
     data() {
       return {
@@ -51,7 +53,11 @@
           this.position = this.position + 1;
         }
         if (this.position >= this.phrases.length) {
-          this.stop();
+          if (this.repeat) {
+            this.position = 0;
+          } else {
+            this.stop();
+          }
         } else {
           this.$emit('position', this.position);
         }
@@ -112,7 +118,7 @@
   .active.key
     font-size: 20px;
 
-  .phrase:not(:last-child):after
+  .phrase:not(:last-of-type):after
     content: ',';
     background-color: transparent;
 </style>

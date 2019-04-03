@@ -1,16 +1,16 @@
 <template lang="pug">
   .container(:style="{backgroundColor: bgIntensity}")
-    mixer(:show="true")
     stage(ref="stage", :goal="stageGoals[stageIndex]", :stage="stageIndex",
         :intensity="intensity", :tempo="tempo",
         @basePoints="basePoints = $event", @complete="onComplete()")
+    mixer(:active="true")
     .top
       .intensity.left
         level-control.control(:level="intensity", :max="4", @level="setIntensity($event)")
           intensity-icon(:level="intensity")
         stars-control.stars.toggle(:stars="stars", @stars="setStars($event)" :default="intensity")
         lesson-builder(ref="lessonBuilder", @stages="stageGoals = $event")
-        composer(ref="composer", :show="true")
+        composer(ref="composer")
       tempo-control.right(:tempo="tempo", @tempo="tempo = $event", :min="60", :max="240")
     .bottom
       .left
@@ -109,8 +109,11 @@
       },
       updateIfPossible() {
         if (this.numBeats > 1 && this.$refs.lessonBuilder) {
-          this.stageGoals = this.$refs.lessonBuilder.build({stars: this.stars});
-          this.$refs.composer.setStage(_.defaults({ layout: 1 }, this));
+          this.stageGoals = this.$refs.lessonBuilder.build({ stars: this.stars });
+          this.$refs.composer.set(_.defaults({
+            pulseBeat: this.pulseBeat,
+            layout: 1
+          }, this));
         }
       }
     },
