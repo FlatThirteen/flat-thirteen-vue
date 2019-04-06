@@ -1,5 +1,5 @@
 <template lang="pug">
-  .corner-frame(:style="{backgroundColor: power.notes && bgIntensity}")
+  .corner-frame(:style="cornerFrameStyle")
     slot
     transition(name="top")
       .top.scale(v-show="!hideTop", :class="scaleClass")
@@ -90,6 +90,12 @@
             this.power.notes > 5 && this.threeStarsCount > (this.next.tempo - 1) * 2 &&
             this.totalPoints >= this.nextPoints;
       },
+      cornerFrameStyle() {
+        return !this.power.notes ? null : {
+          backgroundColor: this.bgIntensity,
+          transition: 'background-color 250ms ease-in-out'
+        }
+      },
       ...mapGetters({
         lessonName: 'progress/lessonName',
         power: 'progress/power',
@@ -144,7 +150,6 @@
 
   .corner-frame
     posit(absolute);
-    transition: background-color 250ms ease-in-out;
 
   .top
     posit(absolute, 0, 0, x, 0);
