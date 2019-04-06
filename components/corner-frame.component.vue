@@ -144,6 +144,7 @@
 
   .corner-frame
     posit(absolute);
+    transition: background-color 250ms ease-in-out;
 
   .top
     posit(absolute, 0, 0, x, 0);

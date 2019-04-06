@@ -33,7 +33,11 @@
         transition-group(name="high__score")
           .high__score(v-for="(score, i) in highScores", :key="score.isNew ? 'new' : i",
               ref="highScore", :style="highScoreStyles[i]", :class="{new: score.isNew}")
-            .high__value(:class="{fail: ready && !score.passing, flash: score.isNew && final}") {{ score.base }}
+            .high__value(:style="highScoreValueStyles[i]",
+                :class="{flash: score.isNew && final}") {{ score.base }}
+              creep(v-if="!score.passing", v-bind="creepProperties[i]")
+                template(slot="html", slot-scope="{filterStyle}")
+                  .high__creep(:style="filterStyle")
             .high__tempo(:class="{hide: !score.tempo || !power.tempo}")
               metronome(:mini="true")
               | {{ score.tempo }}
@@ -55,6 +59,7 @@
 
   import AnimatedMixin from '~/mixins/animated.mixin';
 
+  import { bgIntensity, fgIntensity, primaryBlue, hexString } from '~/common/colors'
   import BeatTick from '~/common/core/beat-tick.model';
   import Sound from '~/common/sound/sound';
   import Tone from '~/common/tone';
@@ -71,6 +76,7 @@
   import PlayButton from '~/components/stage/play-button.component';
   import Star from '~/components/star.component';
   import BouncingBall from '~/components/widget/bouncing-ball.component';
+  import Creep from '~/components/widget/creep.component';
 
   export default {
     mixins: [AnimatedMixin],
@@ -86,7 +92,8 @@
       'goal-button': GoalButton,
       'play-button': PlayButton,
       'star': Star,
-      'bouncing-ball': BouncingBall
+      'bouncing-ball': BouncingBall,
+      'creep': Creep
     },
     inject: ['getComposer'],
     props: {
@@ -183,7 +190,7 @@
       }
       setTimeout(() => {
         this.getComposer().setFinale(_.map(this.stages, 'points'));
-        this.highScores = [{ isNew: true, base: 0, passing: true }];
+        this.highScores = [{ isNew: true, base: 0, passing: true, intensity: this.level.intensity }];
         this.start('+0');
       }, 500);
       this.$bus.$on(BeatTick.BEAT, this.beatHandler);
@@ -377,8 +384,26 @@
       },
       highScoreStyles() {
         return _.map(this.highScores, (score, i) => ({
-          backgroundColor: score.intensity,
           transitionDelay: (this.final || score.isNew ? 0 : 100 * i) + 'ms'
+        }));
+      },
+      highScoreValueStyles() {
+        return _.map(this.highScores, (score, i) => ({
+          color: this.final ? fgIntensity(score.intensity) : hexString(primaryBlue),
+          backgroundColor: this.final ? hexString(primaryBlue) : bgIntensity(score.intensity),
+        }));
+      },
+      creepProperties() {
+        return _.times(this.highScores.length, i => ({
+          turbulence: {
+            type: 'turbulence',
+            seed: i,
+            baseFrequency: 0.07,
+            numOctaves: 3
+          },
+          displacement: {
+            scale: 20
+          }
         }));
       },
       ...mapGetters({
@@ -474,7 +499,7 @@
   }
 </script>
 
-<style scoped lang="stylus", type="text/stylus">
+<style scoped lang="stylus" type="text/stylus">
   @import "~assets/stylus/weenie.styl"
 
   .finale-container
@@ -610,18 +635,16 @@
       padding: 50px 0;
 
     &__score
-      color: primary-blue;
       font-weight: 600;
-      font-size: calc(25px + 4vh);
+      font-size: calc(25px + 4vmin);
       min-height: 25px;
-      padding-right: 10px;
+      padding-right: 5vw;
       text-align: right;
-      margin: -10px 0;
+      margin: 5px 0;
 
       &.new
-        font-size: calc(30px + 5vh);
-        padding: 0 10px;
-        white-space: nowrap;
+        font-size: calc(30px + 5vmin);
+        padding: 0 5vw;
 
       &-enter
         transform: translateX(25vw);
@@ -632,15 +655,19 @@
 
     &__value
       display: inline-block;
+      position: relative;
+      padding: 5px 20px;
       transition: all 500ms;
-
-      &.fail
-        animation: shake 1s;
-        opacity: 0.6;
-        shadow(#555, 5px);
 
       &.flash
         animation: flash 1500ms 20;
+
+    &__creep
+      posit(absolute);
+      background-color: gray;
+      opacity: 0.4;
+      transform: scale(1.1);
+      transform-origin: center;
 
     &__tempo
       display: inline-block;
@@ -743,12 +770,5 @@
     50%
       opacity: 0.8;
       transform: scale(1.1);
-
-  @keyframes shake
-    0%, 100%
-      transform: translateX(0);
-    20%, 60%
-      transform: translateX(1vh);
-    40%, 80%
-      transform: translateX(-1vh);
+      shadow(#555, 5px);
 </style>

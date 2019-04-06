@@ -153,8 +153,14 @@
         });
       },
       onMouseOver(pulseBeat) {
-        this.highlight = !pulseBeat || this.displayScores[pulseBeat] ? {} : _.reduce(
-            this.prerequisite[pulseBeat], (result, required) => _.set(result, required, true), {});
+        this.highlight = !pulseBeat || this.displayScores[pulseBeat] &&
+            !this.frozen[pulseBeat] ? this.defaultHighlight : _.reduce(this.prerequisite[pulseBeat],
+                (result, required) => _.set(result, required, !this.frozen[required]), {});
+        if (this.frozen[pulseBeat]) {
+          _.forEach(this.otherPulseBeats[pulseBeat], other => {
+            this.highlight[other] = this.displayScores[other] && !this.frozen[other];
+          });
+        }
       },
       onLesson(pulseBeat, {x, y}) {
         this.$store.dispatch('progress/weenie', { power: 'notes' });
@@ -175,18 +181,28 @@
       transition() {
         return !this.layoutChange;
       },
+      lastRow() {
+        return _.last(_.values(this.pulseBeatGroups));
+
+      },
       showNextLayout() {
         return this.next.layout && this.next.layout === this.level.layout + 1 &&
             _.every(this.nextLayoutConditions[this.level.layout],
                 (condition, pulseBeat) => _.get(this.displayScores, [pulseBeat, condition]));
       },
       showNextNotes() {
-        let lastRow = _.last(_.values(this.pulseBeatGroups));
         return this.next.notes &&  this.totalPoints >= this.nextPoints &&
             this.totalPoints >= (this.next.notes - 4) * 600 &&
             (this.next.notes < 9 || this.level.layout > 1) &&
-            (_.some(lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'perfect'])) ||
-            _.every(lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'passing'])));
+            (_.some(this.lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'perfect'])) ||
+            _.every(this.lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'passing'])));
+      },
+      defaultHighlight() {
+        return _.some(this.frozen) ||
+            !_.every(this.lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'finished'])) ||
+            _.every(this.lastRow, pulseBeat => _.get(this.displayScores, [pulseBeat, 'passing'])) ? {} :
+            _.mapValues(this.displayScores, (score, pulseBeat) => _.includes(this.lastRow, pulseBeat) &&
+            !_.get(this.displayScores, [pulseBeat, 'passing']));
       },
       bottomStyle() {
         return {
@@ -202,8 +218,10 @@
         bgIntensity: 'progress/bgIntensity',
         layouts: 'progress/layouts',
         pulseBeatGroups: 'progress/pulseBeatGroups',
+        otherPulseBeats: 'progress/otherPulseBeats',
         scaleClass: 'progress/scaleClass',
         displayScores: 'progress/displayScores',
+        frozen: 'progress/frozen',
         passingFinal: 'progress/passingFinal',
         prerequisite: 'progress/prerequisite',
         nextPoints: 'progress/nextPoints',
@@ -216,11 +234,14 @@
           this.highlight = _.mapValues(this.displayScores, value => !value);
         } else if (hint === 'tempo') {
           this.highlight =  _.mapValues(this.displayScores, score =>
-              score && score.stars && !score.points &&
+              score && !score.frozen && score.stars && !score.points &&
               score.stars.length && score.stars.length < 3);
         } else {
-          this.highlight = {};
+          this.highlight = this.defaultHighlight;
         }
+      },
+      defaultHighlight(defaultHighlight) {
+        this.highlight = defaultHighlight;
       },
       showNextLayout(showNextLayout) {
         if (showNextLayout) {

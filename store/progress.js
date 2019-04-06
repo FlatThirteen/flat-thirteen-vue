@@ -59,6 +59,8 @@ export const state = () => ({
     playable: false
   },
   scores: {}, // [layout][pulseBeat] = [{tempo, intensity, base, star, perfect, passing, heavy, light}]
+  creep: {}, // [intensity][tempo][layout][pulseBeat] = Number
+  frozen: {}, // [intensity][tempo][layout][pulseBeat] = Boolean
   nextPoints: 0,
 });
 
@@ -88,6 +90,20 @@ export const getters = {
       result[pulseBeat] = _.compact(_.times(pulseBeat.length, i =>
         pulseBeat.charAt(i) === replace && splice(pulseBeat, i, 1, replacement)));
     }
+    return result;
+  }, {}),
+  otherPulseBeats: (state, getters) => _.transform(getters.pulseBeatGroups, (result, group) => {
+    _.forEach(group, pulseBeat => {
+      result[pulseBeat] = _.without(group, pulseBeat);
+    });
+    return result;
+  }, {}),
+  unfreezes: (state, getters) => _.reduce(getters.pulseBeats, (result, pulseBeat) => {
+    let others = getters.otherPulseBeats[pulseBeat] || [];
+    (result[pulseBeat] || (result[pulseBeat] = [])).unshift(...others);
+    _.forEach(getters.prerequisite[pulseBeat], prerequisite => {
+      (result[prerequisite] || (result[prerequisite] = [])).push(pulseBeat);
+    });
     return result;
   }, {}),
   scaleClass: state => (state.power.notes === 4 ? 'first' :
@@ -127,16 +143,26 @@ export const getters = {
     };
     let ranking = getters.modeScores[state.lesson.pulseBeat];
     let insertion = _.sortedLastIndexBy(ranking, newScore, sortScore);
-    let highScores = _.take(ranking, insertion).concat(newScore,
+    return  _.take(ranking, insertion).concat(newScore,
         _.takeRight(ranking, ranking.length - insertion));
-    return _.map(highScores, score => _.defaults({ intensity: bgIntensity(score.intensity) }, score));
   },
+  creep: state => _.get(state.creep,
+      [state.mode.intensity, state.mode.tempo, state.mode.layout], {}),
+  frozen: state => _.get(state.frozen,
+      [state.mode.intensity, state.mode.tempo, state.mode.layout], {}),
+  freezes: (state, getters) => _.reverse(_.flatMap(_.tail(_.values(getters.pulseBeatGroups)),
+      group => _.filter(group, pulseBeat => getters.playable[pulseBeat] &&
+          !getters.frozen[pulseBeat]))),
   displayScores: (state, getters) => {
     let scoresByPulseBeat = _.get(state.scores, state.mode.layout, {});
     return _.mapValues(_.invert(getters.pulseBeats), (i, pulseBeat) => {
       let scores = scoresByPulseBeat[pulseBeat];
       if (!scores) {
-        return state.hack.playable || getters.playable[pulseBeat] ? { finished: 0 } : undefined;
+        return getters.playable[pulseBeat] ? {
+          finished: 0,
+          creep: getters.creep[pulseBeat],
+          frozen: getters.frozen[pulseBeat]
+        } : undefined;
       }
       let validScores = _.filter(scores, score =>
         score.intensity === state.mode.intensity && score.tempo === getters.tempo);
@@ -144,20 +170,23 @@ export const getters = {
       let score = validScores[0] || scores[0];
 
       return {
-        intensity: fgIntensity(score.intensity),
+        intensity: score.intensity,
         tempo: score.tempo,
-        finished: validScores.length || 1,
+        finished: validScores.length,
         stars: _.map(_.take(stars, 3), 'intensity'),
         points: score.star ? undefined : score.base,
         passing: score.passing,
         perfect: score.perfect,
+        creep: getters.creep[pulseBeat],
+        frozen: getters.frozen[pulseBeat]
       };
     });
   },
   passingFinal: (state, getters) => _.get(getters.displayScores, ['2222', 'passing']),
   playable: (state, getters) => _.mapValues(getters.modeScores, (scores, pulseBeat, modeScores) =>
-      !!scores.length || !getters.prerequisite[pulseBeat] || !getters.prerequisite[pulseBeat].length ||
-          _.some(getters.prerequisite[pulseBeat], pulseBeat => _.filter(modeScores[pulseBeat], 'passing').length)),
+      state.hack.playable || !!scores.length || !getters.prerequisite[pulseBeat] ||
+      !getters.prerequisite[pulseBeat].length ||
+      _.some(getters.prerequisite[pulseBeat], pulseBeat => _.filter(modeScores[pulseBeat], 'passing').length)),
   groupsWithoutStars: (state, getters) => _.filter(getters.pulseBeatGroups,
       pulseBeatGroup => !_.some(pulseBeatGroup, pulseBeat =>
           _.some(getters.modeScores[pulseBeat], score => score.star))),
@@ -176,6 +205,8 @@ export const getters = {
 export const mutations = {
   resetPower(state, params) {
     state.scores = {};
+    state.creep = {};
+    state.frozen = {};
     state.nextPoints = 0;
     if (params.max) {
       _.forEach(MAX_POWER, (max, power) => {
@@ -277,19 +308,49 @@ export const mutations = {
     }
     state.weenie[power] = level;
   },
-  score(state, {pulseBeat, score}) {
-    if (!score.base) {
-      return;
-    }
+  score(state, {pulseBeat, score, unfreeze, freeze}) {
     score.intensity = state.mode.intensity;
     score.passing = passing(score.base);
     score.perfect = perfect(score.base);
-    let layoutScores = state.scores[state.mode.layout] ||
-        Vue.set(state.scores, state.mode.layout, {});
-    let pulseBeatScores = layoutScores[pulseBeat] ||
-        Vue.set(layoutScores, pulseBeat, []);
-    let index = _.sortedLastIndexBy(pulseBeatScores, score, sortScore);
-    pulseBeatScores.splice(index, 0, score);
+    let intensityCreep = state.creep[state.mode.intensity] ||
+        Vue.set(state.creep, state.mode.intensity, {});
+    let tempoCreep = intensityCreep[state.mode.tempo] ||
+        Vue.set(intensityCreep, state.mode.tempo, {});
+    let layoutCreep = tempoCreep[state.mode.layout] ||
+        Vue.set(tempoCreep, state.mode.layout, {});
+    let intensityFrozen = state.frozen[state.mode.intensity] ||
+        Vue.set(state.frozen, state.mode.intensity, {});
+    let tempoFrozen = intensityFrozen[state.mode.tempo] ||
+        Vue.set(intensityFrozen, state.mode.tempo, {});
+    let layoutFrozen = tempoFrozen[state.mode.layout] ||
+        Vue.set(tempoFrozen, state.mode.layout, {});
+    if (score.passing) {
+      if (layoutCreep[pulseBeat]) {
+        layoutCreep[pulseBeat] = 0;
+      }
+      _.forEach(unfreeze, unfreezePulseBeat => {
+        if (layoutFrozen[unfreezePulseBeat]) {
+          Vue.set(layoutFrozen, unfreezePulseBeat, false);
+          return score.star; // Only unfreeze one if not star
+        }
+      });
+    } else {
+      let creep = layoutCreep[pulseBeat] || 0;
+      Vue.set(layoutCreep, pulseBeat, creep + 1);
+      _.forEach(_.take(freeze, creep), freezePulseBeat => {
+        Vue.set(layoutFrozen, freezePulseBeat, true);
+        console.log('Freezing', freezePulseBeat, 'should uncreep', layoutCreep[freezePulseBeat])
+        Vue.set(layoutCreep, freezePulseBeat, 0);
+      });
+    }
+    if (score.base) {
+      let layoutScores = state.scores[state.mode.layout] ||
+          Vue.set(state.scores, state.mode.layout, {});
+      let pulseBeatScores = layoutScores[pulseBeat] ||
+          Vue.set(layoutScores, pulseBeat, []);
+      let index = _.sortedLastIndexBy(pulseBeatScores, score, sortScore);
+      pulseBeatScores.splice(index, 0, score);
+    }
   }
 };
 
@@ -332,7 +393,11 @@ export const actions = {
     });
   },
   addScore({getters, commit}, {pulseBeat, score}) {
-    commit('score', {pulseBeat, score: _.set(score, 'tempo', getters.tempo)});
+    commit('score', { pulseBeat,
+      score: _.set(score, 'tempo', getters.tempo),
+      unfreeze: getters.unfreezes[pulseBeat],
+      freeze: getters.freezes
+    });
   }
 };
 

@@ -15,6 +15,7 @@
       return {
         views: {
           Sound: '/sound',
+          Graphics: '/graphics',
           Backing: '/backing',
           Grid: '/grid',
           Stage: '/stage',

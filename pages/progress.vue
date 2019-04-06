@@ -1,7 +1,8 @@
 <template lang="pug">
   corner-frame(:totalPoints="totalPoints", :totalStars="totalStars",
       :hideTop="!!finaleStages.length", @hint="hint = $event")
-    curriculum(:hint="hint", :debug="true", :scrollTop="scrollTop", @click="onLesson($event)")
+    curriculum(:hint="hint", v-show="!pulseBeat", :debug="true",
+        :scrollTop="scrollTop", @click="onLesson($event)")
     composer(ref="composer")
     .config(v-if="!pulseBeat")
       .button(@click="max()") o

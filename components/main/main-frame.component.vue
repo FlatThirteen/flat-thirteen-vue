@@ -13,7 +13,7 @@
         backing
         stage(:goal="stageGoal", :stage="stageIndex", :intensity="level.intensity", :tempo="tempo",
             @basePoints="stagePoints = $event", @complete="nextStage($event)")
-        quit-button(@click="clearLesson()")
+        quit-button(@click="clearLesson()", :creep="stagePoints < 100")
     slot(name="help", slot="bottom-left")
       .help
 </template>
@@ -88,10 +88,12 @@
         if (!points) {
           GameAnalytics.fail(this.stagePoints);
         }
-        this.addScore({
-          pulseBeat: this.pulseBeat,
-          score: { base: points, star: points === 500 }
-        });
+        if (points || this.stagePoints < 100) {
+          this.addScore({
+            pulseBeat: this.pulseBeat,
+            score: {base: points, star: points === 500}
+          });
+        }
         this.pulseBeat = null;
         this.stages = [];
         this.setStages();
