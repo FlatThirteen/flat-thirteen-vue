@@ -304,6 +304,7 @@
     height: 100px;
     width: 100px;
     margin-top: -20px;
+    transition: background-color 250ms ease-in-out;
 
     &.off
       top: 200px;

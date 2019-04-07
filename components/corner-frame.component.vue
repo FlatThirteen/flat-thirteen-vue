@@ -93,7 +93,7 @@
       cornerFrameStyle() {
         return !this.power.notes ? null : {
           backgroundColor: this.bgIntensity,
-          transition: 'background-color 250ms ease-in-out'
+          transition: this.lessonName ? undefined : 'background-color 250ms ease-in-out'
         }
       },
       ...mapGetters({
