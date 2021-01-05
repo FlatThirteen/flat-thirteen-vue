@@ -16,7 +16,7 @@
     "deploy": "cat dist/BUILD && push-dir --dir=dist --branch=gh-pages --cleanup"
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "color": "^3.1.0",
     "gameanalytics": "^3.1.2",
     "gsap": "^2.1.2",
