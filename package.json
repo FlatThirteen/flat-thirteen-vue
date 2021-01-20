@@ -19,7 +19,7 @@
     "axios": "^0.18.0",
     "color": "^3.1.0",
     "gameanalytics": "^3.1.2",
-    "gsap": "^2.1.2",
+    "gsap": "^3.6.0",
     "js-combinatorics": "^0.5.4",
     "nuxt": "^1.4.5",
     "pixi.js": "^4.8.7",
